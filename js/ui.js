@@ -15,6 +15,7 @@
       this.el.level = document.getElementById('stat-level');
       this.el.xpbar = document.getElementById('xp-fill');
       this.el.zombies = document.getElementById('stat-zombies');
+      this.el.stars = document.getElementById('cafe-stars');
       this.el.toast = document.getElementById('toast');
       this.el.modeLabel = document.getElementById('mode-label');
       this.el.stoveMenu = document.getElementById('stove-menu');
@@ -403,6 +404,13 @@
       this.el.zombies.textContent = G.zombies.length;
       var need = ZC.xpForLevel(G.level);
       this.el.xpbar.style.width = ZC.util.clamp(G.xp / need * 100, 0, 100) + '%';
+      // café star rating (grows with level & prestige)
+      if (this.el.stars) {
+        var s = ZC.util.clamp(1 + Math.floor(G.level / 2) + (G.prestige || 0), 1, 5);
+        var html = '';
+        for (var i = 1; i <= 5; i++) html += (i <= s) ? '★' : '<span class="off">★</span>';
+        this.el.stars.innerHTML = html;
+      }
       this.updateExpandBtn();
     },
 

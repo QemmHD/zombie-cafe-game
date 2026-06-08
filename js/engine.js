@@ -105,6 +105,17 @@
     ctx.strokeStyle = '#2c3e1f'; ctx.lineWidth = 1.3;
     ctx.beginPath(); ctx.moveTo(-4, -13); ctx.lineTo(4, -13);
     ctx.moveTo(-2, -15); ctx.lineTo(-2, -11); ctx.moveTo(1, -15); ctx.lineTo(1, -11); ctx.stroke();
+    // headgear
+    if (opt.hat === 'hardhat') {
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.ellipse(0, -27, 11, 4, 0, 0, Math.PI * 2); ctx.fill();   // brim
+      ctx.beginPath(); ctx.moveTo(-8, -27); ctx.quadraticCurveTo(0, -38, 8, -27); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#e0a90b'; ctx.fillRect(-1.5, -36, 3, 9);   // ridge
+    } else if (opt.hat === 'bandana') {
+      ctx.fillStyle = '#7b241c';
+      ctx.beginPath(); ctx.moveTo(-8, -25); ctx.quadraticCurveTo(0, -31, 8, -25); ctx.lineTo(8, -22); ctx.lineTo(-8, -22); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff'; for (var d = -6; d < 8; d += 4) ctx.fillRect(d, -24, 1.5, 1.5);
+    }
     // carried plate
     if (opt.carrying) {
       ctx.fillStyle = '#ecf0f1';
@@ -194,20 +205,42 @@
   }
   ZC.isoBox = isoBox;
 
-  S.table = function (ctx, x, y, occupied) {
-    S.shadow(ctx, x, y, 18);
-    // pedestal
-    isoBox(ctx, x, y, 5, 2.5, 12, '#5b3a1c', '#4a2f17', '#3d2613');
-    // round top
-    var top = occupied ? '#a4703c' : '#b9824a';
-    ctx.fillStyle = top;
-    ctx.beginPath(); ctx.ellipse(x, y - 14, 22, 11, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#8a5a2b';
-    ctx.beginPath(); ctx.ellipse(x, y - 12, 22, 11, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = top;
-    ctx.beginPath(); ctx.ellipse(x, y - 14, 22, 11, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.beginPath(); ctx.ellipse(x - 6, y - 16, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+  S.table = function (ctx, x, y, opt) {
+    opt = opt || {};
+    var hw = 24, hh = 12, h = 16, ty = y - h;
+    S.shadow(ctx, x, y, 22);
+    // legs
+    ctx.strokeStyle = '#b9bec2'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.55, ty + hh * 0.4); ctx.lineTo(x - hw * 0.55, y + 6);
+    ctx.moveTo(x + hw * 0.55, ty + hh * 0.4); ctx.lineTo(x + hw * 0.55, y + 6);
+    ctx.stroke();
+    // side thickness of the top
+    ctx.fillStyle = '#c9301f';
+    ctx.beginPath();
+    ctx.moveTo(x - hw, ty); ctx.lineTo(x, ty + hh); ctx.lineTo(x + hw, ty);
+    ctx.lineTo(x + hw, ty + 4); ctx.lineTo(x, ty + hh + 4); ctx.lineTo(x - hw, ty + 4);
+    ctx.closePath(); ctx.fill();
+    // checkered cloth top (red gingham)
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(x, ty - hh); ctx.lineTo(x + hw, ty); ctx.lineTo(x, ty + hh); ctx.lineTo(x - hw, ty); ctx.closePath();
+    ctx.clip();
+    ctx.fillStyle = '#d23b2e'; ctx.fillRect(x - hw, ty - hh, hw * 2, hh * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 2.4;
+    var cd = [hw, hh], rd = [-hw, hh], t;
+    for (t = -1; t <= 1.01; t += 0.5) {
+      ctx.beginPath(); ctx.moveTo(x - cd[0] + t * rd[0], ty - cd[1] + t * rd[1]); ctx.lineTo(x + cd[0] + t * rd[0], ty + cd[1] + t * rd[1]); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + t * cd[0] - rd[0], ty + t * cd[1] - rd[1]); ctx.lineTo(x + t * cd[0] + rd[0], ty + t * cd[1] + rd[1]); ctx.stroke();
+    }
+    ctx.restore();
+    // plate (+ food when served)
+    ctx.fillStyle = '#f5f6f7';
+    ctx.beginPath(); ctx.ellipse(x, ty, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#cdd2d6'; ctx.lineWidth = 1; ctx.stroke();
+    if (opt.foodColor) {
+      ctx.fillStyle = opt.foodColor;
+      ctx.beginPath(); ctx.ellipse(x, ty - 1, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    }
   };
 
   S.stove = function (ctx, x, y, opt) {

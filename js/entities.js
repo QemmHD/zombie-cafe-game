@@ -60,6 +60,7 @@
     this.level = 1;
     this.xp = 0;
     this.tint = util.rand(-18, 18);   // slight per-zombie colour variation
+    this.hat = util.pick(['hardhat', 'hardhat', 'bandana', 'none']);  // varied worker looks
   }
   Zombie.prototype.isAvailable = function () { return this.state === 'idle' && this.energy > 5; };
   Zombie.prototype.speedMul = function () { return 1 + (this.level - 1) * 0.04; };
