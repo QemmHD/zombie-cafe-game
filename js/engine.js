@@ -133,6 +133,10 @@
   S.customer = function (ctx, x, y, opt) {
     opt = opt || {};
     var bob = Math.sin(opt.phase || 0) * 2.2;
+    if (opt.vip) {
+      ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.arc(x, y - 12, 22, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
     S.shadow(ctx, x, y, 12);
     ctx.save();
     ctx.translate(x, y - 2 + bob);
@@ -148,6 +152,12 @@
     ctx.fillStyle = '#222';
     var ex = (opt.facing || 1) > 0 ? 1 : -1;
     ctx.fillRect(-4 + ex, -20, 2, 3); ctx.fillRect(3 + ex, -20, 2, 3);
+    if (opt.vip) { // little crown
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      ctx.moveTo(-6, -27); ctx.lineTo(-6, -32); ctx.lineTo(-3, -29); ctx.lineTo(0, -33);
+      ctx.lineTo(3, -29); ctx.lineTo(6, -32); ctx.lineTo(6, -27); ctx.closePath(); ctx.fill();
+    }
     ctx.restore();
   };
 

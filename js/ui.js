@@ -19,9 +19,15 @@
       this.el.modeLabel = document.getElementById('mode-label');
       this.el.stoveMenu = document.getElementById('stove-menu');
 
+      this.el.editBar = document.getElementById('edit-bar');
+      this.el.editText = document.getElementById('edit-text');
+      this.el.goalsBadge = document.getElementById('goals-badge');
+
       this.buildShopBar();
       this.bindButtons();
       this.updateHUD();
+      this.refreshGoalsBadge();
+      this.showAwayEarnings();
     },
 
     buildShopBar: function () {
@@ -55,6 +61,20 @@
         self.highlightActive(this);
         self.setModeLabel('Infect mode: click a seated customer (costs ' + CONFIG.infectCost + ' toxin)');
       });
+      document.getElementById('btn-edit').addEventListener('click', function () {
+        if (G.mode === 'edit') { self.clearMode(); G.clearHeld(); self.refreshEditBar(); return; }
+        G.mode = 'edit'; G.held = null;
+        self.highlightActive(this);
+        self.setModeLabel('Edit mode: tap furniture to pick it up, tap a tile to drop, or Sell');
+        self.refreshEditBar();
+      });
+      document.getElementById('edit-sell').addEventListener('click', function () { G.sellHeld(); });
+      document.getElementById('edit-done').addEventListener('click', function () { self.clearMode(); G.clearHeld(); self.refreshEditBar(); });
+
+      document.getElementById('btn-goals').addEventListener('click', function () { self.openGoals(); });
+      document.getElementById('goals-close').addEventListener('click', function () { document.getElementById('goals-modal').classList.add('hidden'); });
+      document.getElementById('away-close').addEventListener('click', function () { document.getElementById('away-modal').classList.add('hidden'); });
+
       document.getElementById('btn-raid').addEventListener('click', function () { G.startRaid(); });
       document.getElementById('btn-flesh').addEventListener('click', function () { G.buyFlesh(); });
       document.getElementById('btn-pause').addEventListener('click', function () {
@@ -96,8 +116,10 @@
 
     clearMode: function () {
       G.mode = 'none';
+      G.held = null;
       this.highlightActive(null);
       this.setModeLabel('');
+      this.refreshEditBar();
     },
 
     setModeLabel: function (txt) {
@@ -145,6 +167,67 @@
 
     closeStoveMenu: function () {
       if (this.el.stoveMenu) this.el.stoveMenu.classList.add('hidden');
+    },
+
+    /* ---------------------------- Edit bar -------------------------------- */
+    refreshEditBar: function () {
+      var bar = this.el.editBar; if (!bar) return;
+      if (G.mode !== 'edit') { bar.classList.add('hidden'); return; }
+      bar.classList.remove('hidden');
+      var sellBtn = document.getElementById('edit-sell');
+      if (G.held) {
+        var refund = Math.round(G.costOf(G.held) * ZC.CONFIG.refundRate);
+        this.el.editText.textContent = 'Holding ' + (G.held.kind) + ' — drop on a tile';
+        sellBtn.textContent = '🧺 Sell +' + refund;
+        sellBtn.disabled = false; sellBtn.style.opacity = '1';
+      } else {
+        this.el.editText.textContent = 'Tap furniture to pick it up';
+        sellBtn.textContent = '🧺 Sell';
+        sellBtn.disabled = true; sellBtn.style.opacity = '0.4';
+      }
+    },
+
+    /* ------------------------------ Goals --------------------------------- */
+    refreshGoalsBadge: function () {
+      var badge = this.el.goalsBadge; if (!badge) return;
+      var ready = 0;
+      for (var i = 0; i < ZC.QUESTS.length; i++) if (G.questReady(ZC.QUESTS[i])) ready++;
+      if (ready > 0) { badge.textContent = ready; badge.classList.remove('hidden'); }
+      else badge.classList.add('hidden');
+    },
+
+    openGoals: function () {
+      var list = document.getElementById('goals-list');
+      list.innerHTML = '';
+      var self = this;
+      ZC.QUESTS.forEach(function (q) {
+        var prog = Math.min(q.progress(G), q.target);
+        var claimed = !!G.questsClaimed[q.id];
+        var ready = G.questReady(q);
+        var row = document.createElement('div');
+        row.className = 'goal-row' + (claimed ? ' done' : '');
+        row.innerHTML =
+          '<div class="goal-info"><b>' + q.name + '</b>' +
+          '<div class="goal-bar"><div class="goal-fill" style="width:' + (prog / q.target * 100) + '%"></div></div>' +
+          '<small>' + prog + ' / ' + q.target + ' · reward ' + G.rewardText(q.reward) + '</small></div>';
+        var btn = document.createElement('button');
+        btn.className = 'goal-claim';
+        if (claimed) { btn.textContent = '✓ Claimed'; btn.disabled = true; }
+        else if (ready) { btn.textContent = 'Claim'; btn.addEventListener('click', function () { G.claimQuest(q.id); self.openGoals(); }); }
+        else { btn.textContent = 'Locked'; btn.disabled = true; btn.classList.add('locked'); }
+        row.appendChild(btn);
+        list.appendChild(row);
+      });
+      document.getElementById('goals-modal').classList.remove('hidden');
+    },
+
+    /* ----------------------- While you were away -------------------------- */
+    showAwayEarnings: function () {
+      if (!G.awayEarned || G.awayEarned <= 0) return;
+      document.getElementById('away-text').textContent =
+        'While you were away your zombies kept the cafe running and earned 🪙 ' + G.awayEarned + ' coins!';
+      document.getElementById('away-close').textContent = 'Collect 🪙 ' + G.awayEarned;
+      document.getElementById('away-modal').classList.remove('hidden');
     },
 
     /* ------------------------------- HUD ---------------------------------- */

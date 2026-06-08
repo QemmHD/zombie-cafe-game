@@ -29,6 +29,11 @@
       <canvas id="game"></canvas>
       <div id="mode-label"></div>
       <div id="stove-menu" class="hidden"></div>
+      <div id="edit-bar" class="hidden">
+        <span id="edit-text">Tap furniture to pick it up</span>
+        <button id="edit-sell" class="mini-btn">🧺 Sell</button>
+        <button id="edit-done" class="mini-btn">Done</button>
+      </div>
       <div id="toast"></div>
     </main>
 
@@ -38,6 +43,8 @@
     <!-- Tools -->
     <footer id="tools">
       <button class="tool-btn" id="btn-infect" title="Infect a seated customer to gain a zombie">🧪 Infect</button>
+      <button class="tool-btn" id="btn-edit" title="Move or sell placed furniture">✋ Edit</button>
+      <button class="tool-btn" id="btn-goals" title="View goals and claim rewards">🎯 Goals<span id="goals-badge" class="badge hidden"></span></button>
       <button class="tool-btn" id="btn-raid" title="Send free zombies to scavenge for flesh & toxin">⚔️ Raid</button>
       <button class="tool-btn" id="btn-flesh" title="Buy flesh with toxin">🥩 Buy Flesh</button>
       <button class="tool-btn" id="btn-pause">⏸ Pause</button>
@@ -46,6 +53,24 @@
       <button class="tool-btn" id="btn-help">❓ Help</button>
       <button class="tool-btn danger" id="btn-reset">🗑 Reset</button>
     </footer>
+  </div>
+
+  <!-- Goals modal -->
+  <div id="goals-modal" class="hidden">
+    <div class="modal-card">
+      <h2>🎯 Goals</h2>
+      <div id="goals-list"></div>
+      <button id="goals-close">Close</button>
+    </div>
+  </div>
+
+  <!-- While-you-were-away modal -->
+  <div id="away-modal" class="hidden">
+    <div class="modal-card">
+      <h2>🧟 Welcome back!</h2>
+      <p id="away-text">While you were away your zombies kept serving.</p>
+      <button id="away-close">Collect 🪙</button>
+    </div>
   </div>
 
   <!-- Help modal -->
@@ -60,7 +85,11 @@
         <li><b>Build</b> tables, stoves and decorations from the bar below the cafe. Decorations raise <b>appeal</b>, bringing customers faster.</li>
         <li><b>🧪 Infect</b> a seated customer to turn them into a brand-new zombie staffer (costs toxin).</li>
         <li><b>⚔️ Raid</b> the city with free zombies to bring back coins, flesh and toxin.</li>
-        <li>Your cafe <b>auto-saves</b> to this browser. Use 💾 to save anytime.</li>
+        <li><b>✋ Edit</b> lets you pick up furniture to move it, or sell it back for coins.</li>
+        <li><b>🎯 Goals</b> track objectives — claim coin, toxin and flesh rewards as you hit them.</li>
+        <li><b>⭐ VIP customers</b> (with a crown) pay double and tip well — serve them fast!</li>
+        <li>Tap a waiting customer to <b>bump them to the front</b> of the serving queue.</li>
+        <li>Your cafe <b>auto-saves</b>, and keeps earning coins <b>while you're away</b>.</li>
       </ul>
       <button id="help-close">Got it!</button>
     </div>

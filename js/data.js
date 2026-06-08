@@ -47,6 +47,11 @@
     raidDuration: 24,
     raidCooldown: 32,
 
+    // Modern extras
+    refundRate: 0.6,        // selling furniture refunds this fraction
+    vipBaseChance: 0.06,    // chance a customer is a VIP (scales with appeal)
+    offlineCapMin: 480,     // max minutes of "while you were away" earnings
+
     autosaveInterval: 12
   };
 
@@ -84,6 +89,19 @@
   };
 
   ZC.xpForLevel = function (level) { return Math.floor(120 * Math.pow(level, 1.45)); };
+
+  // Goals — each has a target and a one-time reward. progress(G) returns a count.
+  ZC.QUESTS = [
+    { id: 'serve25',  name: 'Serve 25 customers',     target: 25,  reward: { coins: 200 }, progress: function (G) { return G.stats.served; } },
+    { id: 'level3',   name: 'Reach level 3',          target: 3,   reward: { toxin: 10 }, progress: function (G) { return G.level; } },
+    { id: 'tables6',  name: 'Own 6 tables',           target: 6,   reward: { coins: 300 }, progress: function (G) { return G.tables.length; } },
+    { id: 'infect3',  name: 'Infect 3 customers',     target: 3,   reward: { toxin: 15 }, progress: function (G) { return G.stats.infected; } },
+    { id: 'zombies5', name: 'Raise 5 zombies',        target: 5,   reward: { toxin: 20 }, progress: function (G) { return G.zombies.length; } },
+    { id: 'raids3',   name: 'Complete 3 city raids',  target: 3,   reward: { flesh: 8 }, progress: function (G) { return G.stats.raids; } },
+    { id: 'juke',     name: 'Install a Creepy Jukebox', target: 1, reward: { coins: 250 }, progress: function (G) { return G.decor.some(function (d) { return d.itemId === 'juke'; }) ? 1 : 0; } },
+    { id: 'serve150', name: 'Serve 150 customers',    target: 150, reward: { toxin: 30 }, progress: function (G) { return G.stats.served; } }
+  ];
+  ZC.questById = function (id) { for (var i = 0; i < ZC.QUESTS.length; i++) if (ZC.QUESTS[i].id === id) return ZC.QUESTS[i]; return null; };
 
   ZC.CUSTOMER_COLORS = ['#e74c3c', '#3498db', '#f1c40f', '#1abc9c', '#e67e22', '#9b59b6', '#2980b9', '#16a085'];
 
