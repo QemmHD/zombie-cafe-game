@@ -1,30 +1,27 @@
 /*
- * entities.js — Game objects: Table, Stove, Decor, Zombie, Customer.
+ * entities.js — Game objects in isometric tile-space (wx, wy = tile floats).
  */
 (function (ZC) {
   'use strict';
   var CONFIG = ZC.CONFIG, util = ZC.util;
 
-  /* -------------------------------- Furniture ------------------------------ */
   function Table(col, row) {
     this.kind = 'table';
     this.col = col; this.row = row;
-    this.x = col * CONFIG.tile + CONFIG.tile / 2;
-    this.y = row * CONFIG.tile + CONFIG.tile / 2;
+    this.wx = col + 0.5; this.wy = row + 0.5;
     this.id = util.id();
-    this.customer = null;        // seated customer
+    this.customer = null;
   }
-  Table.prototype.seatPos = function () { return { x: this.x, y: this.y + 16 }; };
+  Table.prototype.seat = function () { return { wx: this.wx, wy: this.wy + 0.45 }; };
   Table.prototype.isFree = function () { return this.customer === null; };
   ZC.Table = Table;
 
   function Stove(col, row) {
     this.kind = 'stove';
     this.col = col; this.row = row;
-    this.x = col * CONFIG.tile + CONFIG.tile / 2;
-    this.y = row * CONFIG.tile + CONFIG.tile / 2;
+    this.wx = col + 0.5; this.wy = row + 0.5;
     this.id = util.id();
-    this.recipeId = 'coffee';    // active recipe (auto-cooked)
+    this.recipeId = 'coffee';
     this.cooking = false;
     this.timer = 0;
     this.auto = true;
@@ -36,40 +33,35 @@
     this.kind = 'decor';
     this.itemId = itemId;
     this.col = col; this.row = row;
-    this.x = col * CONFIG.tile + CONFIG.tile / 2;
-    this.y = row * CONFIG.tile + CONFIG.tile / 2;
+    this.wx = col + 0.5; this.wy = row + 0.5;
     this.id = util.id();
     var item = ZC.shopById(itemId);
     this.appeal = item ? item.appeal : 0;
   }
   ZC.Decor = Decor;
 
-  /* --------------------------------- Zombie -------------------------------- */
-  // states: idle, toPickup, toServe, returning, resting
-  function Zombie(x, y) {
+  // states: idle, toPickup, toServe, returning, resting, raiding
+  function Zombie(wx, wy) {
     this.kind = 'zombie';
     this.id = util.id();
-    this.x = x; this.y = y;
+    this.wx = wx; this.wy = wy;
+    this.homeX = wx; this.homeY = wy;
     this.facing = 1;
     this.phase = Math.random() * 6;
     this.energy = CONFIG.zombieMaxEnergy;
     this.state = 'idle';
-    this.task = null;            // { table, portion }
-    this.carrying = null;        // portion being carried
-    this.homeX = x; this.homeY = y;
+    this.task = null;
+    this.carrying = null;
   }
-  Zombie.prototype.isAvailable = function () {
-    return this.state === 'idle' && this.energy > 5;
-  };
+  Zombie.prototype.isAvailable = function () { return this.state === 'idle' && this.energy > 5; };
   ZC.Zombie = Zombie;
 
-  /* -------------------------------- Customer ------------------------------- */
-  // states: entering, waiting, eating, leaving, infecting
-  function Customer(spawnX, spawnY) {
+  // states: entering, waiting, eating, leaving
+  function Customer(wx, wy) {
     this.kind = 'customer';
     this.id = util.id();
-    this.x = spawnX; this.y = spawnY;
-    this.facing = 1;
+    this.wx = wx; this.wy = wy;
+    this.facing = -1;
     this.phase = Math.random() * 6;
     this.color = util.pick(ZC.CUSTOMER_COLORS);
     this.hair = util.pick(['#4a3728', '#2c1810', '#1a1a1a', '#8d6e63', '#d4a017']);
@@ -78,7 +70,7 @@
     this.patience = CONFIG.customerPatience;
     this.eatTimer = 0;
     this.served = false;
-    this.assignedZombie = null;  // zombie en route with food
+    this.assignedZombie = null;
   }
   ZC.Customer = Customer;
 

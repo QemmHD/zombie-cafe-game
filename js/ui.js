@@ -61,6 +61,14 @@
         G.paused = !G.paused;
         this.textContent = G.paused ? '▶ Resume' : '⏸ Pause';
       });
+      var soundBtn = document.getElementById('btn-sound');
+      if (ZC.sfx) soundBtn.textContent = ZC.sfx.isEnabled() ? '🔊 Sound' : '🔇 Muted';
+      soundBtn.addEventListener('click', function () {
+        if (!ZC.sfx) return;
+        var on = ZC.sfx.toggle();
+        this.textContent = on ? '🔊 Sound' : '🔇 Muted';
+        self.toast(on ? 'Sound on' : 'Sound muted');
+      });
       document.getElementById('btn-save').addEventListener('click', function () {
         G.save(); self.toast('Game saved.');
       });

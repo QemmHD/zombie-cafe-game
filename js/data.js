@@ -1,50 +1,60 @@
 /*
  * data.js — Static game data & tuning constants.
- * A fan recreation of the classic "Zombie Cafe" management loop, built from
- * scratch with original art and data (no proprietary assets).
+ * Original fan recreation of the "Zombie Cafe" management loop — isometric
+ * diner, zombie staff, cooking, infecting and raids. All-original art & data.
  */
 (function (ZC) {
   'use strict';
 
   ZC.CONFIG = {
-    tile: 48,
-    cols: 16,
-    rows: 11,
+    // Isometric grid
+    cols: 9,
+    rows: 8,
+    tileW: 58,        // iso tile width  (screen)
+    tileH: 29,        // iso tile height (screen)  -> 2:1 iso
+    wallH: 74,        // back wall height
+    margin: 30,
 
     // Starting resources
     startCoins: 600,
     startToxin: 25,
     startFlesh: 6,
 
+    // Zombie cap
+    baseMaxZombies: 4,
+
     // Spawning
-    spawnIntervalBase: 4.8,   // seconds between customers at appeal 0
-    spawnIntervalMin: 1.4,    // fastest spawn no matter the appeal
-    maxCustomers: 24,
+    spawnIntervalBase: 4.6,
+    spawnIntervalMin: 1.3,
+    maxCustomers: 16,
 
     // Customer behaviour
-    customerPatience: 32,     // seconds a customer waits for food
-    eatTime: 4.5,             // seconds spent eating
-    customerSpeed: 70,        // px / second
+    customerPatience: 34,
+    eatTime: 4.5,
+    customerSpeed: 1.7,        // tiles / second
 
     // Zombie behaviour
-    zombieSpeed: 95,          // px / second
+    zombieSpeed: 2.5,          // tiles / second
     zombieMaxEnergy: 100,
-    serveEnergyCost: 11,      // energy spent per completed serve
-    energyDrainIdle: 0.4,     // slow drain so flesh matters
-    energyRegenRest: 9,       // energy / second while resting
-    fleshFeedAmount: 60,      // energy restored per flesh fed
+    serveEnergyCost: 10,
+    energyDrainIdle: 0.35,
+    energyRegenRest: 8,
+    fleshFeedAmount: 60,
 
     // Economy
-    infectCost: 8,            // toxin to infect a seated customer
-    fleshPerToxin: 3,         // buy flesh: 1 toxin -> N flesh
-    raidDuration: 25,         // seconds
-    raidCooldown: 35,         // seconds
+    infectCost: 8,
+    fleshPerToxin: 3,
+    raidDuration: 24,
+    raidCooldown: 32,
 
-    // Misc
-    autosaveInterval: 12      // seconds
+    autosaveInterval: 12
   };
 
-  // Dishes the cafe can cook. Higher tiers cost more & cook slower but pay far more.
+  ZC.CONFIG.maxZombies = function (level, tables) {
+    return ZC.CONFIG.baseMaxZombies + Math.floor(tables / 2) + Math.floor(level / 2);
+  };
+
+  // Dishes. Higher tiers cost more & cook slower but pay far more.
   ZC.RECIPES = [
     { id: 'coffee', name: 'Bone Brew Coffee', cost: 15,  cookTime: 6,  servings: 3, price: 18,  unlockLevel: 1, color: '#6f4e37', icon: '☕' },
     { id: 'fries',  name: 'Finger Fries',     cost: 40,  cookTime: 10, servings: 4, price: 26,  unlockLevel: 1, color: '#e0a93b', icon: '🍟' },
@@ -59,13 +69,13 @@
     return null;
   };
 
-  // Buildable items
   ZC.SHOP = [
     { id: 'table', name: 'Table',        cost: 120, type: 'table',  appeal: 0,  desc: 'Seats one customer.' },
-    { id: 'stove', name: 'Stove',        cost: 320, type: 'stove',  appeal: 0,  desc: 'Cooks dishes. Auto-cooks its set recipe.' },
-    { id: 'plant', name: 'Spooky Plant', cost: 80,  type: 'decor',  appeal: 6,  desc: 'Raises appeal (faster customers).' },
-    { id: 'lamp',  name: 'Gore Lamp',    cost: 140, type: 'decor',  appeal: 11, desc: 'Raises appeal (faster customers).' },
-    { id: 'rug',   name: 'Bloody Rug',   cost: 220, type: 'decor',  appeal: 18, desc: 'Raises appeal (faster customers).' }
+    { id: 'stove', name: 'Stove',        cost: 320, type: 'stove',  appeal: 0,  desc: 'Cooks dishes automatically. Tap it to choose the recipe.' },
+    { id: 'plant', name: 'Spooky Plant', cost: 80,  type: 'decor',  appeal: 6,  desc: 'Raises appeal — customers arrive faster.' },
+    { id: 'lamp',  name: 'Gore Lamp',    cost: 140, type: 'decor',  appeal: 11, desc: 'Raises appeal — customers arrive faster.' },
+    { id: 'rug',   name: 'Bloody Rug',   cost: 220, type: 'decor',  appeal: 18, desc: 'Raises appeal — customers arrive faster.' },
+    { id: 'juke',  name: 'Creepy Jukebox', cost: 420, type: 'decor', appeal: 30, desc: 'Big appeal boost — packs the place out.' }
   ];
 
   ZC.shopById = function (id) {
@@ -73,12 +83,8 @@
     return null;
   };
 
-  // XP required to reach the NEXT level from the given level.
-  ZC.xpForLevel = function (level) {
-    return Math.floor(120 * Math.pow(level, 1.45));
-  };
+  ZC.xpForLevel = function (level) { return Math.floor(120 * Math.pow(level, 1.45)); };
 
-  // Shirt colours for variety of human customers
-  ZC.CUSTOMER_COLORS = ['#e74c3c', '#3498db', '#f1c40f', '#1abc9c', '#e67e22', '#9b59b6', '#34495e', '#16a085'];
+  ZC.CUSTOMER_COLORS = ['#e74c3c', '#3498db', '#f1c40f', '#1abc9c', '#e67e22', '#9b59b6', '#2980b9', '#16a085'];
 
 })(window.ZC || (window.ZC = {}));
