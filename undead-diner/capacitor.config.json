@@ -1,0 +1,9 @@
+{
+  "appId": "com.undeaddiner.game",
+  "appName": "Undead Diner",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#1a1426"
+  }
+}

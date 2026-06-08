@@ -11,3 +11,5 @@ preview.png
 undead-diner/dist/
 undead-diner/node_modules/
 undead-diner/.vite/
+undead-diner/ios/
+undead-diner/build/
