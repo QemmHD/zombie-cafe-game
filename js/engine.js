@@ -207,8 +207,9 @@
 
   S.stove = function (ctx, x, y, opt) {
     opt = opt || {};
+    var meta = (ZC.APPLIANCES && ZC.APPLIANCES[opt.type]) || { color: '#9aa4ad', dark: '#6c757d', light: '#828c95' };
     S.shadow(ctx, x, y, 20);
-    isoBox(ctx, x, y, 22, 11, 22, '#9aa4ad', '#6c757d', '#828c95');
+    isoBox(ctx, x, y, 22, 11, 22, meta.color, meta.dark, meta.light);
     // burners on top
     for (var i = -1; i <= 1; i += 2) {
       ctx.fillStyle = opt.cooking ? '#e67e22' : '#2f3a44';

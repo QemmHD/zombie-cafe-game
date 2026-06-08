@@ -41,12 +41,37 @@
 
       this.questsClaimed = {}; this.held = null; this.awayEarned = 0;
       this.selectedZombie = null; this.autoServe = true;
-      this.tables.push(new ZC.Table(3, 3));
-      this.tables.push(new ZC.Table(5, 3));
-      this.tables.push(new ZC.Table(4, 5));
-      var st = new ZC.Stove(1, 1); st.recipeId = 'coffee'; this.stoves.push(st);
+      this.usableCols = CONFIG.startUsableCols; this.usableRows = CONFIG.startUsableRows; this.expansion = 0;
+      this.recomputeEntrance();
+      this.tables.push(new ZC.Table(2, 2));
+      this.tables.push(new ZC.Table(4, 2));
+      this.tables.push(new ZC.Table(3, 4));
+      this.stoves.push(new ZC.Stove(1, 1, 'stove'));
       this.spawnZombie(this.kitchen.wx + 0.6, this.kitchen.wy + 0.8);
       this.spawnZombie(this.kitchen.wx + 1.4, this.kitchen.wy + 0.4);
+    },
+
+    /* ---------------------------- Expansion ------------------------------- */
+    recomputeEntrance: function () {
+      this.entrance = { wx: this.usableCols / 2, wy: this.usableRows - 0.15 };
+    },
+    maxExpanded: function () { return this.usableCols >= CONFIG.cols && this.usableRows >= CONFIG.rows; },
+    expand: function () {
+      if (this.maxExpanded()) { if (ZC.ui) ZC.ui.toast('Your cafe is already at full size!'); return false; }
+      var cost = CONFIG.expandCost(this.expansion);
+      if (this.coins < cost.coins || this.toxin < cost.toxin) {
+        if (ZC.ui) ZC.ui.toast('Renovation needs 🪙' + cost.coins + ' + 🧪' + cost.toxin + '.');
+        if (ZC.sfx) ZC.sfx.error();
+        return false;
+      }
+      this.coins -= cost.coins; this.toxin -= cost.toxin; this.expansion++;
+      this.usableCols = Math.min(CONFIG.cols, this.usableCols + 1);
+      this.usableRows = Math.min(CONFIG.rows, this.usableRows + 1);
+      this.recomputeEntrance();
+      if (ZC.sfx) ZC.sfx.build();
+      if (ZC.ui) { ZC.ui.updateHUD(); ZC.ui.toast('Cafe renovated — more floor space unlocked!'); }
+      this.save();
+      return true;
     },
 
     /* ------------------------------ Quests -------------------------------- */
@@ -111,13 +136,14 @@
       for (var i = 0; i < all.length; i++) if (all[i].col === col && all[i].row === row) return true;
       return false;
     },
+    inUsable: function (col, row) { return col >= 0 && row >= 0 && col < this.usableCols && row < this.usableRows; },
     canPlace: function (col, row) {
-      if (col < 0 || row < 0 || col >= CONFIG.cols || row >= CONFIG.rows) return false;
+      if (!this.inUsable(col, row)) return false;
       if (this.tileOccupied(col, row)) return false;
       return true;
     },
     canPlaceExcept: function (col, row, except) {
-      if (col < 0 || row < 0 || col >= CONFIG.cols || row >= CONFIG.rows) return false;
+      if (!this.inUsable(col, row)) return false;
       var all = this.tables.concat(this.stoves, this.decor);
       for (var i = 0; i < all.length; i++) if (all[i] !== except && all[i].col === col && all[i].row === row) return false;
       return true;
@@ -130,7 +156,8 @@
       return this.decor;
     },
     costOf: function (item) {
-      var s = ZC.shopById(item.kind === 'decor' ? item.itemId : item.kind);
+      var id = item.kind === 'decor' ? item.itemId : (item.kind === 'stove' ? item.applianceType : item.kind);
+      var s = ZC.shopById(id);
       return s ? s.cost : 0;
     },
     pickFurniture: function (sx, sy) {
@@ -170,7 +197,7 @@
       if (!this.canPlace(col, row)) { if (ZC.sfx) ZC.sfx.error(); return false; }
       this.coins -= item.cost;
       if (item.type === 'table') this.tables.push(new ZC.Table(col, row));
-      else if (item.type === 'stove') this.stoves.push(new ZC.Stove(col, row));
+      else if (item.type === 'appliance') this.stoves.push(new ZC.Stove(col, row, item.applianceType));
       else this.decor.push(new ZC.Decor(col, row, shopId));
       this.floater(col + 0.5, row + 0.5, '-' + item.cost, '#e74c3c');
       if (ZC.sfx) ZC.sfx.build();
@@ -516,12 +543,17 @@
       ctx.strokeStyle = '#2a2230'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(rightEnd.x, rightEnd.y); ctx.lineTo(top.x, top.y); ctx.lineTo(leftEnd.x, leftEnd.y); ctx.stroke();
 
-      // checkered floor
+      // checkered floor (renovated tiles bright; locked tiles dark/rubble)
       for (var r = 0; r < C.rows; r++) {
         for (var c = 0; c < C.cols; c++) {
           var a = iso.project(c, r), b = iso.project(c + 1, r), d = iso.project(c + 1, r + 1), e = iso.project(c, r + 1);
-          ctx.fillStyle = ((c + r) % 2 === 0) ? '#5a4636' : '#4b3a2d';
+          var usable = this.inUsable(c, r);
+          ctx.fillStyle = usable ? (((c + r) % 2 === 0) ? '#5a4636' : '#4b3a2d') : '#26211c';
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(d.x, d.y); ctx.lineTo(e.x, e.y); ctx.closePath(); ctx.fill();
+          if (!usable) { // rubble dots on un-renovated floor
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect((a.x + d.x) / 2 - 2, (a.y + d.y) / 2 - 1, 3, 2);
+          }
         }
       }
       // counter strip across back (row 0 visual)
@@ -574,7 +606,7 @@
         S.table(ctx, p.x, p.y, !e.isFree());
       } else if (e.kind === 'stove') {
         var rec = e.recipe();
-        S.stove(ctx, p.x, p.y, { cooking: e.cooking, progress: e.cooking ? 1 - e.timer / rec.cookTime : 0, icon: rec ? rec.icon : '', phase: this._t || 0 });
+        S.stove(ctx, p.x, p.y, { cooking: e.cooking, progress: e.cooking ? 1 - e.timer / rec.cookTime : 0, icon: rec ? rec.icon : '', type: e.applianceType, phase: this._t || 0 });
       } else if (e.kind === 'decor') {
         S.decor(ctx, p.x, p.y, e.itemId);
       } else if (e.kind === 'customer') {
@@ -709,8 +741,9 @@
         localStorage.setItem('zombieCafeSave', JSON.stringify({
           v: 2, coins: this.coins, toxin: this.toxin, flesh: this.flesh, xp: this.xp, level: this.level, stats: this.stats,
           questsClaimed: this.questsClaimed, lastSaved: Date.now(), autoServe: this.autoServe,
+          usableCols: this.usableCols, usableRows: this.usableRows, expansion: this.expansion,
           tables: this.tables.map(function (t) { return { c: t.col, r: t.row }; }),
-          stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto }; }),
+          stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto, t: s.applianceType }; }),
           decor: this.decor.map(function (d) { return { c: d.col, r: d.row, item: d.itemId }; }),
           zombieCount: this.zombies.length
         }));
@@ -725,8 +758,12 @@
         this.stats = d.stats || { served: 0, infected: 0, raids: 0 };
         this.questsClaimed = d.questsClaimed || {};
         this.held = null; this.selectedZombie = null; this.autoServe = d.autoServe !== false;
+        this.usableCols = d.usableCols || CONFIG.startUsableCols;
+        this.usableRows = d.usableRows || CONFIG.startUsableRows;
+        this.expansion = d.expansion || 0;
+        this.recomputeEntrance();
         this.tables = (d.tables || []).map(function (t) { return new ZC.Table(t.c, t.r); });
-        this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r); st.recipeId = s.recipe || 'coffee'; st.auto = s.auto !== false; return st; });
+        this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r, s.t); st.recipeId = s.recipe || st.recipeId; st.auto = s.auto !== false; return st; });
         this.decor = (d.decor || []).map(function (x) { return new ZC.Decor(x.c, x.r, x.item); });
         this.zombies = []; var n = d.zombieCount || 2;
         for (var i = 0; i < n; i++) this.spawnZombie(this.kitchen.wx + 0.5 + i * 0.3, this.kitchen.wy + 0.5 + i * 0.2);

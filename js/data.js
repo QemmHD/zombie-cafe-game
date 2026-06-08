@@ -54,7 +54,16 @@
     vipBaseChance: 0.06,    // chance a customer is a VIP (scales with appeal)
     offlineCapMin: 480,     // max minutes of "while you were away" earnings
 
+    // Cafe expansion (start small, renovate outward)
+    startUsableCols: 6,
+    startUsableRows: 5,
+
     autosaveInterval: 12
+  };
+
+  // Expansion cost for the next renovation given current expansion level.
+  ZC.CONFIG.expandCost = function (level) {
+    return { coins: Math.round(400 * Math.pow(level + 1, 1.3)), toxin: 5 * (level + 1) };
   };
 
   ZC.CONFIG.maxZombies = function (level, tables) {
@@ -77,9 +86,22 @@
     return null;
   };
 
+  // Appliance types and the recipe station each one cooks.
+  ZC.APPLIANCES = {
+    stove: { name: 'Stove', station: 'stove', icon: '🍳', color: '#9aa4ad', dark: '#6c757d', light: '#828c95' },
+    grill: { name: 'Grill', station: 'grill', icon: '🔥', color: '#5d4037', dark: '#3e2723', light: '#4e342e' },
+    oven:  { name: 'Oven',  station: 'oven',  icon: '🥧', color: '#b9722e', dark: '#7e4a16', light: '#9c5e22' }
+  };
+  ZC.defaultRecipeFor = function (station) {
+    for (var i = 0; i < ZC.RECIPES.length; i++) if (ZC.RECIPES[i].station === station) return ZC.RECIPES[i].id;
+    return ZC.RECIPES[0].id;
+  };
+
   ZC.SHOP = [
     { id: 'table', name: 'Table',        cost: 120, type: 'table',  appeal: 0,  desc: 'Seats one customer.' },
-    { id: 'stove', name: 'Stove',        cost: 320, type: 'stove',  appeal: 0,  desc: 'Cooks dishes automatically. Tap it to choose the recipe.' },
+    { id: 'stove', name: 'Stove',        cost: 320, type: 'appliance', applianceType: 'stove', appeal: 0, desc: 'Cooks drinks & soups. Tap it to choose the recipe.' },
+    { id: 'grill', name: 'Grill',        cost: 480, type: 'appliance', applianceType: 'grill', appeal: 0, desc: 'Cooks hot food: fries & burgers.' },
+    { id: 'oven',  name: 'Oven',         cost: 760, type: 'appliance', applianceType: 'oven',  appeal: 0, desc: 'Bakes pizza & cake.' },
     { id: 'plant', name: 'Spooky Plant', cost: 80,  type: 'decor',  appeal: 6,  desc: 'Raises appeal — customers arrive faster.' },
     { id: 'lamp',  name: 'Gore Lamp',    cost: 140, type: 'decor',  appeal: 11, desc: 'Raises appeal — customers arrive faster.' },
     { id: 'rug',   name: 'Bloody Rug',   cost: 220, type: 'decor',  appeal: 18, desc: 'Raises appeal — customers arrive faster.' },

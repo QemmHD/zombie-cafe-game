@@ -16,17 +16,21 @@
   Table.prototype.isFree = function () { return this.customer === null; };
   ZC.Table = Table;
 
-  function Stove(col, row) {
+  function Stove(col, row, applianceType) {
     this.kind = 'stove';
+    this.applianceType = applianceType || 'stove';
     this.col = col; this.row = row;
     this.wx = col + 0.5; this.wy = row + 0.5;
     this.id = util.id();
-    this.recipeId = 'coffee';
+    var meta = ZC.APPLIANCES[this.applianceType] || ZC.APPLIANCES.stove;
+    this.recipeId = ZC.defaultRecipeFor(meta.station);
     this.cooking = false;
     this.timer = 0;
     this.auto = true;
+    this.tendedBy = null;
   }
   Stove.prototype.recipe = function () { return ZC.recipeById(this.recipeId); };
+  Stove.prototype.station = function () { return (ZC.APPLIANCES[this.applianceType] || ZC.APPLIANCES.stove).station; };
   ZC.Stove = Stove;
 
   function Decor(col, row, itemId) {

@@ -27,7 +27,15 @@
       this.bindButtons();
       this.updateHUD();
       this.refreshGoalsBadge();
+      this.updateExpandBtn();
       this.showAwayEarnings();
+    },
+
+    updateExpandBtn: function () {
+      var btn = document.getElementById('btn-expand'); if (!btn) return;
+      if (G.maxExpanded()) { btn.textContent = '🧱 Max size'; btn.disabled = true; btn.style.opacity = '0.5'; return; }
+      var c = ZC.CONFIG.expandCost(G.expansion);
+      btn.textContent = '🧱 Expand (🪙' + c.coins + ' 🧪' + c.toxin + ')';
     },
 
     buildShopBar: function () {
@@ -84,6 +92,8 @@
         self.toast(G.autoServe ? 'Auto-serve on — idle zombies serve by themselves.' : 'Auto-serve off — tap a zombie, then a customer, to serve.');
         G.save();
       });
+
+      document.getElementById('btn-expand').addEventListener('click', function () { G.expand(); self.updateExpandBtn(); });
 
       document.getElementById('btn-goals').addEventListener('click', function () { self.openGoals(); });
       document.getElementById('goals-close').addEventListener('click', function () { document.getElementById('goals-modal').classList.add('hidden'); });
@@ -146,13 +156,14 @@
     openStoveMenu: function (stove) {
       var menu = this.el.stoveMenu;
       menu.innerHTML = '';
+      var meta = ZC.APPLIANCES[stove.applianceType] || ZC.APPLIANCES.stove;
       var title = document.createElement('div');
       title.className = 'menu-title';
-      title.textContent = 'Set Stove Recipe';
+      title.textContent = meta.icon + ' ' + meta.name + ' — choose recipe';
       menu.appendChild(title);
 
       var self = this;
-      ZC.RECIPES.forEach(function (rec) {
+      ZC.RECIPES.filter(function (r) { return r.station === meta.station; }).forEach(function (rec) {
         var locked = rec.unlockLevel > G.level;
         var row = document.createElement('button');
         row.className = 'recipe-row' + (locked ? ' locked' : '') + (stove.recipeId === rec.id ? ' selected' : '');
@@ -255,6 +266,7 @@
       this.el.zombies.textContent = G.zombies.length;
       var need = ZC.xpForLevel(G.level);
       this.el.xpbar.style.width = ZC.util.clamp(G.xp / need * 100, 0, 100) + '%';
+      this.updateExpandBtn();
     },
 
     _toastTimer: null,
