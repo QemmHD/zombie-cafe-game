@@ -36,6 +36,27 @@ Your cafe auto-saves to the browser's local storage.
 Currencies: **🪙 Coins** (earned by serving, spent on building) · **🧪 Toxin** (premium —
 infecting, buying flesh) · **🥩 Flesh** (restores zombie energy).
 
+## 📱 Get it on your iPhone (build an IPA — no Mac needed)
+
+The game is wrapped as a native iOS app with [Capacitor](https://capacitorjs.com/),
+and GitHub Actions builds an **unsigned `.ipa`** for you on a cloud macOS runner.
+You then sign it with your own tool (AltStore / Sideloadly / a signing service) and
+install it.
+
+1. Go to the repo's **Actions** tab → **"Build iOS IPA (unsigned)"** → **Run workflow**
+   (it also runs automatically whenever the game files change). Free macOS runners
+   require the repo to be **public**, or Actions minutes enabled.
+2. When it finishes (~5 min), grab `ZombieCafe-unsigned.ipa` from either:
+   - the run's **Artifacts**, or
+   - the **Releases** tab under the **`ios-latest`** release.
+3. **Sign** the `.ipa` with your sideloading tool and install it on your iPhone.
+
+> The IPA is intentionally **unsigned** — signing is what ties it to *your* Apple ID /
+> certificate, which only you can do. The app id is `com.zombiecafe.game`.
+
+Prefer no install at all? It's also a normal mobile web game — host it (e.g. GitHub
+Pages) and open it in Safari, or use **Add to Home Screen** for a full-screen app icon.
+
 ## 🗂 Project structure
 
 ```

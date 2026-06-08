@@ -1,0 +1,14 @@
+{
+  "name": "zombie-cafe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A 2D fan recreation of the classic Zombie Cafe management game, wrapped for iOS via Capacitor.",
+  "scripts": {
+    "build:web": "rm -rf www && mkdir -p www && cp index.html www/ && cp -R css www/ && cp -R js www/"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/ios": "^6.1.0"
+  }
+}

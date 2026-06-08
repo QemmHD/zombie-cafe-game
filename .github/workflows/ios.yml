@@ -1,0 +1,87 @@
+name: Build iOS IPA (unsigned)
+
+# Builds the Capacitor-wrapped game into an UNSIGNED .ipa on a macOS runner,
+# then publishes it to the "ios-latest" GitHub Release so you can download and
+# sign it yourself (AltStore / Sideloadly / your signing service).
+#
+# Trigger automatically on push to the dev branch, or manually from the
+# Actions tab via "Run workflow".
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/2d-game-recreation-CEGJF
+    paths:
+      - 'index.html'
+      - 'css/**'
+      - 'js/**'
+      - 'package.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/ios.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-ipa:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web assets into www/
+        run: npm run build:web
+
+      - name: Add iOS platform
+        run: npx cap add ios
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Archive app (no code signing)
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$PWD/build/App.xcarchive" \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Package unsigned IPA
+        run: |
+          cd build
+          mkdir -p Payload
+          cp -R App.xcarchive/Products/Applications/App.app Payload/App.app
+          zip -qry ZombieCafe-unsigned.ipa Payload
+          ls -lh ZombieCafe-unsigned.ipa
+
+      - name: Upload IPA as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZombieCafe-unsigned-ipa
+          path: build/ZombieCafe-unsigned.ipa
+          if-no-files-found: error
+
+      - name: Publish to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ios-latest --cleanup-tag --yes || true
+          gh release create ios-latest "build/ZombieCafe-unsigned.ipa" \
+            --title "Zombie Cafe — iOS (unsigned IPA)" \
+            --notes "Unsigned IPA built on a GitHub macOS runner. Download it, sign it with your sideloading tool (AltStore / Sideloadly / signing service), then install on your iPhone. App ID: com.zombiecafe.game"

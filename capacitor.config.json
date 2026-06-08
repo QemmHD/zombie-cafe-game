@@ -1,0 +1,9 @@
+{
+  "appId": "com.zombiecafe.game",
+  "appName": "Zombie Cafe",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#14171e"
+  }
+}
