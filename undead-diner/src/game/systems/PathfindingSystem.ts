@@ -1,4 +1,4 @@
-import type { IsoGrid, Tile } from '../iso/IsoGrid';
+import type { IsoWorld, Tile } from '../iso/IsoWorld';
 
 /**
  * Grid pathfinding (A*) over walkable tiles. The diner floor is mostly open,
@@ -6,10 +6,10 @@ import type { IsoGrid, Tile } from '../iso/IsoGrid';
  * supplied (furniture footprints) A* routes around them.
  */
 export class PathfindingSystem {
-  grid: IsoGrid;
+  grid: IsoWorld;
   blocked: Set<string> = new Set();
 
-  constructor(grid: IsoGrid) { this.grid = grid; }
+  constructor(grid: IsoWorld) { this.grid = grid; }
 
   key(c: number, r: number) { return c + ',' + r; }
   setBlocked(tiles: { col: number; row: number }[]) {
