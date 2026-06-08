@@ -1,0 +1,100 @@
+name: Build Zombie Cafe IPA
+
+on:
+  push:
+    branches: [ main, claude/zombie-cafe-game-cgBCq ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Add iOS platform
+        run: |
+          npx cap add ios
+          npx cap sync ios
+
+      # Generate the custom Zombie Cafe app icon from assets/icon.png into the
+      # iOS AppIcon set. Non-fatal: if it fails the build still ships with the
+      # default Capacitor icon.
+      - name: Generate app icon
+        run: npx --yes @capacitor/assets@3 generate --ios --assetPath assets || echo "icon generation skipped"
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios/App
+          pod install
+
+      # Build for a real device (iphoneos / arm64), UNSIGNED.
+      # iOSGods (App+ / VIP online sign) and Sideloadly strip the signature and
+      # re-sign with their own certificate, so we must NOT ship a simulator
+      # build — a simulator binary cannot install on a physical iPhone.
+      - name: Build unsigned device IPA
+        run: |
+          cd ios/App
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            build
+
+      - name: Package IPA
+        run: |
+          cd ios/App
+          APP_PATH="build/Build/Products/Release-iphoneos/App.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "::error::Expected device build at $APP_PATH was not found"
+            ls -R build/Build/Products || true
+            exit 1
+          fi
+          rm -rf Payload
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          # Sanity check: confirm the binary is an arm64 device Mach-O.
+          echo "== Mach-O architecture =="
+          lipo -info "Payload/App.app/App" || file "Payload/App.app/App"
+          zip -qr ZombieCafe.ipa Payload
+          mv ZombieCafe.ipa ../../ZombieCafe.ipa
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZombieCafe-IPA
+          path: ZombieCafe.ipa
+          retention-days: 90
+
+      # Publish the IPA as a GitHub Release asset so there is a direct,
+      # one-click download link to upload into the iOSGods signer.
+      - name: Publish IPA to a GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Zombie Cafe build ${{ github.run_number }}
+          body: |
+            Unsigned **device (arm64)** IPA for sideloading.
+
+            Download `ZombieCafe.ipa` below and upload it to the iOSGods
+            signer (App+ / VIP online sign, or Sideloadly). They re-sign it
+            with their certificate; this build is intentionally unsigned.
+          files: ZombieCafe.ipa

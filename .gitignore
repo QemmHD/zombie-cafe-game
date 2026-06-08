@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+ios/
+android/
+.DS_Store
+*.ipa
+build/

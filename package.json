@@ -1,0 +1,14 @@
+{
+  "name": "zombie-cafe",
+  "version": "1.0.0",
+  "description": "Zombie Cafe - run a restaurant staffed by the undead",
+  "scripts": {
+    "build": "echo 'static'",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/cli": "^6.0.0"
+  }
+}

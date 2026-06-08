@@ -1,0 +1,13 @@
+{
+  "name": "Zombie Cafe",
+  "short_name": "Zombie Cafe",
+  "description": "Run a restaurant staffed by the undead. Cook cursed food, serve customers, and infect humans into new zombie staff.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f0c",
+  "theme_color": "#0b0f0c",
+  "icons": [
+    { "src": "icon.png", "sizes": "1024x1024", "type": "image/png" }
+  ]
+}
