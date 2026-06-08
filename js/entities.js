@@ -56,8 +56,13 @@
     this.state = 'idle';
     this.task = null;
     this.carrying = null;
+    this.name = util.pick(ZC.ZOMBIE_NAMES);
+    this.level = 1;
+    this.xp = 0;
+    this.tint = util.rand(-18, 18);   // slight per-zombie colour variation
   }
   Zombie.prototype.isAvailable = function () { return this.state === 'idle' && this.energy > 5; };
+  Zombie.prototype.speedMul = function () { return 1 + (this.level - 1) * 0.04; };
   ZC.Zombie = Zombie;
 
   // states: entering, waiting, eating, leaving
@@ -75,6 +80,10 @@
     this.eatTimer = 0;
     this.served = false;
     this.assignedZombie = null;
+    this.type = 'normal';      // set by the spawner
+    this.vip = false;
+    this.scale = 1;
+    this.order = null;         // recipeId the customer wants
   }
   ZC.Customer = Customer;
 

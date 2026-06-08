@@ -9,7 +9,7 @@
   var Game = ZC.Game = {
     coins: 0, toxin: 0, flesh: 0, xp: 0, level: 1,
     tables: [], stoves: [], decor: [], zombies: [], customers: [],
-    readyFood: [], floaters: [],
+    readyFood: [], floaters: [], particles: [],
     spawnTimer: 0, autosaveTimer: 0,
     raid: { active: false, timer: 0, cooldown: 0, count: 0 },
     mode: 'none', paused: false,
@@ -33,7 +33,7 @@
       this.coins = CONFIG.startCoins; this.toxin = CONFIG.startToxin; this.flesh = CONFIG.startFlesh;
       this.xp = 0; this.level = 1;
       this.tables = []; this.stoves = []; this.decor = [];
-      this.zombies = []; this.customers = []; this.readyFood = [];
+      this.zombies = []; this.customers = []; this.readyFood = []; this.particles = []; this.floaters = [];
       this.stats = { served: 0, infected: 0, raids: 0 };
 
       this.questsClaimed = {}; this.held = null; this.awayEarned = 0;
@@ -228,11 +228,25 @@
         if (this.freeTable()) this.spawnCustomer();
       }
     },
+    // Distinct dishes the cafe can currently produce (set on unlocked appliances).
+    menu: function () {
+      var ids = [], seen = {};
+      for (var i = 0; i < this.stoves.length; i++) {
+        var r = this.stoves[i].recipe();
+        if (r && r.unlockLevel <= this.level && !seen[r.id]) { seen[r.id] = 1; ids.push(r.id); }
+      }
+      if (ids.length === 0) ids.push('coffee');
+      return ids;
+    },
+
     spawnCustomer: function () {
       var t = this.freeTable(); if (!t) return;
       var c = new ZC.Customer(this.entrance.wx, this.entrance.wy);
-      var vipChance = util.clamp(CONFIG.vipBaseChance + this.appeal() * 0.002, CONFIG.vipBaseChance, 0.25);
-      c.vip = Math.random() < vipChance;
+      var type = ZC.pickCustomerType(this.appeal());
+      var meta = ZC.CUSTOMER_TYPES[type] || ZC.CUSTOMER_TYPES.normal;
+      c.type = type; c.vip = !!meta.vip; c.scale = meta.scale || 1;
+      c.patience = CONFIG.customerPatience * meta.patience;
+      c.order = util.pick(this.menu());
       t.customer = c; c.table = t; this.customers.push(c);
     },
 
@@ -287,18 +301,28 @@
     },
 
     /* ----------------------- Zombie dispatch & update --------------------- */
+    findReady: function (recipeId) {
+      for (var i = 0; i < this.readyFood.length; i++) if (this.readyFood[i].recipeId === recipeId) return i;
+      return -1;
+    },
+
     dispatchZombies: function () {
       if (!this.autoServe || this.readyFood.length === 0) return;
       for (var i = 0; i < this.zombies.length; i++) {
         var z = this.zombies[i];
         if (!z.isAvailable() || z === this.selectedZombie) continue;
-        var target = null;
+        if (this.readyFood.length === 0) break;
+        var target = null, portionIdx = -1;
         for (var j = 0; j < this.customers.length; j++) {
           var c = this.customers[j];
-          if (c.state === 'waiting' && !c.served && !c.assignedZombie) { target = c; break; }
+          if (c.state !== 'waiting' || c.served || c.assignedZombie) continue;
+          var idx = this.findReady(c.order);
+          if (idx >= 0) { target = c; portionIdx = idx; break; }
+          // desperate: a fed-up customer will accept whatever's ready
+          if (c.patience < CONFIG.customerPatience * 0.3) { target = c; portionIdx = 0; break; }
         }
-        if (!target || this.readyFood.length === 0) break;
-        var portion = this.readyFood.shift();
+        if (!target) break;
+        var portion = this.readyFood.splice(portionIdx, 1)[0];
         target.assignedZombie = z;
         z.task = { customer: target, portion: portion };
         z.state = 'toPickup';
@@ -341,14 +365,14 @@
         } else if (z.state === 'toTend') {
           var ts = z.assignedStove;
           if (!ts || this.stoves.indexOf(ts) === -1) { z.state = 'returning'; continue; }
-          if (ZC.moveTo(z, ts.wx + 0.45, ts.wy + 0.5, CONFIG.zombieSpeed, dt)) { z.state = 'tending'; ts.tendedBy = z; }
+          if (ZC.moveTo(z, ts.wx + 0.45, ts.wy + 0.5, CONFIG.zombieSpeed * z.speedMul(), dt)) { z.state = 'tending'; ts.tendedBy = z; }
         } else if (z.state === 'toPickup') {
           if (!z.task || !this.customerValid(z.task.customer)) { this.abortTask(z); continue; }
-          if (ZC.moveTo(z, this.kitchen.wx + 0.4, this.kitchen.wy + 0.4, CONFIG.zombieSpeed, dt)) { z.carrying = z.task.portion; z.state = 'toServe'; }
+          if (ZC.moveTo(z, this.kitchen.wx + 0.4, this.kitchen.wy + 0.4, CONFIG.zombieSpeed * z.speedMul(), dt)) { z.carrying = z.task.portion; z.state = 'toServe'; }
         } else if (z.state === 'toServe') {
           if (!z.task || !this.customerValid(z.task.customer)) { this.abortTask(z); continue; }
           var c = z.task.customer, sp = c.table.seat();
-          if (ZC.moveTo(z, sp.wx - 0.5, sp.wy, CONFIG.zombieSpeed, dt)) this.serveCustomer(z, c);
+          if (ZC.moveTo(z, sp.wx - 0.5, sp.wy, CONFIG.zombieSpeed * z.speedMul(), dt)) this.serveCustomer(z, c);
         } else if (z.state === 'returning') {
           if (ZC.moveTo(z, z.homeX, z.homeY, CONFIG.zombieSpeed, dt)) z.state = 'idle';
         }
@@ -358,7 +382,8 @@
     serveCustomer: function (z, c) {
       var portion = z.carrying || (z.task && z.task.portion);
       var pay = portion ? portion.price : 10;
-      if (c.vip) pay *= 2;
+      var meta = ZC.CUSTOMER_TYPES[c.type] || ZC.CUSTOMER_TYPES.normal;
+      pay = Math.round(pay * (meta.pay || 1));
       // happy customers (served with patience to spare) leave a tip
       var tip = 0;
       if (c.patience > CONFIG.customerPatience * 0.55) tip = Math.round(pay * 0.15);
@@ -367,11 +392,24 @@
       z.energy -= CONFIG.serveEnergyCost; z.state = 'returning';
       c.served = true; c.assignedZombie = null; c.state = 'eating'; c.eatTimer = CONFIG.eatTime;
       this.addCoins(pay); this.addXP(Math.max(3, Math.round(pay / 4)));
+      this.gainZombieXP(z, 1 + (c.vip ? 2 : 0));
       this.stats.served++;
       this.floater(c.wx, c.wy, '+' + pay + (c.vip ? ' ⭐' : (tip ? ' 💰' : '')), c.vip ? '#f39c12' : '#f1c40f');
+      this.spawnParticles(c.wx, c.wy, '#f1c40f', 8);
       if (c.vip && Math.random() < 0.35) { this.addToxin(1); this.floater(c.wx, c.wy - 0.3, '+1 🧪', '#9b59b6'); }
       if (ZC.sfx) ZC.sfx.coin();
       this.checkQuests();
+    },
+
+    gainZombieXP: function (z, amount) {
+      z.xp += amount;
+      var need = 12 + (z.level - 1) * 8;
+      while (z.xp >= need) {
+        z.xp -= need; z.level++;
+        this.floater(z.wx, z.wy, z.name + ' Lv ' + z.level, '#2ecc71');
+        this.spawnParticles(z.wx, z.wy, '#2ecc71', 6);
+        need = 12 + (z.level - 1) * 8;
+      }
     },
 
     /* ------------------------------ Infect -------------------------------- */
@@ -386,6 +424,7 @@
       var z = this.spawnZombie(c.wx, c.wy); z.energy = CONFIG.zombieMaxEnergy; z.state = 'returning';
       this.stats.infected++;
       this.floater(c.wx, c.wy, 'INFECTED!', '#9b59b6');
+      this.spawnParticles(c.wx, c.wy, '#9b59b6', 12);
       if (ZC.sfx) ZC.sfx.infect();
       if (ZC.ui) { ZC.ui.updateHUD(); ZC.ui.toast('Customer infected — new zombie staffer!'); }
       this.checkQuests();
@@ -444,6 +483,23 @@
         var f = this.floaters[i]; f.life -= dt; f.dy += 26 * dt;
         if (f.life <= 0) this.floaters.splice(i, 1);
       }
+      for (i = this.particles.length - 1; i >= 0; i--) {
+        var p = this.particles[i];
+        p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 180 * dt;
+        if (p.life <= 0) this.particles.splice(i, 1);
+      }
+    },
+
+    // Burst of little particles at a tile position (screen-space physics).
+    spawnParticles: function (wx, wy, color, count) {
+      var p = iso.project(wx, wy);
+      for (var i = 0; i < count; i++) {
+        this.particles.push({
+          x: p.x, y: p.y - 18, color: color,
+          vx: util.rand(-55, 55), vy: util.rand(-130, -40),
+          life: util.rand(0.4, 0.8), size: util.rand(2, 4)
+        });
+      }
     },
 
     /* ------------------------------ Render -------------------------------- */
@@ -491,6 +547,15 @@
 
       // warm lighting + vignette overlay
       this.drawLighting(ctx, W, H);
+
+      // particles
+      for (i = 0; i < this.particles.length; i++) {
+        var pa = this.particles[i];
+        ctx.globalAlpha = util.clamp(pa.life * 1.6, 0, 1);
+        ctx.fillStyle = pa.color;
+        ctx.fillRect(pa.x, pa.y, pa.size, pa.size);
+      }
+      ctx.globalAlpha = 1;
 
       // floaters
       for (i = 0; i < this.floaters.length; i++) {
@@ -621,9 +686,11 @@
         S.decor(ctx, p.x, p.y, e.itemId);
       } else if (e.kind === 'customer') {
         var moving = e.state === 'entering' || e.state === 'leaving';
-        S.customer(ctx, p.x, p.y, { color: e.color, hair: e.hair, facing: e.facing, vip: e.vip, phase: moving ? e.phase : 0 });
-        if (e.state === 'waiting') S.bubble(ctx, p.x, p.y, util.clamp(e.patience / CONFIG.customerPatience, 0, 1), '🍴');
-        else if (e.state === 'eating') S.bubble(ctx, p.x, p.y, -1, '😋');
+        S.customer(ctx, p.x, p.y, { color: e.color, hair: e.hair, facing: e.facing, vip: e.vip, type: e.type, scale: e.scale, phase: moving ? e.phase : 0 });
+        if (e.state === 'waiting') {
+          var orec = ZC.recipeById(e.order);
+          S.bubble(ctx, p.x, p.y, util.clamp(e.patience / (CONFIG.customerPatience * (ZC.CUSTOMER_TYPES[e.type] || ZC.CUSTOMER_TYPES.normal).patience), 0, 1), orec ? orec.icon : '🍴');
+        } else if (e.state === 'eating') S.bubble(ctx, p.x, p.y, -1, '😋');
       } else if (e.kind === 'zombie') {
         if (e.state === 'resting' && e.energy < 1) { S.tombstone(ctx, p.x, p.y); if (e === this.selectedZombie) S.selectRing(ctx, p.x, p.y, this._t || 0); return; }
         if (e === this.selectedZombie) S.selectRing(ctx, p.x, p.y, this._t || 0);
@@ -632,6 +699,12 @@
         S.zombie(ctx, p.x, p.y, { phase: (mv || e.state === 'tending') ? e.phase : 0, facing: e.facing, carrying: !!e.carrying, carryColor: cr ? cr.color : null, resting: e.state === 'resting', showEnergy: true, energy: e.energy });
         if (e.state === 'resting') { ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.fillText('💤', p.x + 16, p.y - 34); }
         else if (e.state === 'tending') { ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.fillText('🍳', p.x + 16, p.y - 36); }
+        if (e === this.selectedZombie) {
+          ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+          ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
+          var lbl = e.name + ' · Lv' + e.level;
+          ctx.strokeText(lbl, p.x, p.y - 46); ctx.fillText(lbl, p.x, p.y - 46);
+        }
       }
     },
 
@@ -688,7 +761,8 @@
       if (customer.assignedZombie && customer.assignedZombie !== z) this.abortTask(customer.assignedZombie);
       this.releaseTending(z);
       this.abortTask(z);
-      var portion = this.readyFood.shift();
+      var idx = this.findReady(customer.order); if (idx < 0) idx = 0;
+      var portion = this.readyFood.splice(idx, 1)[0];
       customer.assignedZombie = z;
       z.task = { customer: customer, portion: portion };
       z.state = 'toPickup';
@@ -740,6 +814,7 @@
         tables: this.tables.map(function (t) { return { c: t.col, r: t.row }; }),
         stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto, t: s.applianceType }; }),
         decor: this.decor.map(function (d) { return { c: d.col, r: d.row, item: d.itemId }; }),
+        zombies: this.zombies.map(function (z) { return { name: z.name, level: z.level, xp: z.xp, energy: Math.round(z.energy) }; }),
         zombieCount: this.zombies.length
       };
     },
@@ -763,9 +838,20 @@
       this.tables = (d.tables || []).map(function (t) { return new ZC.Table(t.c, t.r); });
       this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r, s.t); st.recipeId = s.recipe || st.recipeId; st.auto = s.auto !== false; return st; });
       this.decor = (d.decor || []).map(function (x) { return new ZC.Decor(x.c, x.r, x.item); });
-      this.zombies = []; var n = d.zombieCount || 2;
-      for (var i = 0; i < n; i++) this.spawnZombie(this.kitchen.wx + 0.5 + i * 0.3, this.kitchen.wy + 0.5 + i * 0.2);
-      this.customers = []; this.readyFood = [];
+      this.zombies = [];
+      if (d.zombies && d.zombies.length) {
+        for (var zi = 0; zi < d.zombies.length; zi++) {
+          var zd = d.zombies[zi];
+          var nz = this.spawnZombie(this.kitchen.wx + 0.5 + zi * 0.3, this.kitchen.wy + 0.5 + zi * 0.2);
+          if (zd.name) nz.name = zd.name;
+          nz.level = zd.level || 1; nz.xp = zd.xp || 0;
+          nz.energy = (typeof zd.energy === 'number') ? zd.energy : CONFIG.zombieMaxEnergy;
+        }
+      } else {
+        var n = d.zombieCount || 2;
+        for (var i = 0; i < n; i++) this.spawnZombie(this.kitchen.wx + 0.5 + i * 0.3, this.kitchen.wy + 0.5 + i * 0.2);
+      }
+      this.customers = []; this.readyFood = []; this.particles = []; this.floaters = [];
       this.awayEarned = this.computeOfflineEarnings(d.lastSaved);
       if (this.awayEarned > 0) this.coins += this.awayEarned;
       return true;

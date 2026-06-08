@@ -89,6 +89,32 @@ ok('serve25 goal completes', q.progress(G) >= q.target && G.questReady(q));
 var cb = Math.round(G.coins); G.claimQuest('serve25');
 ok('claiming a goal pays out once', Math.round(G.coins) === cb + 200 && G.claimQuest('serve25') === false);
 
+console.log('Orders & customer types');
+ok('menu lists cookable dishes', G.menu().length > 0);
+G.autoServe = true;
+G.zombies.forEach(function (zz) { G.releaseTending(zz); zz.state = 'idle'; zz.energy = 100; zz.task = null; zz.carrying = null; });
+G.customers = []; G.readyFood = [];
+G.spawnCustomer();
+var oc = G.customers[G.customers.length - 1];
+oc.order = 'coffee'; var osp = oc.table.seat(); oc.wx = osp.wx; oc.wy = osp.wy; oc.state = 'waiting'; oc.patience = C.customerPatience; oc.assignedZombie = null;
+G.readyFood.push({ recipeId: 'fries', price: 26 });
+G.readyFood.push({ recipeId: 'coffee', price: 18 });
+G.dispatchZombies();
+ok('dispatch matches the ordered dish', oc.assignedZombie && oc.assignedZombie.task.portion.recipeId === 'coffee');
+
+var zk = G.zombies[0]; zk.carrying = { recipeId: 'coffee', price: 18 }; zk.task = null;
+var kid = new ZC.Customer(0, 0); kid.type = 'kid'; kid.patience = 0;
+var coinsK = Math.round(G.coins); G.serveCustomer(zk, kid);
+ok('kid customer pays 0.8x', Math.round(G.coins) - coinsK === Math.round(18 * 0.8));
+
+var zl = G.zombies[0]; zl.level = 1; zl.xp = 0; G.gainZombieXP(zl, 100);
+ok('zombie levels up from XP', zl.level > 1 && zl.speedMul() > 1);
+
+console.log('Zombie roster persistence');
+G.zombies[0].name = 'TESTZOM'; G.zombies[0].level = 3;
+G.save(); var rcount = G.zombies.length; G.zombies = []; G.load();
+ok('roster persists names & levels', G.zombies.length === rcount && G.zombies.some(function (z) { return z.name === 'TESTZOM' && z.level === 3; }));
+
 console.log('Raid scene');
 ZC.scenes.canvas = { width: 400, height: 400 };
 G.zombies.forEach(function (zz) { zz.state = 'idle'; zz.energy = 100; });

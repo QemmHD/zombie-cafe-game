@@ -29,6 +29,44 @@
       this.refreshGoalsBadge();
       this.updateExpandBtn();
       this.showAwayEarnings();
+
+      // Start ambient music on the first user gesture (autoplay policy).
+      var started = false;
+      function kick() { if (started) return; started = true; if (ZC.sfx && ZC.sfx.startMusic) ZC.sfx.startMusic(); }
+      document.addEventListener('pointerdown', kick, { once: true });
+      document.addEventListener('keydown', kick, { once: true });
+
+      // First-run onboarding: open the help guide once for brand-new players.
+      try {
+        if (!localStorage.getItem('zcSeen')) {
+          localStorage.setItem('zcSeen', '1');
+          var hm = document.getElementById('help-modal');
+          if (hm) hm.classList.remove('hidden');
+        }
+      } catch (e) {}
+    },
+
+    openRoster: function () {
+      var list = document.getElementById('roster-list');
+      list.innerHTML = '';
+      var self = this;
+      if (G.zombies.length === 0) { list.innerHTML = '<p>No zombies yet — infect a customer or raid the city!</p>'; }
+      G.zombies.forEach(function (z) {
+        var energy = ZC.util.clamp(z.energy / ZC.CONFIG.zombieMaxEnergy, 0, 1);
+        var states = { idle: 'idle', toPickup: 'serving', toServe: 'serving', returning: 'returning', tending: 'cooking', toTend: 'cooking', resting: 'resting 💤', raiding: 'raiding' };
+        var row = document.createElement('div');
+        row.className = 'goal-row';
+        row.innerHTML =
+          '<div class="goal-info"><b>🧟 ' + z.name + '</b> <small>Lv ' + z.level + ' · ' + (states[z.state] || z.state) + '</small>' +
+          '<div class="goal-bar"><div class="goal-fill" style="width:' + (energy * 100) + '%;background:' + (energy > 0.3 ? '#2ecc71' : '#e74c3c') + '"></div></div></div>';
+        var btn = document.createElement('button');
+        btn.className = 'goal-claim';
+        btn.textContent = '🥩 Feed';
+        btn.addEventListener('click', function () { G.feedZombie(z); self.openRoster(); });
+        row.appendChild(btn);
+        list.appendChild(row);
+      });
+      document.getElementById('roster-modal').classList.remove('hidden');
     },
 
     openSaveCode: function () {
@@ -109,6 +147,9 @@
       });
 
       document.getElementById('btn-expand').addEventListener('click', function () { G.expand(); self.updateExpandBtn(); });
+
+      document.getElementById('btn-roster').addEventListener('click', function () { self.openRoster(); });
+      document.getElementById('roster-close').addEventListener('click', function () { document.getElementById('roster-modal').classList.add('hidden'); });
 
       document.getElementById('btn-goals').addEventListener('click', function () { self.openGoals(); });
       document.getElementById('goals-close').addEventListener('click', function () { document.getElementById('goals-modal').classList.add('hidden'); });

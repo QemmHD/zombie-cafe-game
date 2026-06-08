@@ -27,7 +27,34 @@
     o.start(); o.stop(a.currentTime + dur + 0.02);
   }
 
+  // ---- Ambient music: a slow, soft minor-key loop ----
+  var musicTimer = null, mi = 0;
+  var MELODY = [110.00, 130.81, 146.83, 164.81, 196.00, 164.81, 146.83, 130.81];
+  function note(a, f, dur, vol, type) {
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol, a.currentTime + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + dur + 0.05);
+  }
+  function startMusic() {
+    if (!enabled || musicTimer) return;
+    var a = ac(); if (!a) return;
+    musicTimer = setInterval(function () {
+      if (!enabled) return;
+      var aa = ac(); if (!aa) return;
+      var f = MELODY[mi % MELODY.length]; mi++;
+      note(aa, f, 0.9, 0.045, 'sine');
+      if (mi % 4 === 0) note(aa, f * 1.5, 1.1, 0.025, 'triangle'); // soft fifth
+    }, 650);
+  }
+  function stopMusic() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }
+
   ZC.sfx = {
+    startMusic: startMusic,
+    stopMusic: stopMusic,
     coin:   function () { tone('square', 880, 1320, 0.10, 0.10); setTimeout(function () { tone('square', 1320, 1760, 0.08, 0.08); }, 60); },
     serve:  function () { tone('triangle', 520, 660, 0.10, 0.10); },
     infect: function () { tone('sawtooth', 200, 70, 0.35, 0.12); },
@@ -39,7 +66,7 @@
     toggle: function () {
       enabled = !enabled;
       try { localStorage.setItem('zcMuted', enabled ? '0' : '1'); } catch (e) {}
-      if (enabled) this.feed();
+      if (enabled) { this.feed(); startMusic(); } else { stopMusic(); }
       return enabled;
     }
   };

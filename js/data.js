@@ -130,4 +130,23 @@
 
   ZC.CUSTOMER_COLORS = ['#e74c3c', '#3498db', '#f1c40f', '#1abc9c', '#e67e22', '#9b59b6', '#2980b9', '#16a085'];
 
+  // Customer archetypes: each orders a specific dish and has its own patience/pay.
+  ZC.CUSTOMER_TYPES = {
+    normal: { patience: 1.0,  pay: 1.0,  scale: 1.0 },
+    kid:    { patience: 1.35, pay: 0.8,  scale: 0.82 },
+    biker:  { patience: 0.7,  pay: 1.35, scale: 1.12 },
+    vip:    { patience: 1.0,  pay: 2.0,  scale: 1.0, vip: true }
+  };
+  // Weighted pick of a customer type (vip weight scales with appeal).
+  ZC.pickCustomerType = function (appeal) {
+    var weights = { normal: 60, kid: 18, biker: 12, vip: Math.min(22, 6 + appeal * 0.4) };
+    var total = 0, k; for (k in weights) total += weights[k];
+    var r = Math.random() * total;
+    for (k in weights) { if (r < weights[k]) return k; r -= weights[k]; }
+    return 'normal';
+  };
+
+  ZC.ZOMBIE_NAMES = ['Mortimer', 'Greta', 'Vlad', 'Lurch', 'Patches', 'Gus', 'Morticia', 'Igor',
+    'Shamble', 'Rotty', 'Cleaver', 'Dredge', 'Maul', 'Bones', 'Hazel', 'Stitch', 'Gnash', 'Drool', 'Crumble', 'Festus'];
+
 })(window.ZC || (window.ZC = {}));

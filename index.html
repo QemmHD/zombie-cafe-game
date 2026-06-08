@@ -44,6 +44,7 @@
     <footer id="tools">
       <button class="tool-btn" id="btn-auto" title="Toggle automatic serving by idle zombies">🤖 Auto: On</button>
       <button class="tool-btn" id="btn-infect" title="Infect a seated customer to gain a zombie">🧪 Infect</button>
+      <button class="tool-btn" id="btn-roster" title="View your zombie staff">🧟 Staff</button>
       <button class="tool-btn" id="btn-edit" title="Move or sell placed furniture">✋ Edit</button>
       <button class="tool-btn" id="btn-expand" title="Renovate to unlock more floor space">🧱 Expand</button>
       <button class="tool-btn" id="btn-goals" title="View goals and claim rewards">🎯 Goals<span id="goals-badge" class="badge hidden"></span></button>
@@ -63,6 +64,15 @@
       <h2>🎯 Goals</h2>
       <div id="goals-list"></div>
       <button id="goals-close">Close</button>
+    </div>
+  </div>
+
+  <!-- Roster modal -->
+  <div id="roster-modal" class="hidden">
+    <div class="modal-card">
+      <h2>🧟 Your Staff</h2>
+      <div id="roster-list"></div>
+      <button id="roster-close">Close</button>
     </div>
   </div>
 
@@ -96,6 +106,8 @@
       <ul>
         <li><b>Goal:</b> Run a cafe staffed by zombies. Cook spooky dishes, serve human customers for 🪙 coins, and grow your undead empire.</li>
         <li><b>Stoves</b> auto-cook their set recipe. <b>Click a stove</b> to choose what it cooks (better dishes unlock as you level up).</li>
+        <li>Each customer <b>orders a specific dish</b> (shown in their bubble) from what your appliances are cooking. Watch for ⭐ VIPs (pay double), patient kids, and impatient bikers.</li>
+        <li><b>🧟 Staff</b> opens your zombie roster — each zombie has a name, levels up as it serves (getting faster), and can be fed there.</li>
         <li><b>Direct your zombies:</b> tap a zombie to select it, then tap a <b>stove</b> to make it tend the cooker (cooks much faster), or tap a <b>customer</b> to send it to serve them. Tap it again to feed it.</li>
         <li><b>🤖 Auto</b> toggles automatic serving — leave it on for a relaxed game, or turn it off to manage every zombie by hand like the original.</li>
         <li>Serving and tending drain a zombie's <b>energy</b> — when it runs out they collapse and rest 💤.</li>

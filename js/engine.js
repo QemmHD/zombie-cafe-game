@@ -139,9 +139,10 @@
       ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#f1c40f';
       ctx.beginPath(); ctx.arc(x, y - 12, 22, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
-    S.shadow(ctx, x, y, 12);
+    S.shadow(ctx, x, y, 12 * (opt.scale || 1));
     ctx.save();
     ctx.translate(x, y - 2 + bob);
+    if (opt.scale && opt.scale !== 1) ctx.scale(opt.scale, opt.scale);
     ctx.fillStyle = '#2c3e50';
     ctx.fillRect(-6, 6, 5, 11); ctx.fillRect(1, 6, 5, 11);
     ctx.fillStyle = opt.color || '#3498db';
@@ -157,6 +158,10 @@
     ctx.fillStyle = '#222';
     var ex = (opt.facing || 1) > 0 ? 1 : -1;
     ctx.fillRect(-4 + ex, -20, 2, 3); ctx.fillRect(3 + ex, -20, 2, 3);
+    if (opt.type === 'biker') { // sunglasses + bandana
+      ctx.fillStyle = '#111'; ctx.fillRect(-6 + ex, -20, 12, 3);
+      ctx.fillStyle = '#7b241c'; ctx.fillRect(-7, -27, 14, 4);
+    }
     if (opt.vip) { // little crown
       ctx.fillStyle = '#f1c40f';
       ctx.beginPath();
