@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Zombie Cafe</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Top HUD -->
+    <header id="hud">
+      <div class="title">🧟 ZOMBIE CAFE</div>
+      <div class="stats">
+        <div class="stat"><span class="ico">🪙</span><span id="stat-coins">0</span></div>
+        <div class="stat"><span class="ico">🧪</span><span id="stat-toxin">0</span></div>
+        <div class="stat"><span class="ico">🥩</span><span id="stat-flesh">0</span></div>
+        <div class="stat lvl">
+          <span class="ico">Lv</span><span id="stat-level">1</span>
+          <div class="xp"><div id="xp-fill"></div></div>
+        </div>
+        <div class="stat"><span class="ico">🧟</span><span id="stat-zombies">0</span></div>
+      </div>
+    </header>
+
+    <!-- Game canvas -->
+    <main id="stage">
+      <canvas id="game"></canvas>
+      <div id="mode-label"></div>
+      <div id="stove-menu" class="hidden"></div>
+      <div id="toast"></div>
+    </main>
+
+    <!-- Build / shop bar -->
+    <div id="shop-bar"></div>
+
+    <!-- Tools -->
+    <footer id="tools">
+      <button class="tool-btn" id="btn-infect" title="Infect a seated customer to gain a zombie">🧪 Infect</button>
+      <button class="tool-btn" id="btn-raid" title="Send free zombies to scavenge for flesh & toxin">⚔️ Raid</button>
+      <button class="tool-btn" id="btn-flesh" title="Buy flesh with toxin">🥩 Buy Flesh</button>
+      <button class="tool-btn" id="btn-pause">⏸ Pause</button>
+      <button class="tool-btn" id="btn-save">💾 Save</button>
+      <button class="tool-btn" id="btn-help">❓ Help</button>
+      <button class="tool-btn danger" id="btn-reset">🗑 Reset</button>
+    </footer>
+  </div>
+
+  <!-- Help modal -->
+  <div id="help-modal" class="hidden">
+    <div class="modal-card">
+      <h2>🧟 How to run your Zombie Cafe</h2>
+      <ul>
+        <li><b>Goal:</b> Run a cafe staffed by zombies. Cook spooky dishes, serve human customers for 🪙 coins, and grow your undead empire.</li>
+        <li><b>Stoves</b> auto-cook their set recipe. <b>Click a stove</b> to choose what it cooks (better dishes unlock as you level up).</li>
+        <li><b>Zombies</b> automatically carry finished food to seated customers. Serving drains their <b>energy</b> — when it runs out they collapse and rest 💤.</li>
+        <li><b>Feed zombies</b> by clicking them (uses 🥩 flesh) to restore energy fast.</li>
+        <li><b>Build</b> tables, stoves and decorations from the bar below the cafe. Decorations raise <b>appeal</b>, bringing customers faster.</li>
+        <li><b>🧪 Infect</b> a seated customer to turn them into a brand-new zombie staffer (costs toxin).</li>
+        <li><b>⚔️ Raid</b> the city with free zombies to bring back coins, flesh and toxin.</li>
+        <li>Your cafe <b>auto-saves</b> to this browser. Use 💾 to save anytime.</li>
+      </ul>
+      <button id="help-close">Got it!</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
