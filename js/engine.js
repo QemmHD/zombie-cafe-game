@@ -84,6 +84,7 @@
     // apron/body
     ctx.fillStyle = opt.resting ? '#54663f' : '#6aa84f';
     roundRect(ctx, -10, -12, 20, 21, 5); ctx.fill();
+    ctx.strokeStyle = 'rgba(18,28,12,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.85)';      // little apron
     roundRect(ctx, -6, -2, 12, 11, 2); ctx.fill();
     // arms
@@ -92,6 +93,7 @@
     // head
     ctx.fillStyle = '#7cbf5e';
     roundRect(ctx, -8, -27, 16, 17, 5); ctx.fill();
+    ctx.strokeStyle = 'rgba(18,28,12,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = '#6aa84f';                       // ear
     ctx.fillRect(face > 0 ? 7 : -9, -21, 3, 5);
     // eyes
@@ -144,9 +146,12 @@
     ctx.fillRect(-6, 6, 5, 11); ctx.fillRect(1, 6, 5, 11);
     ctx.fillStyle = opt.color || '#3498db';
     roundRect(ctx, -9, -12, 18, 21, 5); ctx.fill();
+    ctx.strokeStyle = 'rgba(10,14,20,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = opt.color || '#3498db';
     ctx.fillRect(-12, -8, 4, 12); ctx.fillRect(8, -8, 4, 12);
     ctx.fillStyle = '#f1c27d';
     roundRect(ctx, -7, -26, 14, 16, 5); ctx.fill();
+    ctx.strokeStyle = 'rgba(60,40,20,0.45)'; ctx.lineWidth = 1.3; ctx.stroke();
     ctx.fillStyle = opt.hair || '#4a3728';
     roundRect(ctx, -7, -27, 14, 7, 3); ctx.fill();
     ctx.fillStyle = '#222';
@@ -269,6 +274,13 @@
     }
     ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#222'; ctx.fillText(icon || '🍴', bx, by + 1);
+  };
+
+  // Selection ring under a directed zombie
+  S.selectRing = function (ctx, x, y, phase) {
+    var r = 16 + Math.sin(phase * 4) * 1.5;
+    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.45, 0, 0, Math.PI * 2); ctx.stroke();
   };
 
   S.floater = function (ctx, x, y, text, color, alpha) {

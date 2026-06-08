@@ -15,6 +15,7 @@
     mode: 'none', paused: false,
     stats: { served: 0, infected: 0, raids: 0 },
     questsClaimed: {}, held: null, awayEarned: 0,
+    selectedZombie: null, autoServe: true,
 
     init: function (canvas) {
       this.canvas = canvas;
@@ -39,6 +40,7 @@
       this.stats = { served: 0, infected: 0, raids: 0 };
 
       this.questsClaimed = {}; this.held = null; this.awayEarned = 0;
+      this.selectedZombie = null; this.autoServe = true;
       this.tables.push(new ZC.Table(3, 3));
       this.tables.push(new ZC.Table(5, 3));
       this.tables.push(new ZC.Table(4, 5));
@@ -214,8 +216,10 @@
       for (var i = 0; i < this.stoves.length; i++) {
         var st = this.stoves[i], rec = st.recipe();
         if (!rec) continue;
+        var tended = st.tendedBy && st.tendedBy.state === 'tending' && st.tendedBy.assignedStove === st && this.zombies.indexOf(st.tendedBy) !== -1;
+        var rate = tended ? CONFIG.tendSpeedMultiplier : 1;
         if (st.cooking) {
-          st.timer -= dt;
+          st.timer -= dt * rate;
           if (st.timer <= 0) {
             st.cooking = false;
             for (var s = 0; s < rec.servings; s++) this.readyFood.push({ recipeId: rec.id, price: rec.price });
@@ -260,10 +264,10 @@
 
     /* ----------------------- Zombie dispatch & update --------------------- */
     dispatchZombies: function () {
-      if (this.readyFood.length === 0) return;
+      if (!this.autoServe || this.readyFood.length === 0) return;
       for (var i = 0; i < this.zombies.length; i++) {
         var z = this.zombies[i];
-        if (!z.isAvailable()) continue;
+        if (!z.isAvailable() || z === this.selectedZombie) continue;
         var target = null;
         for (var j = 0; j < this.customers.length; j++) {
           var c = this.customers[j];
@@ -283,6 +287,7 @@
       if (z.carrying) { this.readyFood.push(z.carrying); z.carrying = null; }
       if (z.task && z.task.customer && z.task.customer.assignedZombie === z) z.task.customer.assignedZombie = null;
       z.task = null;
+      if (z.assignedStove) this.releaseTending(z);
       if (z.state !== 'resting') z.state = 'returning';
     },
 
@@ -297,11 +302,22 @@
           if (z.energy >= CONFIG.zombieMaxEnergy * 0.5) { z.energy = util.clamp(z.energy, 0, CONFIG.zombieMaxEnergy); z.state = 'idle'; }
           continue;
         }
+        if (z.state === 'tending') {
+          z.energy -= CONFIG.energyDrainTending * dt;
+          if (z.energy <= 0) { z.energy = 0; this.releaseTending(z); z.state = 'resting'; continue; }
+          if (z.assignedStove && this.stoves.indexOf(z.assignedStove) !== -1) ZC.moveTo(z, z.assignedStove.wx + 0.45, z.assignedStove.wy + 0.5, CONFIG.zombieSpeed, dt);
+          else { this.releaseTending(z); z.state = 'returning'; }
+          continue;
+        }
         z.energy -= CONFIG.energyDrainIdle * dt;
         if (z.energy <= 0) { z.energy = 0; this.abortTask(z); z.state = 'resting'; continue; }
 
         if (z.state === 'idle') {
           ZC.moveTo(z, z.homeX, z.homeY, CONFIG.zombieSpeed * 0.5, dt);
+        } else if (z.state === 'toTend') {
+          var ts = z.assignedStove;
+          if (!ts || this.stoves.indexOf(ts) === -1) { z.state = 'returning'; continue; }
+          if (ZC.moveTo(z, ts.wx + 0.45, ts.wy + 0.5, CONFIG.zombieSpeed, dt)) { z.state = 'tending'; ts.tendedBy = z; }
         } else if (z.state === 'toPickup') {
           if (!z.task || !this.customerValid(z.task.customer)) { this.abortTask(z); continue; }
           if (ZC.moveTo(z, this.kitchen.wx + 0.4, this.kitchen.wy + 0.4, CONFIG.zombieSpeed, dt)) { z.carrying = z.task.portion; z.state = 'toServe'; }
@@ -376,7 +392,7 @@
       var avail = []; for (var i = 0; i < this.zombies.length; i++) if (this.zombies[i].isAvailable()) avail.push(this.zombies[i]);
       if (avail.length === 0) { if (ZC.ui) ZC.ui.toast('No rested zombies free to raid!'); if (ZC.sfx) ZC.sfx.error(); return false; }
       var count = Math.min(3, avail.length);
-      for (var k = 0; k < count; k++) { avail[k].state = 'raiding'; avail[k].energy -= 20; }
+      for (var k = 0; k < count; k++) { this.releaseTending(avail[k]); if (avail[k] === this.selectedZombie) this.deselect(); avail[k].state = 'raiding'; avail[k].energy -= 20; }
       this.raid.active = true; this.raid.timer = CONFIG.raidDuration; this.raid.count = count;
       if (ZC.ui) ZC.ui.toast('Sent ' + count + ' zombies to scavenge the city...');
       return true;
@@ -449,6 +465,9 @@
       });
       for (i = 0; i < draw.length; i++) this.drawEntity(ctx, draw[i]);
 
+      // warm lighting + vignette overlay
+      this.drawLighting(ctx, W, H);
+
       // floaters
       for (i = 0; i < this.floaters.length; i++) {
         var f = this.floaters[i], p = iso.project(f.wx, f.wy);
@@ -460,6 +479,18 @@
         ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
         ctx.fillText('🧟 Raiding the city... ' + Math.ceil(this.raid.timer) + 's', W / 2, 26);
       }
+    },
+
+    drawLighting: function (ctx, W, H) {
+      if (!this._vignette) {
+        var g = ctx.createRadialGradient(W / 2, H * 0.42, Math.min(W, H) * 0.28, W / 2, H * 0.42, Math.max(W, H) * 0.72);
+        g.addColorStop(0, 'rgba(255,214,150,0.10)');
+        g.addColorStop(0.55, 'rgba(0,0,0,0)');
+        g.addColorStop(1, 'rgba(8,6,14,0.42)');
+        this._vignette = g;
+      }
+      ctx.fillStyle = this._vignette;
+      ctx.fillRect(0, 0, W, H);
     },
 
     drawRoom: function (ctx) {
@@ -552,11 +583,13 @@
         if (e.state === 'waiting') S.bubble(ctx, p.x, p.y, util.clamp(e.patience / CONFIG.customerPatience, 0, 1), '🍴');
         else if (e.state === 'eating') S.bubble(ctx, p.x, p.y, -1, '😋');
       } else if (e.kind === 'zombie') {
-        if (e.state === 'resting' && e.energy < 1) { S.tombstone(ctx, p.x, p.y); return; }
-        var mv = e.state === 'toPickup' || e.state === 'toServe' || e.state === 'returning';
+        if (e.state === 'resting' && e.energy < 1) { S.tombstone(ctx, p.x, p.y); if (e === this.selectedZombie) S.selectRing(ctx, p.x, p.y, this._t || 0); return; }
+        if (e === this.selectedZombie) S.selectRing(ctx, p.x, p.y, this._t || 0);
+        var mv = e.state === 'toPickup' || e.state === 'toServe' || e.state === 'returning' || e.state === 'toTend';
         var cr = e.carrying ? ZC.recipeById(e.carrying.recipeId) : null;
-        S.zombie(ctx, p.x, p.y, { phase: mv ? e.phase : 0, facing: e.facing, carrying: !!e.carrying, carryColor: cr ? cr.color : null, resting: e.state === 'resting', showEnergy: true, energy: e.energy });
+        S.zombie(ctx, p.x, p.y, { phase: (mv || e.state === 'tending') ? e.phase : 0, facing: e.facing, carrying: !!e.carrying, carryColor: cr ? cr.color : null, resting: e.state === 'resting', showEnergy: true, energy: e.energy });
         if (e.state === 'resting') { ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.fillText('💤', p.x + 16, p.y - 34); }
+        else if (e.state === 'tending') { ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.fillText('🍳', p.x + 16, p.y - 36); }
       }
     },
 
@@ -587,11 +620,56 @@
         else { var f = this.pickFurniture(sx, sy); if (f) { this.held = f; if (ZC.sfx) ZC.sfx.build(); if (ZC.ui) ZC.ui.refreshEditBar(); } }
         return;
       }
+      // ---- A zombie is selected: the next tap directs it ----
+      if (this.selectedZombie && this.zombies.indexOf(this.selectedZombie) !== -1) {
+        var sz = this.selectedZombie;
+        var stv = this.pickStove(sx, sy); if (stv) { this.directToStove(sz, stv); return; }
+        var cuw = this.pickCustomer(sx, sy); if (cuw && cuw.state === 'waiting') { this.directToServe(sz, cuw); return; }
+        var zz = this.pickZombie(sx, sy);
+        if (zz === sz) { if (sz.energy < CONFIG.zombieMaxEnergy) this.feedZombie(sz); else this.deselect(); return; }
+        if (zz) { this.selectZombie(zz); return; }
+        this.deselect(); return;
+      }
+      // ---- Nothing selected ----
+      var z = this.pickZombie(sx, sy); if (z) { this.selectZombie(z); return; }
       var st = this.pickStove(sx, sy); if (st) { if (ZC.ui) ZC.ui.openStoveMenu(st); return; }
-      var z = this.pickZombie(sx, sy); if (z) { if (z.state === 'resting' || z.energy < CONFIG.zombieMaxEnergy) this.feedZombie(z); return; }
-      // tap a waiting customer to bump them to the front of the serving queue
       var cust = this.pickCustomer(sx, sy);
       if (cust && cust.state === 'waiting' && !cust.assignedZombie) { this.prioritize(cust); }
+    },
+
+    selectZombie: function (z) {
+      if (!z || z.state === 'raiding') return;
+      this.selectedZombie = z;
+      if (ZC.sfx) ZC.sfx.feed();
+      if (ZC.ui) ZC.ui.toast('Zombie selected — tap a stove to cook, or a customer to serve.');
+    },
+    deselect: function () { this.selectedZombie = null; },
+
+    releaseTending: function (z) {
+      if (z.assignedStove) { if (z.assignedStove.tendedBy === z) z.assignedStove.tendedBy = null; z.assignedStove = null; }
+    },
+
+    directToStove: function (z, stove) {
+      // toggle off if already tending this stove
+      if (z.state === 'tending' && z.assignedStove === stove) { this.releaseTending(z); z.state = 'returning'; this.deselect(); return; }
+      this.releaseTending(z);
+      this.abortTask(z);
+      z.assignedStove = stove; z.state = 'toTend';
+      this.floater(stove.wx, stove.wy, '👨‍🍳', '#f1c40f');
+      if (ZC.sfx) ZC.sfx.build();
+      this.deselect();
+    },
+    directToServe: function (z, customer) {
+      if (this.readyFood.length === 0) { if (ZC.ui) ZC.ui.toast('No food ready yet — cook something first!'); if (ZC.sfx) ZC.sfx.error(); return; }
+      if (customer.assignedZombie && customer.assignedZombie !== z) this.abortTask(customer.assignedZombie);
+      this.releaseTending(z);
+      this.abortTask(z);
+      var portion = this.readyFood.shift();
+      customer.assignedZombie = z;
+      z.task = { customer: customer, portion: portion };
+      z.state = 'toPickup';
+      this.floater(customer.wx, customer.wy, '!', '#3498db');
+      this.deselect();
     },
 
     prioritize: function (c) {
@@ -630,7 +708,7 @@
       try {
         localStorage.setItem('zombieCafeSave', JSON.stringify({
           v: 2, coins: this.coins, toxin: this.toxin, flesh: this.flesh, xp: this.xp, level: this.level, stats: this.stats,
-          questsClaimed: this.questsClaimed, lastSaved: Date.now(),
+          questsClaimed: this.questsClaimed, lastSaved: Date.now(), autoServe: this.autoServe,
           tables: this.tables.map(function (t) { return { c: t.col, r: t.row }; }),
           stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto }; }),
           decor: this.decor.map(function (d) { return { c: d.col, r: d.row, item: d.itemId }; }),
@@ -646,7 +724,7 @@
         this.coins = d.coins; this.toxin = d.toxin; this.flesh = d.flesh; this.xp = d.xp; this.level = d.level;
         this.stats = d.stats || { served: 0, infected: 0, raids: 0 };
         this.questsClaimed = d.questsClaimed || {};
-        this.held = null;
+        this.held = null; this.selectedZombie = null; this.autoServe = d.autoServe !== false;
         this.tables = (d.tables || []).map(function (t) { return new ZC.Table(t.c, t.r); });
         this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r); st.recipeId = s.recipe || 'coffee'; st.auto = s.auto !== false; return st; });
         this.decor = (d.decor || []).map(function (x) { return new ZC.Decor(x.c, x.r, x.item); });

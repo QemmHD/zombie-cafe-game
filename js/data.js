@@ -16,16 +16,16 @@
     margin: 30,
 
     // Starting resources
-    startCoins: 600,
-    startToxin: 25,
-    startFlesh: 6,
+    startCoins: 450,
+    startToxin: 18,
+    startFlesh: 5,
 
     // Zombie cap
     baseMaxZombies: 4,
 
-    // Spawning
-    spawnIntervalBase: 4.6,
-    spawnIntervalMin: 1.3,
+    // Spawning  (slower, gradual real-time build-up)
+    spawnIntervalBase: 5.4,
+    spawnIntervalMin: 1.5,
     maxCustomers: 16,
 
     // Customer behaviour
@@ -38,6 +38,8 @@
     zombieMaxEnergy: 100,
     serveEnergyCost: 10,
     energyDrainIdle: 0.35,
+    energyDrainTending: 1.2,   // tending a stove costs energy
+    tendSpeedMultiplier: 2.2,  // a tended stove cooks this much faster
     energyRegenRest: 8,
     fleshFeedAmount: 60,
 
@@ -60,13 +62,14 @@
   };
 
   // Dishes. Higher tiers cost more & cook slower but pay far more.
+  // station: which appliance type cooks it (kettle = stove/drinks, grill = hot food, oven = baked)
   ZC.RECIPES = [
-    { id: 'coffee', name: 'Bone Brew Coffee', cost: 15,  cookTime: 6,  servings: 3, price: 18,  unlockLevel: 1, color: '#6f4e37', icon: '☕' },
-    { id: 'fries',  name: 'Finger Fries',     cost: 40,  cookTime: 10, servings: 4, price: 26,  unlockLevel: 1, color: '#e0a93b', icon: '🍟' },
-    { id: 'burger', name: 'Brain Burger',     cost: 95,  cookTime: 16, servings: 4, price: 58,  unlockLevel: 2, color: '#b5651d', icon: '🍔' },
-    { id: 'soup',   name: 'Eyeball Soup',     cost: 150, cookTime: 21, servings: 5, price: 82,  unlockLevel: 3, color: '#7bbf5a', icon: '🍲' },
-    { id: 'pizza',  name: 'Zombie Pizza',     cost: 280, cookTime: 28, servings: 6, price: 132, unlockLevel: 4, color: '#d23b2e', icon: '🍕' },
-    { id: 'cake',   name: 'Graveyard Cake',   cost: 520, cookTime: 36, servings: 6, price: 240, unlockLevel: 6, color: '#9b59b6', icon: '🍰' }
+    { id: 'coffee', name: 'Bone Brew Coffee', cost: 15,  cookTime: 8,  servings: 3, price: 18,  unlockLevel: 1, station: 'stove', color: '#6f4e37', icon: '☕' },
+    { id: 'fries',  name: 'Finger Fries',     cost: 40,  cookTime: 13, servings: 4, price: 26,  unlockLevel: 1, station: 'grill', color: '#e0a93b', icon: '🍟' },
+    { id: 'burger', name: 'Brain Burger',     cost: 95,  cookTime: 20, servings: 4, price: 56,  unlockLevel: 2, station: 'grill', color: '#b5651d', icon: '🍔' },
+    { id: 'soup',   name: 'Eyeball Soup',     cost: 150, cookTime: 26, servings: 5, price: 80,  unlockLevel: 3, station: 'stove', color: '#7bbf5a', icon: '🍲' },
+    { id: 'pizza',  name: 'Zombie Pizza',     cost: 280, cookTime: 34, servings: 6, price: 128, unlockLevel: 4, station: 'oven',  color: '#d23b2e', icon: '🍕' },
+    { id: 'cake',   name: 'Graveyard Cake',   cost: 520, cookTime: 44, servings: 6, price: 232, unlockLevel: 6, station: 'oven',  color: '#9b59b6', icon: '🍰' }
   ];
 
   ZC.recipeById = function (id) {

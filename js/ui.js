@@ -47,6 +47,7 @@
     setBuildMode: function (shopId, btn) {
       // toggle off if already selected
       if (G.mode === 'build:' + shopId) { this.clearMode(); return; }
+      G.deselect();
       G.mode = 'build:' + shopId;
       this.highlightActive(btn);
       var item = ZC.shopById(shopId);
@@ -57,12 +58,14 @@
       var self = this;
       document.getElementById('btn-infect').addEventListener('click', function () {
         if (G.mode === 'infect') { self.clearMode(); return; }
+        G.deselect();
         G.mode = 'infect';
         self.highlightActive(this);
         self.setModeLabel('Infect mode: click a seated customer (costs ' + CONFIG.infectCost + ' toxin)');
       });
       document.getElementById('btn-edit').addEventListener('click', function () {
         if (G.mode === 'edit') { self.clearMode(); G.clearHeld(); self.refreshEditBar(); return; }
+        G.deselect();
         G.mode = 'edit'; G.held = null;
         self.highlightActive(this);
         self.setModeLabel('Edit mode: tap furniture to pick it up, tap a tile to drop, or Sell');
@@ -70,6 +73,17 @@
       });
       document.getElementById('edit-sell').addEventListener('click', function () { G.sellHeld(); });
       document.getElementById('edit-done').addEventListener('click', function () { self.clearMode(); G.clearHeld(); self.refreshEditBar(); });
+
+      var autoBtn = document.getElementById('btn-auto');
+      autoBtn.textContent = G.autoServe ? '🤖 Auto: On' : '🤖 Auto: Off';
+      autoBtn.classList.toggle('active', !G.autoServe);
+      autoBtn.addEventListener('click', function () {
+        G.autoServe = !G.autoServe;
+        this.textContent = G.autoServe ? '🤖 Auto: On' : '🤖 Auto: Off';
+        this.classList.toggle('active', !G.autoServe);
+        self.toast(G.autoServe ? 'Auto-serve on — idle zombies serve by themselves.' : 'Auto-serve off — tap a zombie, then a customer, to serve.');
+        G.save();
+      });
 
       document.getElementById('btn-goals').addEventListener('click', function () { self.openGoals(); });
       document.getElementById('goals-close').addEventListener('click', function () { document.getElementById('goals-modal').classList.add('hidden'); });
@@ -117,6 +131,7 @@
     clearMode: function () {
       G.mode = 'none';
       G.held = null;
+      G.deselect();
       this.highlightActive(null);
       this.setModeLabel('');
       this.refreshEditBar();
