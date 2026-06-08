@@ -156,6 +156,16 @@ body {
 .panel .close { width: 100%; margin-top: 6px; }
 .muted { color: #8a6a3a; font-size: 12px; }
 
+/* ---------- Debug overlay ---------- */
+.dbg {
+  position: absolute; left: 56px; top: 84px; z-index: 45;
+  background: rgba(10,8,16,0.82); color: #b8ffce; border: 1px solid #2e7d4a;
+  border-radius: 8px; padding: 6px 9px; font: 11px/1.5 ui-monospace, Menlo, monospace; pointer-events: none;
+}
+.dbg-h { color: #fff; font-weight: 800; margin-bottom: 2px; }
+.dbg-h span { color: #7aa; font-weight: 400; }
+.dbg b { color: #ffd24a; font-weight: 700; }
+
 /* ---------- Toast ---------- */
 .toast {
   position: absolute; bottom: 74px; left: 50%; transform: translateX(-50%);

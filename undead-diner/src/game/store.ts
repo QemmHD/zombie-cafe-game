@@ -35,6 +35,7 @@ export interface HudState {
   customerPopup: number | null;  // customer id whose action popup is open
   customerOrder: string | null;  // that customer's order recipe id
   buildItem: string | null;      // item chosen in the build tray
+  debug: any | null;             // selected-zombie debug readout
   patch: (p: Partial<HudState>) => void;
   setPanel: (p: Panel) => void;
   setToast: (t: string | null) => void;
@@ -66,6 +67,7 @@ export const useGame = create<HudState>((set) => ({
   customerPopup: null,
   customerOrder: null,
   buildItem: null,
+  debug: null,
   patch: (p) => set(p),
   setPanel: (p) => set({ panel: p }),
   setToast: (t) => set({ toast: t })

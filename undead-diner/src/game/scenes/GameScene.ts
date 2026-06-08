@@ -49,6 +49,9 @@ export default class GameScene extends Phaser.Scene {
   private floorG!: Phaser.GameObjects.Graphics;
   private fxG!: Phaser.GameObjects.Graphics;
   private bubbles = new Map<number, Phaser.GameObjects.Text>();
+  private steamFx = new Map<number, any>();
+  private flyFx = new Map<number, any>();
+  private decals: any[] = [];
   private spawnT = 1.5;
   private autosaveT = 0;
 
@@ -63,7 +66,7 @@ export default class GameScene extends Phaser.Scene {
     this.infection = new InfectionSystem(this);
     this.build = new BuildModeSystem(this);
     this.raid = new RaidSystem(this);
-    this.xp.onLevelUp = (lvl) => { this.recipes.syncUnlocked(); toast('Level ' + lvl + '!'); this.sfx('level'); };
+    this.xp.onLevelUp = (lvl) => { this.recipes.syncUnlocked(); toast('Level ' + lvl + '!'); this.sfx('level'); for (const z of this.zombies) if (z.available()) this.oneShot(z, 'zombie_celebrate', 0.8); };
 
     this.cameras.main.setBackgroundColor('#241c33');
     this.floorG = this.add.graphics().setDepth(-100000);
@@ -116,9 +119,36 @@ export default class GameScene extends Phaser.Scene {
   createZombie(col: number, row: number, stats?: any): ZombieWorker {
     const z = new ZombieWorker(col, row, stats);
     z.homeCol = Math.max(0, Math.min(2, Math.round(col))); z.homeRow = Math.round(row);
-    z.sprite = this.add.sprite(0, 0, z.chef ? 'zombie_chef' : 'zombie').setOrigin(0.5, 0.92).setScale(CFG.charScale).setInteractive();
+    z.sprite = this.add.sprite(0, 0, 'zombie_idle', 0).setOrigin(0.5, 0.92).setScale(CFG.charScale);
+    (z as any).anim = '';
+    z.sprite.play('zombie_idle');
     this.zombies.push(z); this.syncRoster();
     return z;
+  }
+  setAnim(o: any, key: string) {
+    if ((o as any).lock > 0) return;          // one-shot anims (infect/celebrate) hold
+    if ((o as any).anim !== key) { (o as any).anim = key; o.sprite.play(key, true); }
+  }
+  oneShot(z: any, key: string, dur: number) { z.sprite.play(key); (z as any).anim = key; (z as any).lock = dur; }
+
+  // Maps a zombie's task/state to its animation key (the visible state machine).
+  zombieAnim(z: ZombieWorker): string {
+    switch (z.state) {
+      case 'cooking': return 'zombie_cook';
+      case 'cleaning': return 'zombie_clean';
+      case 'serving': return 'zombie_carry';
+      case 'rest': return 'zombie_tired';
+      case 'idle': return z.energy < CFG.tiredThreshold ? 'zombie_tired' : 'zombie_idle';
+      default: return z.carry ? 'zombie_carry' : 'zombie_walk';   // toStation/toCounter/toTable/toDirty/walk
+    }
+  }
+  custAnim(c: Customer): string {
+    const s = c.skin;
+    if (c.state === 'toTable') return 'cust' + s + '_walk';
+    if (c.state === 'leaving') return 'cust' + s + '_leave';
+    if (c.state === 'eating') return 'cust' + s + '_eat';
+    if (c.state === 'sit') return c.patience < CFG.customerPatience * 0.3 ? 'cust' + s + '_angry' : 'cust' + s + '_sit';
+    return 'cust' + s + '_idle';
   }
 
   addFurniture(itemId: string, col: number, row: number): Furniture {
@@ -129,7 +159,8 @@ export default class GameScene extends Phaser.Scene {
     else if (def.kind === 'station') f = new Station(col, row, itemId, def.station!, this.recipes.defaultFor(def.station!));
     else f = new Decor(col, row, itemId, def.appeal || 0);
     const p = this.iso.toScreen(col + 0.5, row + 0.5);
-    f.sprite = this.add.sprite(p.x, p.y, def.texture).setOrigin(0.5, 0.84).setScale(0.86);
+    const scale = f.kind === 'station' ? 0.66 : f.kind === 'counter' ? 0.66 : f.kind === 'table' ? 0.62 : f.kind === 'chair' ? 0.6 : 0.62;
+    f.sprite = this.add.sprite(p.x, p.y, def.texture).setOrigin(0.5, 0.84).setScale(scale);
     f.sprite.setDepth(this.iso.depth(col, row));
     this.furniture.push(f);
     this.refreshBlocked();
@@ -290,7 +321,12 @@ export default class GameScene extends Phaser.Scene {
     const p = this.iso.toScreen(col + 0.5, row + 0.5);
     for (let i = 0; i < 6; i++) { const c = this.add.image(p.x, p.y - 24, 'coin').setDepth(1e6).setScale(0.7); this.tweens.add({ targets: c, x: p.x + (Math.random() - 0.5) * 48, y: p.y - 34 - Math.random() * 26, alpha: 0, duration: 700, onComplete: () => c.destroy() }); }
   }
-  greenPuff(col: number, row: number) { const p = this.iso.toScreen(col + 0.5, row + 0.5); const s = this.add.sprite(p.x, p.y - 24, 'puff').setDepth(1e6).setScale(0.3); this.tweens.add({ targets: s, scale: 1.8, alpha: 0, duration: 650, onComplete: () => s.destroy() }); }
+  greenPuff(col: number, row: number) {
+    const p = this.iso.toScreen(col + 0.5, row + 0.5);
+    const s = this.add.sprite(p.x, p.y - 28, 'smoke', 0).setDepth(1e6).setScale(1.2);
+    s.play('smoke'); s.once('animationcomplete', () => s.destroy());
+    this.tweens.add({ targets: s, scale: 1.8, alpha: 0, duration: 700 });
+  }
   sfx(kind: string) {
     if (!useGame.getState().sound) return;
     try {
@@ -317,11 +353,12 @@ export default class GameScene extends Phaser.Scene {
     const menu = this.menu(); if (!menu.length) return;
     const order = menu[(Math.random() * menu.length) | 0];
     const vip = Math.random() < 0.08 + this.appeal() * 0.003;
-    const c = new Customer(this.entrance.col, this.entrance.row, order, vip, (Math.random() * 6) | 0);
+    const c = new Customer(this.entrance.col, this.entrance.row, order, vip, (Math.random() * 3) | 0);
     table.occupiedBy = c; c.table = table;
     c.path = this.pathTo({ col: this.entrance.col, row: this.entrance.row }, { col: table.col, row: table.row });
     c.state = 'toTable';
-    c.sprite = this.add.sprite(0, 0, 'customer' + c.skin).setOrigin(0.5, 0.92).setScale(CFG.charScale);
+    c.sprite = this.add.sprite(0, 0, 'cust' + c.skin + '_walk', 0).setOrigin(0.5, 0.92).setScale(CFG.charScale);
+    (c as any).anim = '';
     this.customers.push(c);
   }
   removeCustomer(c: Customer) { c.sprite?.destroy(); const b = this.bubbles.get(c.id); if (b) { b.destroy(); this.bubbles.delete(c.id); } const i = this.customers.indexOf(c); if (i >= 0) this.customers.splice(i, 1); }
@@ -365,7 +402,9 @@ export default class GameScene extends Phaser.Scene {
       this.updateCustomers(dt);
       this.taskSys.update(dt);
       this.autosaveT += dt; if (this.autosaveT > CFG.autosave) { this.autosaveT = 0; this.doSave(); }
+      for (const z of this.zombies) if ((z as any).lock > 0) (z as any).lock -= dt;
       if ((this as any)._rt === undefined) (this as any)._rt = 0; (this as any)._rt += dt; if ((this as any)._rt > 0.5) { (this as any)._rt = 0; this.syncRoster(); }
+      if ((this as any)._dt === undefined) (this as any)._dt = 0; (this as any)._dt += dt; if ((this as any)._dt > 0.15) { (this as any)._dt = 0; this.pushDebug(); }
     }
     this.render();
   }
@@ -373,25 +412,45 @@ export default class GameScene extends Phaser.Scene {
   render() {
     const g = this.fxG; g.clear();
     // furniture depth + dirty texture
-    for (const f of this.furniture) { if (f.kind === 'table') f.sprite.setTexture((f as Table).dirty ? 'table_dirty' : 'table'); f.sprite?.setDepth(this.iso.depth(f.col, f.row)); }
-    // characters
-    for (const c of this.customers) this.placeChar(c, g);
-    for (const z of this.zombies) this.placeChar(z, g);
-    // selection ring
+    for (const f of this.furniture) { if (f.kind === 'table') f.sprite.setTexture((f as Table).dirty ? 'table_dirty' : 'table_clean'); f.sprite?.setDepth(this.iso.depth(f.col, f.row)); }
+    // characters — shadow + position + depth + STATE-DRIVEN animation
+    for (const c of this.customers) {
+      this.placeChar(c, g);
+      this.setAnim(c, this.custAnim(c));
+    }
+    for (const z of this.zombies) {
+      this.placeChar(z, g);
+      this.setAnim(z, this.zombieAnim(z));
+    }
+    // selection ring (the command surface)
     const sel = this.selection.selected;
-    if (sel) { const p = this.iso.toScreen(sel.col + 0.5, sel.row + 0.5); const r = 22 + Math.sin((this.time.now / 120)) * 2; g.lineStyle(3, 0xffd24a); g.strokeEllipse(p.x, p.y, r * 1.6, r * 0.7); }
-    // station cook bars
-    for (const s of this.stations()) if (s.cooking && s.cookTotal > 0) { const p = this.iso.toScreen(s.col + 0.5, s.row + 0.5); this.bar(g, p.x, p.y - 70, 34, 1 - s.cookTimer / s.cookTotal, 0xffd24a); }
-    // customers: bubble + patience; zombies: energy + carry
-    for (const c of this.customers) { const p = this.iso.toScreen(c.col + 0.5, c.row + 0.5); if (c.state === 'sit') this.ring(g, p.x + 18, p.y - 52, c.patience / (CFG.customerPatience * (c.vip ? 1.1 : 1))); this.bubble(c, p); }
-    for (const z of this.zombies) { const p = this.iso.toScreen(z.col + 0.5, z.row + 0.5); if (z.busy()) this.bar(g, p.x, p.y - 74, 24, z.energy / z.maxEnergy, z.energy / z.maxEnergy > 0.3 ? 0x7ac74f : 0xe7553b); if (z.carry) { const rec = recipeById(z.carry.recipeId); g.fillStyle(0xfbfdfe); g.fillEllipse(p.x + z.facing * 12, p.y - 34, 13, 7); if (rec) { g.fillStyle(rec.color); g.fillEllipse(p.x + z.facing * 12, p.y - 36, 6, 4); } } }
+    if (sel) { const p = this.iso.toScreen(sel.col + 0.5, sel.row + 0.5); const r = 24 + Math.sin(this.time.now / 120) * 2; g.lineStyle(4, 0xffd24a); g.strokeEllipse(p.x, p.y, r * 1.6, r * 0.7); }
+    // cooking steam + bars
+    for (const s of this.stations()) {
+      const p = this.iso.toScreen(s.col + 0.5, s.row + 0.5);
+      if (s.cooking) {
+        if (s.cookTotal > 0) this.bar(g, p.x, p.y - 74, 34, 1 - s.cookTimer / s.cookTotal, 0xffd24a);
+        let st = this.steamFx.get(s.id);
+        if (!st) { st = this.add.sprite(p.x, p.y - 64, 'steam', 0).setDepth(1e6).play('steam'); this.steamFx.set(s.id, st); }
+        st.setPosition(p.x, p.y - 64);
+      } else { const st = this.steamFx.get(s.id); if (st) { st.destroy(); this.steamFx.delete(s.id); } }
+    }
+    // flies over dirty tables
+    for (const t of this.tables()) {
+      const p = this.iso.toScreen(t.col + 0.5, t.row + 0.5);
+      if (t.dirty) { let fl = this.flyFx.get(t.id); if (!fl) { fl = this.add.sprite(p.x, p.y - 30, 'fly', 0).setDepth(1e6).play('fly'); this.flyFx.set(t.id, fl); } fl.setPosition(p.x + Math.sin(this.time.now / 200) * 10, p.y - 30 + Math.cos(this.time.now / 160) * 6); }
+      else { const fl = this.flyFx.get(t.id); if (fl) { fl.destroy(); this.flyFx.delete(t.id); } }
+    }
+    // customers: bubble + patience ring
+    for (const c of this.customers) { const p = this.iso.toScreen(c.col + 0.5, c.row + 0.5); if (c.state === 'sit') this.ring(g, p.x + 18, p.y - 56, c.patience / (CFG.customerPatience * (c.vip ? 1.1 : 1))); this.bubble(c, p); }
+    // zombies: energy bar + carried plate
+    for (const z of this.zombies) { const p = this.iso.toScreen(z.col + 0.5, z.row + 0.5); if (z.busy()) this.bar(g, p.x, p.y - 80, 24, z.energy / z.maxEnergy, z.energy / z.maxEnergy > 0.3 ? 0x7ac74f : 0xe7553b); if (z.carry) { const rec = recipeById(z.carry.recipeId); g.fillStyle(0xfbfdfe); g.fillEllipse(p.x + z.facing * 13, p.y - 40, 14, 7); if (rec) { g.fillStyle(rec.color); g.fillEllipse(p.x + z.facing * 13, p.y - 42, 6, 4); } } }
   }
   placeChar(c: any, g: Phaser.GameObjects.Graphics) {
     if (!c.sprite) return;
     const p = this.iso.toScreen(c.col + 0.5, c.row + 0.5);
-    const bob = c.moving && c.moving() ? Math.sin(c.bob) * 2 : 0;
-    g.fillStyle(0x000000, 0.22); g.fillEllipse(p.x, p.y + 2, 30, 12);
-    c.sprite.setPosition(p.x, p.y + bob); c.sprite.setDepth(this.iso.depth(c.col, c.row) + 5); c.sprite.setFlipX(c.facing < 0);
+    g.fillStyle(0x000000, 0.22); g.fillEllipse(p.x, p.y + 2, 32, 13);
+    c.sprite.setPosition(p.x, p.y); c.sprite.setDepth(this.iso.depth(c.col, c.row) + 5); c.sprite.setFlipX(c.facing < 0);
   }
   bar(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, f: number, color: number) { g.fillStyle(0x000000, 0.5); g.fillRect(x - w / 2, y, w, 5); g.fillStyle(color); g.fillRect(x - w / 2, y, w * Phaser.Math.Clamp(f, 0, 1), 5); }
   ring(g: Phaser.GameObjects.Graphics, x: number, y: number, f: number) { const col = f > 0.4 ? 0x7ac74f : f > 0.18 ? 0xffd24a : 0xe7553b; g.lineStyle(3, col); g.beginPath(); g.arc(x, y, 10, -Math.PI / 2, -Math.PI / 2 + Phaser.Math.Clamp(f, 0, 1) * Math.PI * 2, false); g.strokePath(); }
@@ -402,6 +461,21 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /* ------------------------------ roster + save ------------------------ */
+  pushDebug() {
+    const z = this.selection.selected as ZombieWorker | null;
+    if (!z) { if (useGame.getState().debug) useGame.getState().patch({ debug: null }); return; }
+    let target = '—';
+    const t = z.task;
+    if (t) {
+      if (t.kind === 'cook') target = 'stove@' + t.station.col + ',' + t.station.row + ' (' + recipeById(t.recipeId!)?.name + ')';
+      else if (t.kind === 'serve') target = 'cust wants ' + recipeById(t.customer.order)?.name;
+      else if (t.kind === 'clean') target = 'table@' + t.table.col + ',' + t.table.row;
+      else if (t.kind === 'move') target = 'tile ' + t.dest!.col + ',' + t.dest!.row;
+      else if (t.kind === 'rest') target = 'home';
+    }
+    useGame.getState().patch({ debug: { name: z.name, state: z.state, cmd: t ? t.kind : 'none', target, anim: (z as any).anim || '—', energy: Math.round(z.energy), carry: z.carry ? recipeById(z.carry.recipeId)?.name : null } });
+  }
+
   syncRoster() {
     useGame.getState().patch({
       zombieCount: this.zombies.length,

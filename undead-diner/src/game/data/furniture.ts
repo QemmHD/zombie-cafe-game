@@ -13,7 +13,7 @@ export interface ShopItem {
 }
 
 export const SHOP: ShopItem[] = [
-  { id: 'table',   name: 'Diner Table',  kind: 'table',   texture: 'table',   cost: 120, unlockLevel: 1, desc: 'Seats one hungry human.' },
+  { id: 'table',   name: 'Diner Table',  kind: 'table',   texture: 'table_clean', cost: 120, unlockLevel: 1, desc: 'Seats one hungry human.' },
   { id: 'counter', name: 'Serve Counter', kind: 'counter', texture: 'counter', cost: 160, unlockLevel: 1, desc: 'Where cooked food waits.' },
   { id: 'stove',   name: 'Stove',        kind: 'station',  texture: 'stove',   cost: 300, unlockLevel: 1, station: 'stove', desc: 'Cooks drinks & grits.' },
   { id: 'grill',   name: 'Grill',        kind: 'station',  texture: 'grill',   cost: 460, unlockLevel: 2, station: 'grill', desc: 'Cooks fries & burgers.' },

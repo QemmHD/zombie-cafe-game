@@ -12,10 +12,11 @@ export class InfectionSystem {
     if (c.table) { c.table.occupiedBy = null; c.table = null; }
     this.world.removeCustomer(c);
     this.world.greenPuff(c.col, c.row);
-    this.world.createZombie(c.col, c.row, {
+    const z = this.world.createZombie(c.col, c.row, {
       speed: 0.8 + Math.random() * 0.8, cook: 0.8 + Math.random() * 0.8,
       serve: 0.8 + Math.random() * 0.8, clean: 0.8 + Math.random() * 0.8
     });
+    this.world.oneShot(z, 'zombie_infect', 0.6);
     this.world.popup(c.col, c.row, 'INFECTED!', 0x7ac74f);
     useGame.getState().patch({ customerPopup: null });
     return true;

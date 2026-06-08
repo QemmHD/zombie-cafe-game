@@ -7,6 +7,7 @@ import BottomBar from './ui/BottomBar';
 import BuildTray from './ui/BuildTray';
 import { RecipePopup, CustomerPopup } from './ui/Popups';
 import Panels from './ui/Panels';
+import DebugOverlay from './ui/DebugOverlay';
 
 export default function App() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -37,6 +38,7 @@ export default function App() {
         <RecipePopup />
         <CustomerPopup />
         <Panels />
+        <DebugOverlay />
         {toast && <div className="toast">{toast}</div>}
       </div>
     </>

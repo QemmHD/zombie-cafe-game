@@ -7,7 +7,7 @@ export const CFG = {
   gridRows: 8,
   designW: 600,
   designH: 680,
-  charScale: 0.74,
+  charScale: 0.82,
 
   startUsableCols: 7,
   startUsableRows: 6,
