@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node test/headless.js",
     "icons": "python3 tools/generate_icons.py",
-    "build:web": "rm -rf www && mkdir -p www && cp index.html www/ && cp manifest.webmanifest www/ && cp sw.js www/ && cp -R css www/ && cp -R js www/ && cp -R icons www/"
+    "build:web": "rm -rf www && mkdir -p www/assets && cp index.html www/ && cp manifest.webmanifest www/ && cp sw.js www/ && cp -R css www/ && cp -R js www/ && cp -R icons www/ && cp -R assets/art www/assets/ 2>/dev/null || true"
   },
   "dependencies": {
     "@capacitor/local-notifications": "^6.1.0"

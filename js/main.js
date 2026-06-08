@@ -17,6 +17,7 @@
     ZC.scenes.ctx = ctx;
 
     ZC.Game.init(canvas);
+    if (ZC.art && ZC.art.init) ZC.art.init();   // load drop-in sprites if present
     ZC.ui.init();
 
     bindInput(canvas);

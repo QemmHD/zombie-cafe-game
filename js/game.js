@@ -802,6 +802,9 @@
       }
     },
 
+    // Use a drop-in sprite if one is loaded, else fall back to procedural art.
+    art: function (ctx, key, x, y, scale) { return ZC.art && ZC.art.draw ? ZC.art.draw(ctx, key, x, y, scale) : false; },
+
     drawEntity: function (ctx, e) {
       var p = iso.project(e.wx, e.wy);
       if (e.kind === 'table') {
@@ -809,14 +812,15 @@
         if (e.customer && e.customer.state === 'eating') {
           var fr = ZC.recipeById(e.customer.order); foodColor = fr ? fr.color : '#cdb';
         }
-        S.table(ctx, p.x, p.y, { occupied: !e.isFree(), foodColor: foodColor });
+        if (!this.art(ctx, 'table', p.x, p.y)) S.table(ctx, p.x, p.y, { occupied: !e.isFree(), foodColor: foodColor });
       } else if (e.kind === 'stove') {
         var rec = e.recipe();
-        S.stove(ctx, p.x, p.y, { cooking: e.cooking, progress: e.cooking ? 1 - e.timer / rec.cookTime : 0, icon: rec ? rec.icon : '', type: e.applianceType, phase: this._t || 0 });
+        if (!this.art(ctx, e.applianceType, p.x, p.y)) S.stove(ctx, p.x, p.y, { cooking: e.cooking, progress: e.cooking ? 1 - e.timer / rec.cookTime : 0, icon: rec ? rec.icon : '', type: e.applianceType, phase: this._t || 0 });
       } else if (e.kind === 'decor') {
-        S.decor(ctx, p.x, p.y, e.itemId);
+        if (!this.art(ctx, 'decor_' + e.itemId, p.x, p.y)) S.decor(ctx, p.x, p.y, e.itemId);
       } else if (e.kind === 'customer') {
         var moving = e.state === 'entering' || e.state === 'leaving';
+        if (!this.art(ctx, 'customer', p.x, p.y, e.scale || 1))
         S.customer(ctx, p.x, p.y, { color: e.color, hair: e.hair, facing: e.facing, vip: e.vip, type: e.type, scale: e.scale, phase: moving ? e.phase : 0 });
         if (e.state === 'waiting') {
           var orec = ZC.recipeById(e.order);
@@ -827,7 +831,14 @@
         if (e === this.selectedZombie) S.selectRing(ctx, p.x, p.y, this._t || 0);
         var mv = e.state === 'toPickup' || e.state === 'toServe' || e.state === 'returning' || e.state === 'toTend';
         var cr = e.carrying ? ZC.recipeById(e.carrying.recipeId) : null;
+        if (!this.art(ctx, 'zombie', p.x, p.y))
         S.zombie(ctx, p.x, p.y, { phase: (mv || e.state === 'tending') ? e.phase : 0, facing: e.facing, hat: e.hat, carrying: !!e.carrying, carryColor: cr ? cr.color : null, resting: e.state === 'resting', showEnergy: true, energy: e.energy });
+        else if (e.state !== 'resting') {
+          // tiny energy bar overlay for sprite mode
+          var bw = 22, en = util.clamp(e.energy / 100, 0, 1);
+          ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(p.x - bw / 2, p.y - 64, bw, 3);
+          ctx.fillStyle = en > 0.3 ? '#2ecc71' : '#e74c3c'; ctx.fillRect(p.x - bw / 2, p.y - 64, bw * en, 3);
+        }
         if (e.state === 'resting') { ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.fillText('💤', p.x + 16, p.y - 34); }
         else if (e.state === 'tending') { ctx.font = '13px serif'; ctx.textAlign = 'center'; ctx.fillText('🍳', p.x + 16, p.y - 36); }
         if (e === this.selectedZombie) {
