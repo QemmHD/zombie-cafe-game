@@ -170,6 +170,19 @@ html, body {
 .goal-claim:disabled { cursor: default; }
 .goal-claim.locked, .goal-claim:disabled { background: #3a4252; color: #8c99a8; }
 
+/* ---------------- Save code modal ---------------- */
+#save-code {
+  width: 100%; background: #11151c; color: var(--text); border: 1px solid #3a4456;
+  border-radius: 10px; padding: 10px; font-family: monospace; font-size: 12px; resize: vertical;
+  margin: 10px 0; word-break: break-all;
+}
+.save-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.save-actions button {
+  flex: 1 1 auto; background: var(--panel2); color: #fff; border: 1px solid #45506250;
+  border-radius: 10px; padding: 10px; cursor: pointer; font-weight: 700; font-size: 13px;
+}
+.save-actions button:hover { background: #3a4252; border-color: var(--accent); }
+
 /* ---------------- Tools ---------------- */
 #tools { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 12px; }
 .tool-btn {

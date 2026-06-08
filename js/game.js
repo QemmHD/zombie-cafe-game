@@ -21,15 +21,12 @@
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
       iso.setup();
-      canvas.width = Math.round(iso.width);
-      canvas.height = Math.round(iso.height);
 
       // key tile positions
       this.entrance = { wx: CONFIG.cols - 0.5, wy: CONFIG.rows - 0.2 };
       this.kitchen = { wx: 0.6, wy: 0.6 };   // counter pickup point (back corner)
 
       if (!this.load()) this.newGame();
-      this.bindCanvas();
     },
 
     newGame: function () {
@@ -453,7 +450,7 @@
     render: function () {
       var ctx = this.ctx, W = this.canvas.width, H = this.canvas.height;
       ctx.clearRect(0, 0, W, H);
-      this.drawRoom(ctx);
+      this.blitRoom(ctx, W, H);
 
       // build highlight
       if (this.mode.indexOf('build:') === 0 && this.hoverTile) this.drawTileHighlight(ctx, this.hoverTile.col, this.hoverTile.row);
@@ -518,6 +515,19 @@
       }
       ctx.fillStyle = this._vignette;
       ctx.fillRect(0, 0, W, H);
+    },
+
+    invalidateRoom: function () { this._roomKey = null; },
+    blitRoom: function (ctx, W, H) {
+      var key = this.usableCols + 'x' + this.usableRows;
+      if (typeof document === 'undefined' || !document.createElement) { this.drawRoom(ctx); return; }
+      if (!this._roomCanvas || this._roomKey !== key) {
+        if (!this._roomCanvas) { this._roomCanvas = document.createElement('canvas'); }
+        this._roomCanvas.width = W; this._roomCanvas.height = H;
+        this.drawRoom(this._roomCanvas.getContext('2d'));
+        this._roomKey = key;
+      }
+      ctx.drawImage(this._roomCanvas, 0, 0);
     },
 
     drawRoom: function (ctx) {
@@ -626,24 +636,6 @@
     },
 
     /* ----------------------------- Input ---------------------------------- */
-    bindCanvas: function () {
-      var self = this, canvas = this.canvas;
-      function toCanvas(ev) {
-        var rect = canvas.getBoundingClientRect();
-        var sx = canvas.width / rect.width, sy = canvas.height / rect.height;
-        var px = ev.clientX !== undefined ? ev.clientX : (ev.touches && ev.touches[0].clientX);
-        var py = ev.clientY !== undefined ? ev.clientY : (ev.touches && ev.touches[0].clientY);
-        return { x: (px - rect.left) * sx, y: (py - rect.top) * sy };
-      }
-      function tileAt(p) { var u = iso.unproject(p.x, p.y); return { col: Math.floor(u.wx), row: Math.floor(u.wy) }; }
-
-      canvas.addEventListener('mousemove', function (ev) { self.hoverTile = tileAt(toCanvas(ev)); });
-      canvas.addEventListener('click', function (ev) { var p = toCanvas(ev); self.handleClick(p.x, p.y, tileAt(p)); });
-      canvas.addEventListener('touchstart', function (ev) {
-        ev.preventDefault(); var p = toCanvas(ev); var t = tileAt(p); self.hoverTile = t; self.handleClick(p.x, p.y, t);
-      }, { passive: false });
-    },
-
     handleClick: function (sx, sy, tile) {
       if (this.mode.indexOf('build:') === 0) { this.placeItem(this.mode.split(':')[1], tile.col, tile.row); return; }
       if (this.mode === 'infect') { var c = this.pickCustomer(sx, sy); if (c) this.infectCustomer(c); return; }
@@ -736,44 +728,82 @@
     },
 
     /* ------------------------------ Save ---------------------------------- */
+    SAVE_KEY: 'zombieCafeSave',
+    SAVE_VERSION: 3,
+
+    serialize: function () {
+      return {
+        v: this.SAVE_VERSION,
+        coins: this.coins, toxin: this.toxin, flesh: this.flesh, xp: this.xp, level: this.level, stats: this.stats,
+        questsClaimed: this.questsClaimed, lastSaved: Date.now(), autoServe: this.autoServe,
+        usableCols: this.usableCols, usableRows: this.usableRows, expansion: this.expansion,
+        tables: this.tables.map(function (t) { return { c: t.col, r: t.row }; }),
+        stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto, t: s.applianceType }; }),
+        decor: this.decor.map(function (d) { return { c: d.col, r: d.row, item: d.itemId }; }),
+        zombieCount: this.zombies.length
+      };
+    },
+
+    // Apply a (possibly older) save object to the live game, migrating as needed.
+    applyData: function (d) {
+      if (!d || (d.v !== 2 && d.v !== 3)) return false;
+      this.coins = d.coins; this.toxin = d.toxin; this.flesh = d.flesh; this.xp = d.xp; this.level = d.level;
+      this.stats = d.stats || { served: 0, infected: 0, raids: 0 };
+      this.questsClaimed = d.questsClaimed || {};
+      this.held = null; this.selectedZombie = null; this.autoServe = d.autoServe !== false;
+      // Migration: v2 predates expansion — unlock the full cafe so old layouts survive.
+      if (d.usableCols && d.usableRows) {
+        this.usableCols = d.usableCols; this.usableRows = d.usableRows; this.expansion = d.expansion || 0;
+      } else {
+        this.usableCols = CONFIG.cols; this.usableRows = CONFIG.rows;
+        this.expansion = Math.max(CONFIG.cols - CONFIG.startUsableCols, CONFIG.rows - CONFIG.startUsableRows);
+      }
+      this.recomputeEntrance();
+      this.invalidateRoom();
+      this.tables = (d.tables || []).map(function (t) { return new ZC.Table(t.c, t.r); });
+      this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r, s.t); st.recipeId = s.recipe || st.recipeId; st.auto = s.auto !== false; return st; });
+      this.decor = (d.decor || []).map(function (x) { return new ZC.Decor(x.c, x.r, x.item); });
+      this.zombies = []; var n = d.zombieCount || 2;
+      for (var i = 0; i < n; i++) this.spawnZombie(this.kitchen.wx + 0.5 + i * 0.3, this.kitchen.wy + 0.5 + i * 0.2);
+      this.customers = []; this.readyFood = [];
+      this.awayEarned = this.computeOfflineEarnings(d.lastSaved);
+      if (this.awayEarned > 0) this.coins += this.awayEarned;
+      return true;
+    },
+
     save: function () {
-      try {
-        localStorage.setItem('zombieCafeSave', JSON.stringify({
-          v: 2, coins: this.coins, toxin: this.toxin, flesh: this.flesh, xp: this.xp, level: this.level, stats: this.stats,
-          questsClaimed: this.questsClaimed, lastSaved: Date.now(), autoServe: this.autoServe,
-          usableCols: this.usableCols, usableRows: this.usableRows, expansion: this.expansion,
-          tables: this.tables.map(function (t) { return { c: t.col, r: t.row }; }),
-          stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto, t: s.applianceType }; }),
-          decor: this.decor.map(function (d) { return { c: d.col, r: d.row, item: d.itemId }; }),
-          zombieCount: this.zombies.length
-        }));
-        return true;
-      } catch (e) { return false; }
+      try { localStorage.setItem(this.SAVE_KEY, JSON.stringify(this.serialize())); return true; }
+      catch (e) { return false; }
     },
     load: function () {
       try {
-        var raw = localStorage.getItem('zombieCafeSave'); if (!raw) return false;
-        var d = JSON.parse(raw); if (d.v !== 2) return false;   // old saves use different coords
-        this.coins = d.coins; this.toxin = d.toxin; this.flesh = d.flesh; this.xp = d.xp; this.level = d.level;
-        this.stats = d.stats || { served: 0, infected: 0, raids: 0 };
-        this.questsClaimed = d.questsClaimed || {};
-        this.held = null; this.selectedZombie = null; this.autoServe = d.autoServe !== false;
-        this.usableCols = d.usableCols || CONFIG.startUsableCols;
-        this.usableRows = d.usableRows || CONFIG.startUsableRows;
-        this.expansion = d.expansion || 0;
-        this.recomputeEntrance();
-        this.tables = (d.tables || []).map(function (t) { return new ZC.Table(t.c, t.r); });
-        this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r, s.t); st.recipeId = s.recipe || st.recipeId; st.auto = s.auto !== false; return st; });
-        this.decor = (d.decor || []).map(function (x) { return new ZC.Decor(x.c, x.r, x.item); });
-        this.zombies = []; var n = d.zombieCount || 2;
-        for (var i = 0; i < n; i++) this.spawnZombie(this.kitchen.wx + 0.5 + i * 0.3, this.kitchen.wy + 0.5 + i * 0.2);
-        this.customers = []; this.readyFood = [];
-        this.awayEarned = this.computeOfflineEarnings(d.lastSaved);
-        if (this.awayEarned > 0) this.coins += this.awayEarned;
+        var raw = localStorage.getItem(this.SAVE_KEY); if (!raw) return false;
+        return this.applyData(JSON.parse(raw));
+      } catch (e) { return false; }
+    },
+
+    // Portable save code (base64 of the JSON) for moving between devices.
+    exportSave: function () {
+      try {
+        var json = JSON.stringify(this.serialize());
+        var b64 = (typeof btoa !== 'undefined') ? btoa(unescape(encodeURIComponent(json))) : Buffer.from(json).toString('base64');
+        return 'ZC1' + b64;
+      } catch (e) { return null; }
+    },
+    importSave: function (code) {
+      try {
+        if (!code) return false;
+        code = String(code).trim();
+        if (code.indexOf('ZC1') === 0) code = code.slice(3);
+        var json = (typeof atob !== 'undefined') ? decodeURIComponent(escape(atob(code))) : Buffer.from(code, 'base64').toString('utf8');
+        var d = JSON.parse(json);
+        if (!this.applyData(d)) return false;
+        this.save();
         return true;
       } catch (e) { return false; }
     },
-    reset: function () { localStorage.removeItem('zombieCafeSave'); this.newGame(); if (ZC.ui) ZC.ui.updateHUD(); }
+
+    reset: function () { localStorage.removeItem(this.SAVE_KEY); this.newGame(); this.invalidateRoom(); if (ZC.ui) ZC.ui.updateHUD(); }
   };
 
 })(window.ZC || (window.ZC = {}));

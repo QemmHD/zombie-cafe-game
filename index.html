@@ -75,6 +75,20 @@
     </div>
   </div>
 
+  <!-- Save code modal -->
+  <div id="save-modal" class="hidden">
+    <div class="modal-card">
+      <h2>💾 Save code</h2>
+      <p id="save-desc">Copy this code to back up your cafe, or paste one in and load it.</p>
+      <textarea id="save-code" rows="4" placeholder="Paste a save code here..."></textarea>
+      <div class="save-actions">
+        <button id="save-copy">📋 Copy</button>
+        <button id="save-load">📥 Load code</button>
+        <button id="save-cancel">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Help modal -->
   <div id="help-modal" class="hidden">
     <div class="modal-card">
@@ -97,7 +111,10 @@
         <li>Tap a waiting customer to <b>bump them to the front</b> of the serving queue.</li>
         <li>Your cafe <b>auto-saves</b>, and keeps earning coins <b>while you're away</b>.</li>
       </ul>
-      <button id="help-close">Got it!</button>
+      <div class="save-actions">
+        <button id="help-savecode">🔑 Save / transfer code</button>
+        <button id="help-close">Got it!</button>
+      </div>
     </div>
   </div>
 
@@ -106,6 +123,8 @@
   <script src="js/engine.js"></script>
   <script src="js/entities.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/raid.js"></script>
+  <script src="js/scene.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
 </body>

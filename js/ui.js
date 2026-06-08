@@ -31,6 +31,21 @@
       this.showAwayEarnings();
     },
 
+    openSaveCode: function () {
+      var ta = document.getElementById('save-code');
+      ta.value = G.exportSave() || '';
+      document.getElementById('save-modal').classList.remove('hidden');
+    },
+
+    // Show/hide cafe-only chrome (toolbars) when entering/leaving other scenes.
+    setCafeChrome: function (on) {
+      var ids = ['shop-bar', 'tools'];
+      for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (el) el.style.display = on ? '' : 'none';
+      }
+    },
+
     updateExpandBtn: function () {
       var btn = document.getElementById('btn-expand'); if (!btn) return;
       if (G.maxExpanded()) { btn.textContent = '🧱 Max size'; btn.disabled = true; btn.style.opacity = '0.5'; return; }
@@ -99,7 +114,7 @@
       document.getElementById('goals-close').addEventListener('click', function () { document.getElementById('goals-modal').classList.add('hidden'); });
       document.getElementById('away-close').addEventListener('click', function () { document.getElementById('away-modal').classList.add('hidden'); });
 
-      document.getElementById('btn-raid').addEventListener('click', function () { G.startRaid(); });
+      document.getElementById('btn-raid').addEventListener('click', function () { ZC.RaidScene.launch(); });
       document.getElementById('btn-flesh').addEventListener('click', function () { G.buyFlesh(); });
       document.getElementById('btn-pause').addEventListener('click', function () {
         G.paused = !G.paused;
@@ -124,6 +139,32 @@
       });
       document.getElementById('help-close').addEventListener('click', function () {
         document.getElementById('help-modal').classList.add('hidden');
+      });
+
+      // Save / transfer code modal
+      document.getElementById('help-savecode').addEventListener('click', function () {
+        document.getElementById('help-modal').classList.add('hidden');
+        self.openSaveCode();
+      });
+      document.getElementById('save-cancel').addEventListener('click', function () {
+        document.getElementById('save-modal').classList.add('hidden');
+      });
+      document.getElementById('save-copy').addEventListener('click', function () {
+        var ta = document.getElementById('save-code');
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        if (navigator.clipboard) { try { navigator.clipboard.writeText(ta.value); } catch (e) {} }
+        self.toast('Save code copied.');
+      });
+      document.getElementById('save-load').addEventListener('click', function () {
+        var code = document.getElementById('save-code').value;
+        if (G.importSave(code)) {
+          document.getElementById('save-modal').classList.add('hidden');
+          self.updateHUD(); self.refreshGoalsBadge();
+          self.toast('Save loaded!');
+        } else {
+          self.toast('That save code is not valid.');
+        }
       });
 
       document.addEventListener('keydown', function (e) {
