@@ -5,3 +5,9 @@ build/
 *.ipa
 .DS_Store
 package-lock.json
+preview.png
+
+# Undead Diner (React+TS+Phaser) build/cache
+undead-diner/dist/
+undead-diner/node_modules/
+undead-diner/.vite/
