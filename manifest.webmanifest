@@ -1,0 +1,16 @@
+{
+  "name": "Zombie Cafe",
+  "short_name": "Zombie Cafe",
+  "description": "Run a cafe staffed by zombies — cook, serve, infect, raid and grow your undead empire.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14171e",
+  "theme_color": "#14171e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

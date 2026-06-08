@@ -5,9 +5,14 @@
   "description": "A 2D fan recreation of the classic Zombie Cafe management game, wrapped for iOS via Capacitor.",
   "scripts": {
     "test": "node test/headless.js",
-    "build:web": "rm -rf www && mkdir -p www && cp index.html www/ && cp -R css www/ && cp -R js www/"
+    "icons": "python3 tools/generate_icons.py",
+    "build:web": "rm -rf www && mkdir -p www && cp index.html www/ && cp manifest.webmanifest www/ && cp sw.js www/ && cp -R css www/ && cp -R js www/ && cp -R icons www/"
+  },
+  "dependencies": {
+    "@capacitor/local-notifications": "^6.1.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.1.0",
     "@capacitor/core": "^6.1.0",
     "@capacitor/ios": "^6.1.0"

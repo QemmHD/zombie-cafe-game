@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Zombie Cafe</title>
+  <meta name="theme-color" content="#14171e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Zombie Cafe" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -46,7 +53,9 @@
       <button class="tool-btn" id="btn-infect" title="Infect a seated customer to gain a zombie">🧪 Infect</button>
       <button class="tool-btn" id="btn-roster" title="View your zombie staff">🧟 Staff</button>
       <button class="tool-btn" id="btn-edit" title="Move or sell placed furniture">✋ Edit</button>
+      <button class="tool-btn" id="btn-style" title="Change floor & wall styles">🎨 Style</button>
       <button class="tool-btn" id="btn-expand" title="Renovate to unlock more floor space">🧱 Expand</button>
+      <button class="tool-btn" id="btn-franchise" title="Reset for a permanent earnings boost">🏛️ Franchise</button>
       <button class="tool-btn" id="btn-goals" title="View goals and claim rewards">🎯 Goals<span id="goals-badge" class="badge hidden"></span></button>
       <button class="tool-btn" id="btn-raid" title="Send free zombies to scavenge for flesh & toxin">⚔️ Raid</button>
       <button class="tool-btn" id="btn-flesh" title="Buy flesh with toxin">🥩 Buy Flesh</button>
@@ -63,7 +72,30 @@
     <div class="modal-card">
       <h2>🎯 Goals</h2>
       <div id="goals-list"></div>
+      <h2 style="margin-top:14px">🏆 Achievements</h2>
+      <div id="ach-list"></div>
       <button id="goals-close">Close</button>
+    </div>
+  </div>
+
+  <!-- Style modal -->
+  <div id="style-modal" class="hidden">
+    <div class="modal-card">
+      <h2>🎨 Cafe Style</h2>
+      <h3 class="style-h">Floor</h3>
+      <div id="floor-list" class="style-list"></div>
+      <h3 class="style-h">Walls</h3>
+      <div id="wall-list" class="style-list"></div>
+      <button id="style-close">Close</button>
+    </div>
+  </div>
+
+  <!-- Daily bonus modal -->
+  <div id="daily-modal" class="hidden">
+    <div class="modal-card">
+      <h2>🎁 Daily Bonus</h2>
+      <p id="daily-text">Welcome back!</p>
+      <button id="daily-close">Collect 🪙</button>
     </div>
   </div>
 
@@ -132,6 +164,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/notify.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/entities.js"></script>
   <script src="js/game.js"></script>

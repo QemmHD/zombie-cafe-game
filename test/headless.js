@@ -94,6 +94,8 @@ ok('menu lists cookable dishes', G.menu().length > 0);
 G.autoServe = true;
 G.zombies.forEach(function (zz) { G.releaseTending(zz); zz.state = 'idle'; zz.energy = 100; zz.task = null; zz.carrying = null; });
 G.customers = []; G.readyFood = [];
+G.tables.forEach(function (t) { t.customer = null; });   // free tables so a customer can be seated
+G.event = null; G.prestigeMult = 1;                       // deterministic payout
 G.spawnCustomer();
 var oc = G.customers[G.customers.length - 1];
 oc.order = 'coffee'; var osp = oc.table.seat(); oc.wx = osp.wx; oc.wy = osp.wy; oc.state = 'waiting'; oc.patience = C.customerPatience; oc.assignedZombie = null;
@@ -136,6 +138,35 @@ var code = G.exportSave();
 ok('export produces a code', typeof code === 'string' && code.indexOf('ZC1') === 0);
 G.coins = 123;
 ok('import restores from code', G.importSave(code) && Math.round(G.coins) === snapshot);
+
+console.log('Mastery, styles, events');
+G.mastery['coffee'] = 300; // tier 3
+var st0 = G.stoves.find(function (s) { return s.applianceType === 'stove'; });
+st0.recipeId = 'coffee'; st0.cooking = true; st0.timer = 0.01; G.readyFood = [];
+for (var mi = 0; mi < 3; mi++) G.update(dt);
+var coffees = G.readyFood.filter(function (p) { return p.recipeId === 'coffee'; });
+ok('mastery boosts batch size (+tier servings)', coffees.length >= 6);
+ok('mastery boosts price', coffees.length > 0 && coffees[0].price > 18);
+
+G.coins = 10000;
+ok('buy + select a floor theme', G.buyStyle('floor', 'checker') && G.floorThemeId === 'checker' && G.ownsStyle('floor', 'checker'));
+
+G.event = { id: 'happy', name: 'Happy Hour', icon: '🍹', timer: 30, payMult: 1.5, spawnMult: 1, infectMult: 1 };
+var ze = G.zombies[0]; ze.carrying = { recipeId: 'coffee', price: 20 }; ze.task = null; ze.state = 'toServe';
+var ec = new ZC.Customer(0, 0); ec.type = 'normal'; ec.patience = 0; G.prestigeMult = 1;
+var ecb = Math.round(G.coins); G.serveCustomer(ze, ec);
+ok('event pay multiplier applies', Math.round(G.coins) - ecb === Math.round(20 * 1.5));
+G.event = null;
+
+ok('achievement auto-unlocks (first serve)', !!G.achievements.first_serve);
+
+console.log('Daily bonus & prestige');
+G.lastDailyDay = 0; G.dailyStreak = 0; var dc = G.coins; G.checkDaily();
+ok('daily bonus grants coins', G.coins > dc && G.dailyReward > 0);
+
+G.level = 12; var pv = G.prestige;
+ok('franchise increments prestige & boosts earnings', G.franchise() && G.prestige === pv + 1 && G.prestigeMult > 1);
+ok('franchise keeps mastery, resets the cafe', G.mastery.coffee >= 300 && G.level === 1 && G.usableCols === C.startUsableCols);
 
 console.log('');
 if (failures) { console.log('FAILED: ' + failures + ' check(s)'); process.exit(1); }

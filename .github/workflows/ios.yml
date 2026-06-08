@@ -47,6 +47,9 @@ jobs:
       - name: Add iOS platform
         run: npx cap add ios
 
+      - name: Generate app icon & splash
+        run: npx @capacitor/assets generate --ios --assetPath assets || echo "asset generation skipped"
+
       - name: Sync Capacitor
         run: npx cap sync ios
 

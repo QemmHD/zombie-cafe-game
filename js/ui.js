@@ -29,6 +29,7 @@
       this.refreshGoalsBadge();
       this.updateExpandBtn();
       this.showAwayEarnings();
+      this.showDaily();
 
       // Start ambient music on the first user gesture (autoplay policy).
       var started = false;
@@ -147,6 +148,15 @@
       });
 
       document.getElementById('btn-expand').addEventListener('click', function () { G.expand(); self.updateExpandBtn(); });
+      document.getElementById('btn-style').addEventListener('click', function () { self.openStyle(); });
+      document.getElementById('style-close').addEventListener('click', function () { document.getElementById('style-modal').classList.add('hidden'); });
+      document.getElementById('btn-franchise').addEventListener('click', function () {
+        if (!G.canFranchise()) { self.toast('Reach level ' + ZC.CONFIG.prestigeLevelReq + ' to franchise.'); return; }
+        if (confirm('Franchise your cafe?\n\nThis RESETS your cafe, coins and level, but grants a PERMANENT +' + Math.round(ZC.CONFIG.prestigeBonus * 100) + '% earnings boost (kept forever). Your achievements, recipe mastery and styles are kept.')) {
+          G.franchise(); self.updateHUD(); self.refreshGoalsBadge();
+        }
+      });
+      document.getElementById('daily-close').addEventListener('click', function () { document.getElementById('daily-modal').classList.add('hidden'); });
 
       document.getElementById('btn-roster').addEventListener('click', function () { self.openRoster(); });
       document.getElementById('roster-close').addEventListener('click', function () { document.getElementById('roster-modal').classList.add('hidden'); });
@@ -247,11 +257,13 @@
       var self = this;
       ZC.RECIPES.filter(function (r) { return r.station === meta.station; }).forEach(function (rec) {
         var locked = rec.unlockLevel > G.level;
+        var tier = ZC.masteryTier(G.mastery[rec.id]);
+        var stars = tier > 0 ? ' ' + new Array(tier + 1).join('⭐') : '';
         var row = document.createElement('button');
         row.className = 'recipe-row' + (locked ? ' locked' : '') + (stove.recipeId === rec.id ? ' selected' : '');
         row.innerHTML =
           '<span class="r-icon">' + rec.icon + '</span>' +
-          '<span class="r-info"><b>' + rec.name + '</b><small>cost 🪙' + rec.cost + ' • ' + rec.servings + ' servings • sells 🪙' + rec.price + ' ea • ' + rec.cookTime + 's</small></span>' +
+          '<span class="r-info"><b>' + rec.name + stars + '</b><small>cost 🪙' + rec.cost + ' • ' + (rec.servings + tier) + ' servings • sells 🪙' + Math.round(rec.price * (1 + 0.1 * tier)) + ' ea • ' + rec.cookTime + 's</small></span>' +
           (locked ? '<span class="r-lock">🔒 Lv ' + rec.unlockLevel + '</span>' : '');
         if (!locked) {
           row.addEventListener('click', function () {
@@ -326,7 +338,50 @@
         row.appendChild(btn);
         list.appendChild(row);
       });
+      // achievements section
+      var alist = document.getElementById('ach-list');
+      alist.innerHTML = '';
+      ZC.ACHIEVEMENTS.forEach(function (a) {
+        var got = !!G.achievements[a.id];
+        var row = document.createElement('div');
+        row.className = 'goal-row' + (got ? '' : ' done');
+        row.innerHTML = '<div class="goal-info"><b>' + (got ? '🏆 ' : '🔒 ') + a.name + '</b>' +
+          '<small>' + a.desc + ' · ' + G.rewardText(a.reward) + '</small></div>' +
+          '<button class="goal-claim" disabled>' + (got ? '✓' : '—') + '</button>';
+        alist.appendChild(row);
+      });
       document.getElementById('goals-modal').classList.remove('hidden');
+    },
+
+    openStyle: function () {
+      var self = this;
+      function fill(listId, kind, themes, currentId) {
+        var list = document.getElementById(listId);
+        list.innerHTML = '';
+        themes.forEach(function (th) {
+          var owned = G.ownsStyle(kind, th.id);
+          var selected = currentId === th.id;
+          var btn = document.createElement('button');
+          btn.className = 'style-swatch' + (selected ? ' selected' : '');
+          var sw = (kind === 'floor') ? ('linear-gradient(135deg,' + th.a + ' 50%,' + th.b + ' 50%)') : ('linear-gradient(135deg,' + th.left + ',' + th.right + ')');
+          btn.innerHTML = '<span class="sw" style="background:' + sw + '"></span>' +
+            '<span class="sw-name">' + th.name + '</span>' +
+            '<span class="sw-cost">' + (owned ? (selected ? 'In use' : 'Owned') : ('🪙' + th.cost)) + '</span>';
+          btn.addEventListener('click', function () { G.buyStyle(kind, th.id); self.openStyle(); self.updateHUD(); });
+          list.appendChild(btn);
+        });
+      }
+      fill('floor-list', 'floor', ZC.FLOOR_THEMES, G.floorThemeId);
+      fill('wall-list', 'wall', ZC.WALL_THEMES, G.wallThemeId);
+      document.getElementById('style-modal').classList.remove('hidden');
+    },
+
+    showDaily: function () {
+      if (!G.dailyReward || G.dailyReward <= 0) return;
+      document.getElementById('daily-text').textContent =
+        'Day ' + G.dailyStreak + ' streak! Here\'s 🪙 ' + G.dailyReward + ' coins — come back tomorrow for more.';
+      document.getElementById('daily-close').textContent = 'Collect 🪙 ' + G.dailyReward;
+      document.getElementById('daily-modal').classList.remove('hidden');
     },
 
     /* ----------------------- While you were away -------------------------- */

@@ -16,6 +16,11 @@
     stats: { served: 0, infected: 0, raids: 0 },
     questsClaimed: {}, held: null, awayEarned: 0,
     selectedZombie: null, autoServe: true,
+    mastery: {}, achievements: {}, ownedStyles: {},
+    floorThemeId: 'wood', wallThemeId: 'dusk',
+    event: null, eventTimer: 0,
+    prestige: 0, prestigeMult: 1,
+    dailyStreak: 0, lastDailyDay: 0, dailyReward: 0,
 
     init: function (canvas) {
       this.canvas = canvas;
@@ -27,6 +32,7 @@
       this.kitchen = { wx: 0.6, wy: 0.6 };   // counter pickup point (back corner)
 
       if (!this.load()) this.newGame();
+      this.checkDaily();
     },
 
     newGame: function () {
@@ -38,8 +44,13 @@
 
       this.questsClaimed = {}; this.held = null; this.awayEarned = 0;
       this.selectedZombie = null; this.autoServe = true;
+      this.mastery = {}; this.event = null; this.eventTimer = CONFIG.eventInterval;
+      this.prestige = 0; this.prestigeMult = 1;
+      this.achievements = {}; this.ownedStyles = { wood: 1, dusk: 1 };
+      this.floorThemeId = 'wood'; this.wallThemeId = 'dusk';
+      this.dailyStreak = 0; this.lastDailyDay = 0; this.dailyReward = 0;
       this.usableCols = CONFIG.startUsableCols; this.usableRows = CONFIG.startUsableRows; this.expansion = 0;
-      this.recomputeEntrance();
+      this.recomputeEntrance(); this.invalidateRoom();
       this.tables.push(new ZC.Table(2, 2));
       this.tables.push(new ZC.Table(4, 2));
       this.tables.push(new ZC.Table(3, 4));
@@ -78,7 +89,23 @@
         var q = ZC.QUESTS[i];
         if (this.questReady(q) && !q._notified) { q._notified = true; if (ZC.ui) ZC.ui.toast('🎯 Goal complete: ' + q.name + ' — claim your reward!'); }
       }
+      this.checkAchievements();
       if (ZC.ui) ZC.ui.refreshGoalsBadge();
+    },
+
+    checkAchievements: function () {
+      for (var i = 0; i < ZC.ACHIEVEMENTS.length; i++) {
+        var a = ZC.ACHIEVEMENTS[i];
+        if (!this.achievements[a.id] && a.done(this)) {
+          this.achievements[a.id] = 1;
+          var r = a.reward || {};
+          if (r.coins) this.coins += r.coins;
+          if (r.toxin) this.toxin += r.toxin;
+          if (r.flesh) this.flesh += r.flesh;
+          if (ZC.sfx) ZC.sfx.level();
+          if (ZC.ui) { ZC.ui.toast('🏆 Achievement: ' + a.name + '  (' + this.rewardText(r) + ')'); ZC.ui.updateHUD(); }
+        }
+      }
     },
     claimQuest: function (id) {
       var q = ZC.questById(id); if (!q || !this.questReady(q)) return false;
@@ -92,6 +119,67 @@
       this.save();
       return true;
     },
+    /* ----------------------- Daily bonus & prestige ----------------------- */
+    dayIndex: function () { return Math.floor(Date.now() / 86400000); },
+    checkDaily: function () {
+      var today = this.dayIndex();
+      if (this.lastDailyDay === today) { this.dailyReward = 0; return; }
+      // consecutive day keeps the streak; a gap resets it
+      this.dailyStreak = (this.lastDailyDay === today - 1) ? (this.dailyStreak + 1) : 1;
+      this.lastDailyDay = today;
+      this.dailyReward = CONFIG.dailyBase * this.dailyStreak;
+      this.coins += this.dailyReward;
+      this.save();
+    },
+
+    canFranchise: function () { return this.level >= CONFIG.prestigeLevelReq; },
+    franchise: function () {
+      if (!this.canFranchise()) { if (ZC.ui) ZC.ui.toast('Reach level ' + CONFIG.prestigeLevelReq + ' to franchise.'); return false; }
+      // preserve meta across the reset
+      var keep = {
+        prestige: this.prestige + 1,
+        achievements: this.achievements,
+        ownedStyles: this.ownedStyles,
+        floorThemeId: this.floorThemeId, wallThemeId: this.wallThemeId,
+        mastery: this.mastery,
+        dailyStreak: this.dailyStreak, lastDailyDay: this.lastDailyDay
+      };
+      this.newGame();
+      this.prestige = keep.prestige;
+      this.prestigeMult = 1 + this.prestige * CONFIG.prestigeBonus;
+      this.achievements = keep.achievements;
+      this.ownedStyles = keep.ownedStyles;
+      this.floorThemeId = keep.floorThemeId; this.wallThemeId = keep.wallThemeId;
+      this.mastery = keep.mastery;
+      this.dailyStreak = keep.dailyStreak; this.lastDailyDay = keep.lastDailyDay;
+      this.invalidateRoom();
+      if (ZC.sfx) ZC.sfx.level();
+      this.checkAchievements();
+      this.save();
+      if (ZC.ui) { ZC.ui.updateHUD(); ZC.ui.toast('🏛️ Franchised! Permanent +' + Math.round(this.prestige * CONFIG.prestigeBonus * 100) + '% earnings.'); }
+      return true;
+    },
+
+    /* ---------------------------- Styling --------------------------------- */
+    buyStyle: function (kind, id) {
+      var theme = kind === 'floor' ? ZC.floorTheme(id) : ZC.wallTheme(id);
+      var key = kind + ':' + id;
+      if (!this.ownedStyles[key] && theme.cost > 0) {
+        if (this.coins < theme.cost) { if (ZC.ui) ZC.ui.toast('Need ' + theme.cost + ' coins.'); if (ZC.sfx) ZC.sfx.error(); return false; }
+        this.coins -= theme.cost; this.ownedStyles[key] = 1;
+        if (ZC.sfx) ZC.sfx.build();
+      }
+      if (kind === 'floor') this.floorThemeId = id; else this.wallThemeId = id;
+      this.invalidateRoom();
+      this.save();
+      if (ZC.ui) ZC.ui.updateHUD();
+      return true;
+    },
+    ownsStyle: function (kind, id) {
+      var theme = kind === 'floor' ? ZC.floorTheme(id) : ZC.wallTheme(id);
+      return theme.cost === 0 || !!this.ownedStyles[kind + ':' + id];
+    },
+
     rewardText: function (r) {
       var p = [];
       if (r.coins) p.push('🪙' + r.coins);
@@ -212,6 +300,7 @@
       this.dispatchZombies();
       this.updateZombies(dt);
       this.updateRaid(dt);
+      this.updateEvents(dt);
       this.updateFloaters(dt);
       this.autosaveTimer += dt;
       if (this.autosaveTimer >= CONFIG.autosaveInterval) { this.autosaveTimer = 0; this.save(); }
@@ -224,6 +313,7 @@
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0) {
         var interval = util.clamp(CONFIG.spawnIntervalBase - this.appeal() * 0.05, CONFIG.spawnIntervalMin, CONFIG.spawnIntervalBase);
+        if (this.event && this.event.spawnMult) interval *= this.event.spawnMult;
         this.spawnTimer = interval * util.rand(0.7, 1.3);
         if (this.freeTable()) this.spawnCustomer();
       }
@@ -260,8 +350,11 @@
           st.timer -= dt * rate;
           if (st.timer <= 0) {
             st.cooking = false;
-            for (var s = 0; s < rec.servings; s++) this.readyFood.push({ recipeId: rec.id, price: rec.price });
-            this.floater(st.wx, st.wy, '+' + rec.servings + ' ' + rec.icon, '#2ecc71');
+            var tier = ZC.masteryTier(this.mastery[rec.id]);
+            var servings = rec.servings + tier;
+            var price = Math.round(rec.price * (1 + 0.1 * tier));
+            for (var s = 0; s < servings; s++) this.readyFood.push({ recipeId: rec.id, price: price });
+            this.floater(st.wx, st.wy, '+' + servings + ' ' + rec.icon, '#2ecc71');
           }
         } else if (st.auto && rec.unlockLevel <= this.level && this.coins >= rec.cost && this.readyFood.length < this.tables.length + 2) {
           this.coins -= rec.cost; st.cooking = true; st.timer = rec.cookTime;
@@ -383,11 +476,14 @@
       var portion = z.carrying || (z.task && z.task.portion);
       var pay = portion ? portion.price : 10;
       var meta = ZC.CUSTOMER_TYPES[c.type] || ZC.CUSTOMER_TYPES.normal;
-      pay = Math.round(pay * (meta.pay || 1));
+      pay = pay * (meta.pay || 1) * this.prestigeMult;
+      if (this.event && this.event.payMult) pay *= this.event.payMult;
+      pay = Math.round(pay);
       // happy customers (served with patience to spare) leave a tip
       var tip = 0;
       if (c.patience > CONFIG.customerPatience * 0.55) tip = Math.round(pay * 0.15);
       pay += tip;
+      if (portion) this.mastery[portion.recipeId] = (this.mastery[portion.recipeId] || 0) + 1;
       z.carrying = null; z.task = null;
       z.energy -= CONFIG.serveEnergyCost; z.state = 'returning';
       c.served = true; c.assignedZombie = null; c.state = 'eating'; c.eatTimer = CONFIG.eatTime;
@@ -414,10 +510,11 @@
 
     /* ------------------------------ Infect -------------------------------- */
     infectCustomer: function (c) {
+      var cost = Math.round(CONFIG.infectCost * (this.event && this.event.infectMult ? this.event.infectMult : 1));
       if (this.zombies.length >= this.maxZombies()) { if (ZC.ui) ZC.ui.toast('Zombie cap reached — add more tables/level up.'); if (ZC.sfx) ZC.sfx.error(); return false; }
-      if (this.toxin < CONFIG.infectCost) { if (ZC.ui) ZC.ui.toast('Not enough toxin (need ' + CONFIG.infectCost + ').'); if (ZC.sfx) ZC.sfx.error(); return false; }
+      if (this.toxin < cost) { if (ZC.ui) ZC.ui.toast('Not enough toxin (need ' + cost + ').'); if (ZC.sfx) ZC.sfx.error(); return false; }
       if (c.state !== 'waiting' && c.state !== 'eating') return false;
-      this.toxin -= CONFIG.infectCost;
+      this.toxin -= cost;
       if (c.table) c.table.customer = null;
       if (c.assignedZombie) this.abortTask(c.assignedZombie);
       var idx = this.customers.indexOf(c); if (idx !== -1) this.customers.splice(idx, 1);
@@ -475,6 +572,29 @@
         if (ZC.sfx) ZC.sfx.coin();
         this.checkQuests();
         if (ZC.ui) ZC.ui.toast('Raid returned! +' + coins + ' coins, +' + flesh + ' flesh, +' + toxin + ' toxin');
+      }
+    },
+
+    // Random limited-time events that liven up the cafe.
+    updateEvents: function (dt) {
+      if (this.event) {
+        this.event.timer -= dt;
+        if (this.event.timer <= 0) {
+          if (ZC.ui) ZC.ui.toast(this.event.name + ' has ended.');
+          this.event = null;
+          this.eventTimer = CONFIG.eventInterval;
+        }
+        return;
+      }
+      this.eventTimer -= dt;
+      if (this.eventTimer <= 0) {
+        this.eventTimer = CONFIG.eventInterval;
+        if (Math.random() < CONFIG.eventChance) {
+          var def = util.pick(ZC.EVENTS);
+          this.event = { id: def.id, name: def.name, icon: def.icon, desc: def.desc, timer: CONFIG.eventDuration, payMult: def.payMult || 1, spawnMult: def.spawnMult || 1, infectMult: def.infectMult || 1 };
+          if (ZC.sfx) ZC.sfx.level();
+          if (ZC.ui) ZC.ui.toast(def.icon + ' ' + def.name + ' — ' + def.desc);
+        }
       }
     },
 
@@ -568,6 +688,11 @@
         ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
         ctx.fillText('🧟 Raiding the city... ' + Math.ceil(this.raid.timer) + 's', W / 2, 26);
       }
+      if (this.event) {
+        ctx.fillStyle = 'rgba(155,89,182,0.85)'; ZC.roundRect(ctx, W / 2 - 140, 8, 280, 26, 8); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText(this.event.icon + ' ' + this.event.name + ' — ' + Math.ceil(this.event.timer) + 's', W / 2, 25);
+      }
     },
 
     drawLighting: function (ctx, W, H) {
@@ -597,17 +722,19 @@
 
     drawRoom: function (ctx) {
       var C = CONFIG;
+      var wall = ZC.wallTheme(this.wallThemeId);
+      var floor = ZC.floorTheme(this.floorThemeId);
       // far back walls (left + right) meeting at top corner
       var top = iso.project(0, 0);
       var rightEnd = iso.project(C.cols, 0);
       var leftEnd = iso.project(0, C.rows);
       // right-back wall
-      ctx.fillStyle = '#473a4a';
+      ctx.fillStyle = wall.right;
       ctx.beginPath();
       ctx.moveTo(top.x, top.y); ctx.lineTo(rightEnd.x, rightEnd.y);
       ctx.lineTo(rightEnd.x, rightEnd.y - C.wallH); ctx.lineTo(top.x, top.y - C.wallH); ctx.closePath(); ctx.fill();
       // left-back wall
-      ctx.fillStyle = '#3b3140';
+      ctx.fillStyle = wall.left;
       ctx.beginPath();
       ctx.moveTo(top.x, top.y); ctx.lineTo(leftEnd.x, leftEnd.y);
       ctx.lineTo(leftEnd.x, leftEnd.y - C.wallH); ctx.lineTo(top.x, top.y - C.wallH); ctx.closePath(); ctx.fill();
@@ -623,7 +750,7 @@
         for (var c = 0; c < C.cols; c++) {
           var a = iso.project(c, r), b = iso.project(c + 1, r), d = iso.project(c + 1, r + 1), e = iso.project(c, r + 1);
           var usable = this.inUsable(c, r);
-          ctx.fillStyle = usable ? (((c + r) % 2 === 0) ? '#5a4636' : '#4b3a2d') : '#26211c';
+          ctx.fillStyle = usable ? (((c + r) % 2 === 0) ? floor.a : floor.b) : '#26211c';
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(d.x, d.y); ctx.lineTo(e.x, e.y); ctx.closePath(); ctx.fill();
           if (!usable) { // rubble dots on un-renovated floor
             ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -811,6 +938,9 @@
         coins: this.coins, toxin: this.toxin, flesh: this.flesh, xp: this.xp, level: this.level, stats: this.stats,
         questsClaimed: this.questsClaimed, lastSaved: Date.now(), autoServe: this.autoServe,
         usableCols: this.usableCols, usableRows: this.usableRows, expansion: this.expansion,
+        mastery: this.mastery, achievements: this.achievements, ownedStyles: this.ownedStyles,
+        floorThemeId: this.floorThemeId, wallThemeId: this.wallThemeId,
+        prestige: this.prestige, dailyStreak: this.dailyStreak, lastDailyDay: this.lastDailyDay,
         tables: this.tables.map(function (t) { return { c: t.col, r: t.row }; }),
         stoves: this.stoves.map(function (s) { return { c: s.col, r: s.row, recipe: s.recipeId, auto: s.auto, t: s.applianceType }; }),
         decor: this.decor.map(function (d) { return { c: d.col, r: d.row, item: d.itemId }; }),
@@ -834,6 +964,17 @@
         this.expansion = Math.max(CONFIG.cols - CONFIG.startUsableCols, CONFIG.rows - CONFIG.startUsableRows);
       }
       this.recomputeEntrance();
+      // meta / customization / progression
+      this.mastery = d.mastery || {};
+      this.achievements = d.achievements || {};
+      this.ownedStyles = d.ownedStyles || { wood: 1, dusk: 1 };
+      this.floorThemeId = d.floorThemeId || 'wood';
+      this.wallThemeId = d.wallThemeId || 'dusk';
+      this.prestige = d.prestige || 0;
+      this.prestigeMult = 1 + this.prestige * CONFIG.prestigeBonus;
+      this.dailyStreak = d.dailyStreak || 0;
+      this.lastDailyDay = d.lastDailyDay || 0;
+      this.event = null; this.eventTimer = CONFIG.eventInterval;
       this.invalidateRoom();
       this.tables = (d.tables || []).map(function (t) { return new ZC.Table(t.c, t.r); });
       this.stoves = (d.stoves || []).map(function (s) { var st = new ZC.Stove(s.c, s.r, s.t); st.recipeId = s.recipe || st.recipeId; st.auto = s.auto !== false; return st; });
