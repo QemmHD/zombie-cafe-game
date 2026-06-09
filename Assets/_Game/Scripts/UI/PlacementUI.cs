@@ -74,11 +74,11 @@ namespace ZombieCafe.UI
             world.z = 0f;
 
             var cell = GridManager.Instance.WorldToGrid(world);
-            bool canPlace = GridManager.Instance.CanPlace(cell, _furniture.Size);
+            bool canPlace = GridManager.Instance.CanPlace(cell.x, cell.y, _furniture.Size);
 
             if (_ghost != null)
             {
-                _ghost.transform.position = GridManager.Instance.GridToWorld(cell);
+                _ghost.transform.position = GridManager.Instance.GridToWorld(cell.x, cell.y);
                 var sr = _ghost.GetComponent<SpriteRenderer>();
                 if (sr != null) sr.color = canPlace
                     ? new Color(0f, 1f, 0f, 0.5f)

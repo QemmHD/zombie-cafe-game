@@ -66,6 +66,15 @@ namespace ZombieCafe.Cafe
             return true;
         }
 
+        // Places an already-instantiated GameObject onto the grid (used by PlacementSession).
+        public bool TryPlaceExisting(GameObject existing, int x, int y, Vector2Int size)
+        {
+            if (!CanPlace(x, y, size)) return false;
+            existing.transform.position = GridToWorld(x, y);
+            MarkOccupied(x, y, size, existing);
+            return true;
+        }
+
         public void Remove(int x, int y)
         {
             if (!_placements.TryGetValue(new Vector2Int(x, y), out var go)) return;

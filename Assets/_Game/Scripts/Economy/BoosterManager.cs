@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ZombieCafe.Core;
 using ZombieCafe.Data;
 
 namespace ZombieCafe.Economy
@@ -30,7 +31,7 @@ namespace ZombieCafe.Economy
                 TimeRemaining    = 0f;
                 ActiveMultiplier = 1f;
                 OnBoosterExpired?.Invoke();
-                EventBus.Publish(new Core.NotificationEvent { Message = "Booster expired!", Duration = 2f });
+                EventBus.Publish(new NotificationEvent { Message = "Booster expired!", Duration = 2f });
             }
         }
 
@@ -48,7 +49,7 @@ namespace ZombieCafe.Economy
             }
 
             OnBoosterActivated?.Invoke(ActiveMultiplier);
-            EventBus.Publish(new Core.NotificationEvent { Message = $"{booster.DisplayName} active! {booster.CookSpeedMultiplier}x speed", Duration = 3f });
+            EventBus.Publish(new NotificationEvent { Message = $"{booster.DisplayName} active! {booster.CookSpeedMultiplier}x speed", Duration = 3f });
             return true;
         }
 

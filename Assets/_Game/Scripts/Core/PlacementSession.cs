@@ -1,5 +1,6 @@
 using UnityEngine;
 using ZombieCafe.Cafe;
+using ZombieCafe.Data;
 
 namespace ZombieCafe.Core
 {
@@ -23,9 +24,9 @@ namespace ZombieCafe.Core
             if (!IsActive) return false;
 
             var cell = new Vector2Int(gridX, gridY);
-            if (!GridManager.Instance.CanPlace(cell, Furniture.Size)) return false;
+            if (!GridManager.Instance.CanPlace(cell.x, cell.y, Furniture.Size)) return false;
 
-            GridManager.Instance.TryPlace(cell, Furniture.Size, Item.gameObject);
+            GridManager.Instance.TryPlaceExisting(Item.gameObject, cell.x, cell.y, Furniture.Size);
             Item.GridPosition = cell;
 
             IsActive = false;

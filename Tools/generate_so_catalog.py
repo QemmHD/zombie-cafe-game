@@ -267,7 +267,7 @@ DISH_CATALOG = [
     ("dish_turbo_temporal",   "Turbo Temporal",       10,   35,  0, 6),
     ("dish_hyper_hypothal",   "Hyper Hypothal",        5,   20,  0, 4),
     # Filling up to 320 with numbered variants
-] + [(f"dish_special_{i:03d}", f"Special Dish {i:03d}", 300+i*10, 90+i*3, max(0,i//20), max(1,i//15)) for i in range(1, 261)]
+] + [(f"dish_special_{i:03d}", f"Special Dish {i:03d}", 300+i*10, 90+i*3, max(0,i//20), max(1,i//15)) for i in range(1, 262)]
 
 # Trim to exactly 320
 DISH_CATALOG = DISH_CATALOG[:320]
