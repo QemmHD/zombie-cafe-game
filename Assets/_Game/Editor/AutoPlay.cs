@@ -4,16 +4,13 @@ using UnityEngine;
 
 namespace ZombieCafe.Editor
 {
-    // Automatically sets up scenes and enters Play mode once per editor session.
-    // Fires on the first domain reload after the editor opens.
+    // Re-runs scene setup and enters Play mode on every domain reload.
+    // Skips if already playing or still compiling.
     [InitializeOnLoad]
     public static class AutoPlay
     {
-        const string SESSION_KEY = "ZombieCafe.AutoPlayDone";
-
         static AutoPlay()
         {
-            if (SessionState.GetBool(SESSION_KEY, false)) return;
             EditorApplication.delayCall += Run;
         }
 
@@ -21,14 +18,7 @@ namespace ZombieCafe.Editor
         {
             EditorApplication.delayCall -= Run;
 
-            // Wait out any in-progress compilation
-            if (EditorApplication.isCompiling)
-            {
-                EditorApplication.delayCall += Run;
-                return;
-            }
-
-            SessionState.SetBool(SESSION_KEY, true);
+            if (EditorApplication.isCompiling || EditorApplication.isPlaying) return;
 
             try
             {
@@ -36,7 +26,7 @@ namespace ZombieCafe.Editor
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"[AutoPlay] Scene setup failed: {e.Message}. Entering Play anyway.");
+                Debug.LogWarning($"[AutoPlay] Scene setup error: {e.Message}");
             }
 
             EditorApplication.isPlaying = true;

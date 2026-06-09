@@ -50,6 +50,7 @@ namespace ZombieCafe.UI
 
         IEnumerator ShowToast(string message, float duration)
         {
+            if (ToastPrefab == null) yield break;   // no prefab wired — GameUIRoot handles toasts
             var go  = Instantiate(ToastPrefab, ToastContainer);
             var tmp = go.GetComponentInChildren<TextMeshProUGUI>();
             var cg  = go.GetComponent<CanvasGroup>();

@@ -89,7 +89,19 @@ namespace ZombieCafe.Editor
             // ── Combat ─────────────────────────────────────────────────────
             AddManager<ZombieCafe.Combat.CafeDefenseManager>(scene, "CafeDefenseManager");
 
-            // ── UI Canvas (empty root — wire prefabs in editor) ────────────
+            // ── Input handler ──────────────────────────────────────────────
+            AddManager<ZombieCafe.Input.CafeInputHandler>(scene, "CafeInputHandler");
+
+            // ── Grid floor renderer ────────────────────────────────────────
+            AddManager<ZombieCafe.Cafe.GridFloorRenderer>(scene, "GridFloorRenderer");
+
+            // ── Starter content (first-run zombie + stove) ────────────────
+            AddManager<ZombieCafe.Core.StarterContent>(scene, "StarterContent");
+
+            // ── Runtime UI (builds all UI in Play mode) ───────────────────
+            AddManager<ZombieCafe.UI.GameUIRoot>(scene, "GameUIRoot");
+
+            // ── UI Canvas (notification manager — null-safe without prefab) ──
             var canvas = new GameObject("UICanvas");
             canvas.AddComponent<ZombieCafe.UI.NotificationManager>();
             SceneManager.MoveGameObjectToScene(canvas, scene);
