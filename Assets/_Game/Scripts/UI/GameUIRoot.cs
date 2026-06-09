@@ -645,9 +645,10 @@ namespace ZombieCafe.UI
         void Anchor(object t, float ax, float ay, float bx, float by, Vector2 oMin, Vector2 oMax)
         {
             RectTransform rt = null;
-            if (t is RectTransform rr) rt = rr;
-            else if (t is Transform tr) rt = tr as RectTransform ?? tr.GetComponent<RectTransform>();
-            else if (t is Component c)  rt = c.GetComponent<RectTransform>();
+            if (t is RectTransform rr)        rt = rr;
+            else if (t is GameObject g)       rt = g.GetComponent<RectTransform>();
+            else if (t is Transform tr)       rt = tr as RectTransform ?? tr.GetComponent<RectTransform>();
+            else if (t is Component c)        rt = c.GetComponent<RectTransform>();
             if (rt == null) return;
             rt.anchorMin = new Vector2(ax, ay);
             rt.anchorMax = new Vector2(bx, by);
