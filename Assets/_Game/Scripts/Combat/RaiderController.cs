@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ZombieCafe.Cafe;
 using ZombieCafe.Core;
+using ZombieCafe.Economy;
 using ZombieCafe.Zombies;
 
 namespace ZombieCafe.Combat
