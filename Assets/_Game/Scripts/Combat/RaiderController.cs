@@ -112,10 +112,11 @@ namespace ZombieCafe.Combat
                     int stolen = _targetStation.CurrentDish != null
                         ? Mathf.RoundToInt(_targetStation.CurrentDish.CoinReward * 0.5f)
                         : CoinStealAmt;
-                    // We don't call CollectDish — raider just takes the coins
+                    int actualStolen = Mathf.Min(stolen, currency.Coins);
+                    if (actualStolen > 0) currency.SpendCoins(actualStolen);
                     EventBus.Publish(new NotificationEvent
                     {
-                        Message  = $"Raider stole {stolen} coins!",
+                        Message  = $"Raider stole {actualStolen} coins!",
                         Duration = 2f
                     });
                 }
