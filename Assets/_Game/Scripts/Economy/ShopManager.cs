@@ -89,7 +89,7 @@ namespace ZombieCafe.Economy
             var go   = new UnityEngine.GameObject(data.FurnitureId);
             var item = go.AddComponent<PlaceableItem>();
             item.ItemId   = data.FurnitureId;
-            item.ItemType = data.FurnitureType.ToString().ToLower();
+            item.ItemType = data.Type.ToString().ToLower();
             item.Size     = data.Size;
             return item;
         }

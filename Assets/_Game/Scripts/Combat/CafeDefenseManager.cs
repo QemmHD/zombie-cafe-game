@@ -22,7 +22,7 @@ namespace ZombieCafe.Combat
         public Transform[] RaiderSpawnPoints;
 
         ZombieInventory _inventory;
-        bool            _waveActive;
+        // _waveActive removed — wave sequencing is handled by coroutine flow
 
         void Start()
         {
@@ -45,7 +45,6 @@ namespace ZombieCafe.Combat
         {
             if (RaiderPrefab == null || RaiderSpawnPoints.Length == 0) yield break;
 
-            _waveActive = true;
             int cafeLevel   = SaveSystem.Current.CafeLevel;
             int raiderCount = BaseRaiderCount + (cafeLevel - 1);
 
@@ -74,7 +73,6 @@ namespace ZombieCafe.Combat
             while (spawned.Exists(r => r != null && !r.GetComponent<CombatUnit>().IsDead))
                 yield return new WaitForSeconds(0.5f);
 
-            _waveActive = false;
             EventBus.Publish(new NotificationEvent { Message = "Raiders repelled!", Duration = 3f });
 
             // Award defence bonus
