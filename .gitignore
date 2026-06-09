@@ -1,0 +1,56 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Uu]serSettings/
+
+# Unity asset meta files for ignored assets
+*.meta
+
+# Unity cache
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Visual Studio
+.vs/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── Extracted original assets (local placeholders only, NOT for distribution) ──
+# These are Capcom-owned assets extracted from the IPA for dev reference.
+# They must NEVER be committed or distributed.
+Assets/Sprites/Atlases/
+Assets/Sprites/Sliced/
+Assets/Audio/Music/*.caf
+Assets/Audio/SFX/*.caf
+Assets/Audio/Music/*.mp3
+Assets/Audio/SFX/*.mp3
