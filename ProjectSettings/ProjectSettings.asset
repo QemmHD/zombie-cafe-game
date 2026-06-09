@@ -176,3 +176,4 @@ PlayerSettings:
   hmiLoadingImage: {fileID: 0}
   m_shaderPrecisionModel: 0
   m_IncrementalIl2cppBuild: 0
+  activeInputHandler: 2
