@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -5,12 +6,9 @@ using UnityEngine.SceneManagement;
 
 namespace ZombieCafe.Editor
 {
-    /// <summary>
-    /// One-click setup: creates Boot and Main scenes, adds all manager GameObjects,
-    /// registers them in Build Settings, and saves everything.
-    ///
-    /// Menu: ZombieCafe > Setup Scenes (run once after first Unity import)
-    /// </summary>
+    // Menu: ZombieCafe > Setup Scenes
+    // Run once after opening the project for the first time.
+    // Populates Boot.unity and Main.unity with all required manager GameObjects.
     public static class SceneSetupTool
     {
         const string BOOT_PATH = "Assets/_Game/Scenes/Boot.unity";
@@ -19,96 +17,99 @@ namespace ZombieCafe.Editor
         [MenuItem("ZombieCafe/Setup Scenes")]
         public static void SetupScenes()
         {
-            // Ensure asset folders exist
-            EnsureFolder("Assets/_Game/Scenes");
-            EnsureFolder("Assets/_Game/Resources");
+            if (!EditorUtility.DisplayDialog("Setup Scenes",
+                    "This will populate Boot.unity and Main.unity with manager GameObjects.\n" +
+                    "Run once on a fresh project. Continue?", "Yes", "Cancel"))
+                return;
 
-            SetupBootScene();
-            SetupMainScene();
-            RegisterBuildSettings();
+            SetupBoot();
+            SetupMain();
+            SetupBuildSettings();
 
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            Debug.Log("[SceneSetupTool] Done! Open Boot or Main scene and press Play.");
+            EditorUtility.DisplayDialog("Done",
+                "Boot and Main scenes are set up.\n" +
+                "Next: run  python Tools/generate_so_catalog.py  then press Play.",
+                "OK");
         }
 
         // ── Boot scene ────────────────────────────────────────────────────────
 
-        static void SetupBootScene()
+        static void SetupBoot()
         {
-            var scene = CreateOrLoadScene(BOOT_PATH);
+            var scene = EditorSceneManager.OpenScene(BOOT_PATH, OpenSceneMode.Single);
 
-            // Clear any existing GameObjects
+            // Remove everything that already exists (idempotent re-run)
             foreach (var go in scene.GetRootGameObjects())
                 Object.DestroyImmediate(go);
 
             // BootstrapManager
-            AddComponent<ZombieCafe.Core.BootstrapManager>(scene, "Bootstrap");
+            var boot = new GameObject("BootstrapManager");
+            boot.AddComponent<ZombieCafe.Core.BootstrapManager>();
 
+            EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, BOOT_PATH);
-            Debug.Log("[SceneSetupTool] Boot scene saved.");
+            Debug.Log("[SceneSetup] Boot.unity saved.");
         }
 
         // ── Main scene ────────────────────────────────────────────────────────
 
-        static void SetupMainScene()
+        static void SetupMain()
         {
-            var scene = CreateOrLoadScene(MAIN_PATH);
+            var scene = EditorSceneManager.OpenScene(MAIN_PATH, OpenSceneMode.Single);
 
             foreach (var go in scene.GetRootGameObjects())
                 Object.DestroyImmediate(go);
 
-            // Camera
-            var camGO = new GameObject("Main Camera");
-            SceneManager.MoveGameObjectToScene(camGO, scene);
-            var cam = camGO.AddComponent<Camera>();
-            cam.orthographic = true;
-            cam.orthographicSize = 5f;
-            cam.backgroundColor = new Color(0.1f, 0.12f, 0.1f);
-            cam.transform.position = new Vector3(0, 0, -10);
-            camGO.tag = "MainCamera";
-            camGO.AddComponent<AudioListener>();
+            // ── Core managers ──────────────────────────────────────────────
+            AddManager<ZombieCafe.Core.GameManager>(scene,        "GameManager");
 
-            // --- Core managers ---
-            AddComponent<ZombieCafe.Core.GameManager>(scene,      "GameManager");
-            AddComponent<ZombieCafe.Core.EventBus>(scene,         "EventBus");       // static class but harmless empty GO
-            AddComponent<ZombieCafe.Core.SaveSystem>(scene,       "SaveSystem");
+            // ── Cafe ───────────────────────────────────────────────────────
+            AddManager<ZombieCafe.Cafe.CafeManager>(scene,        "CafeManager");
+            AddManager<ZombieCafe.Cafe.GridManager>(scene,        "GridManager");
+            AddManager<ZombieCafe.Cafe.CafeExpansion>(scene,      "CafeExpansion");
 
-            // --- Cafe systems ---
-            AddComponent<ZombieCafe.Cafe.GridManager>(scene,      "GridManager");
+            // ── Economy ────────────────────────────────────────────────────
+            AddManager<ZombieCafe.Economy.CurrencyManager>(scene, "CurrencyManager");
+            AddManager<ZombieCafe.Economy.ShopManager>(scene,     "ShopManager");
+            AddManager<ZombieCafe.Economy.BoosterManager>(scene,  "BoosterManager");
 
-            // --- Economy ---
-            AddComponent<ZombieCafe.Economy.CurrencyManager>(scene,   "CurrencyManager");
-            AddComponent<ZombieCafe.Economy.ZombieRoster>(scene,      "ZombieRoster");
-            AddComponent<ZombieCafe.Economy.MeatLocker>(scene,        "MeatLocker");
-            AddComponent<ZombieCafe.Economy.CafeExpansion>(scene,     "CafeExpansion");
-            AddComponent<ZombieCafe.Economy.BoosterManager>(scene,    "BoosterManager");
-            AddComponent<ZombieCafe.Economy.TombstoneManager>(scene,  "TombstoneManager");
-            AddComponent<ZombieCafe.Economy.ShopManager>(scene,       "ShopManager");
+            // ── Zombies ────────────────────────────────────────────────────
+            AddManager<ZombieCafe.Zombies.ZombieInventory>(scene, "ZombieInventory");
+            AddManager<ZombieCafe.Zombies.MeatLocker>(scene,      "MeatLocker");
 
-            // --- Combat ---
-            AddComponent<ZombieCafe.Combat.CafeDefenseManager>(scene, "CafeDefenseManager");
+            // ── Combat ─────────────────────────────────────────────────────
+            AddManager<ZombieCafe.Combat.CafeDefenseManager>(scene, "CafeDefenseManager");
 
-            // --- Input ---
-            AddComponent<ZombieCafe.Input.CafeInputHandler>(scene,    "CafeInputHandler");
+            // ── UI Canvas (empty root — wire prefabs in editor) ────────────
+            var canvas = new GameObject("UICanvas");
+            canvas.AddComponent<ZombieCafe.UI.NotificationManager>();
+            SceneManager.MoveGameObjectToScene(canvas, scene);
 
-            // --- UI root ---
-            var uiRoot = new GameObject("UI");
-            SceneManager.MoveGameObjectToScene(uiRoot, scene);
+            // ── Camera ─────────────────────────────────────────────────────
+            var cam = new GameObject("Main Camera");
+            var camComp = cam.AddComponent<Camera>();
+            camComp.orthographic     = true;
+            camComp.orthographicSize = 5f;
+            camComp.backgroundColor  = new Color(0.1f, 0.08f, 0.08f);
+            cam.tag = "MainCamera";
+            SceneManager.MoveGameObjectToScene(cam, scene);
 
-            AddComponentUnderParent<ZombieCafe.UI.NotificationManager>(uiRoot, "NotificationManager");
-            AddComponentUnderParent<ZombieCafe.UI.ShopUI>(uiRoot,             "ShopUI");
-            AddComponentUnderParent<ZombieCafe.UI.MeatLockerUI>(uiRoot,       "MeatLockerUI");
-            AddComponentUnderParent<ZombieCafe.UI.CafeExpansionUI>(uiRoot,    "CafeExpansionUI");
-            AddComponentUnderParent<ZombieCafe.UI.PlacementUI>(uiRoot,        "PlacementUI");
+            // ── Directional light ──────────────────────────────────────────
+            var lightGo = new GameObject("Directional Light");
+            var light   = lightGo.AddComponent<Light>();
+            light.type      = LightType.Directional;
+            light.intensity = 1f;
+            lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            SceneManager.MoveGameObjectToScene(lightGo, scene);
 
+            EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, MAIN_PATH);
-            Debug.Log("[SceneSetupTool] Main scene saved.");
+            Debug.Log("[SceneSetup] Main.unity saved.");
         }
 
-        // ── Build Settings ────────────────────────────────────────────────────
+        // ── Build settings ────────────────────────────────────────────────────
 
-        static void RegisterBuildSettings()
+        static void SetupBuildSettings()
         {
             var scenes = new[]
             {
@@ -116,51 +117,24 @@ namespace ZombieCafe.Editor
                 new EditorBuildSettingsScene(MAIN_PATH, true),
             };
             EditorBuildSettings.scenes = scenes;
-            Debug.Log("[SceneSetupTool] Build Settings updated: Boot (index 0), Main (index 1).");
+            Debug.Log("[SceneSetup] Build settings updated: Boot(0), Main(1).");
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // ── Helper ────────────────────────────────────────────────────────────
 
-        static Scene CreateOrLoadScene(string path)
+        static void AddManager<T>(Scene scene, string name) where T : Component
         {
-            // If the scene asset exists, open it; otherwise create new
-            var asset = AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
-            if (asset != null)
-                return EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
-
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            EditorSceneManager.SaveScene(scene, path);
-            AssetDatabase.ImportAsset(path);
-            return scene;
-        }
-
-        static GameObject AddComponent<T>(Scene scene, string name) where T : Component
-        {
+            // Check if type is actually available — if not, skip gracefully
             var go = new GameObject(name);
-            SceneManager.MoveGameObjectToScene(go, scene);
-            go.AddComponent<T>();
-            return go;
-        }
-
-        static GameObject AddComponentUnderParent<T>(GameObject parent, string name) where T : Component
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent.transform, false);
-            go.AddComponent<T>();
-            return go;
-        }
-
-        static void EnsureFolder(string path)
-        {
-            var parts = path.Split('/');
-            var current = parts[0];
-            for (int i = 1; i < parts.Length; i++)
+            try { go.AddComponent<T>(); }
+            catch
             {
-                var next = current + "/" + parts[i];
-                if (!AssetDatabase.IsValidFolder(next))
-                    AssetDatabase.CreateFolder(current, parts[i]);
-                current = next;
+                Debug.LogWarning($"[SceneSetup] Could not add {typeof(T).Name} — skipping.");
+                Object.DestroyImmediate(go);
+                return;
             }
+            SceneManager.MoveGameObjectToScene(go, scene);
         }
     }
 }
+#endif
