@@ -75,7 +75,7 @@ namespace ZombieCafe.Editor
 
             // ── Zombies ────────────────────────────────────────────────────
             AddManager<ZombieCafe.Zombies.ZombieInventory>(scene, "ZombieInventory");
-            AddManager<ZombieCafe.Zombies.MeatLocker>(scene,      "MeatLocker");
+            AddManager<ZombieCafe.Cafe.MeatLocker>(scene,         "MeatLocker");
 
             // ── Combat ─────────────────────────────────────────────────────
             AddManager<ZombieCafe.Combat.CafeDefenseManager>(scene, "CafeDefenseManager");
