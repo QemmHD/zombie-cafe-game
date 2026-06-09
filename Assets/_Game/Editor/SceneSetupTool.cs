@@ -32,6 +32,15 @@ namespace ZombieCafe.Editor
                 "OK");
         }
 
+        // Silent version — no dialogs, safe to call from automation.
+        public static void SetupScenesQuiet()
+        {
+            SetupBoot();
+            SetupMain();
+            SetupBuildSettings();
+            Debug.Log("[SceneSetup] Silent setup complete.");
+        }
+
         // ── Boot scene ────────────────────────────────────────────────────────
 
         static void SetupBoot()
