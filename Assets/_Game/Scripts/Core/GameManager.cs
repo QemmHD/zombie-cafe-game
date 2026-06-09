@@ -1,4 +1,9 @@
 using UnityEngine;
+using ZombieCafe.Audio;
+using ZombieCafe.Cafe;
+using ZombieCafe.Combat;
+using ZombieCafe.Economy;
+using ZombieCafe.Zombies;
 
 namespace ZombieCafe.Core
 {
