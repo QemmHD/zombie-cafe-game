@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffffffffffffffffffffffffffffffff, type: 3}
+  m_Name: pet_spider
+  m_EditorClassIdentifier:
+  PetId: pet_spider
+  DisplayName: Spider
+  Ability: 1
+  AbilityCooldown: 3.5
+  HabitatSize: {x: 1, y: 1}
+  BaseHP: 55
+  BaseAttack: 22
+  Animator: null
