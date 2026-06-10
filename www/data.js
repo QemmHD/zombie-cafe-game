@@ -40,6 +40,7 @@ window.SHOP = [
   { id: 'stove',   cat: 'Kitchen',   kind: 'stove',  name: 'Cursed Stove',  emoji: '🔥', cur: 'coin',  base: 150,  grow: 1.8, sell: 60, store: true, desc: 'Another station to cook on.' },
   { id: 'counter', cat: 'Kitchen',   kind: 'decor',  name: 'Prep Counter',  emoji: '🍴', art: 'counter', cur: 'coin', base: 220, grow: 1.3, ambiance: 7, sell: 80, store: true, desc: '+7 ambiance. Grimy prep station.' },
   { id: 'sink',    cat: 'Kitchen',   kind: 'decor',  name: 'Rusty Sink',    emoji: '🚰', art: 'sink',    cur: 'coin', base: 260, grow: 1.3, ambiance: 8, sell: 90, store: true, desc: '+8 ambiance.' },
+  { id: 'fridge',  cat: 'Kitchen',   kind: 'decor',  name: 'Grimy Fridge',  emoji: '🧊', art: 'fridge',  cur: 'coin', base: 340, grow: 1.3, ambiance: 6, sell: 120, store: true, desc: '+6 ambiance. Stained cold storage.' },
 
   // --- Staff ---
   { id: 'zombie',  cat: 'Staff',     kind: 'zombie', name: 'Hire Zombie',   emoji: '🧟', cur: 'toxin', base: 3,    grow: 1.5, desc: 'Staff cook, serve & clean. Goes to the Meat Locker if your active slots are full.' },

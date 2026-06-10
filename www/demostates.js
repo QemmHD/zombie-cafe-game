@@ -42,7 +42,7 @@
 
     busy: function (w) {
       w.coins = 5000; w.toxin = 20;
-      w.buy('table'); w.buy('table'); w.buy('plant'); w.buy('lamp'); w.buy('counter');
+      w.buy('table'); w.buy('table'); w.buy('plant'); w.buy('lamp'); w.buy('counter'); w.buy('fridge'); w.buy('sink');
       w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 25;     // mid-cook
       w.startCook(w.stoves[1].id, 'coffee'); w.stoves[1].ready = true; w.stoves[1].readyAt = w.t;
       w.ready = ['coffee', 'coffee', 'burger'];

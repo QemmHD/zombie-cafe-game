@@ -405,6 +405,19 @@
         c.strokeStyle = C.steel; c.lineWidth = S * 0.04; c.beginPath(); c.moveTo(p.x, y - S * 0.12); c.lineTo(p.x, y - S * 0.3); c.lineTo(p.x + S * 0.1, y - S * 0.3); c.stroke();
         c.fillStyle = 'rgba(120,200,90,.6)'; c.beginPath(); c.ellipse(p.x, y - S * 0.02, S * 0.16, S * 0.07, 0, 0, 7); c.fill();   // dirty green water
         c.fillStyle = 'rgba(150,220,110,.5)'; circle(c, p.x - S * 0.05, y - S * 0.03, S * 0.025); break;
+      case 'fridge':
+        // tall body: dark right side face, lit front, top cap, handle, grime
+        c.fillStyle = shade('#c9cdc4', 0.62); rr(c, p.x - S * 0.16, y - S * 0.74, S * 0.36, S * 0.92, 6); c.fill(); c.stroke();   // side face
+        c.fillStyle = '#c9cdc4'; rr(c, p.x - S * 0.28, y - S * 0.74, S * 0.36, S * 0.92, 6); c.fill();
+        c.fillStyle = 'rgba(255,255,255,.14)'; rr(c, p.x - S * 0.26, y - S * 0.72, S * 0.12, S * 0.86, 4); c.fill();              // left highlight
+        c.fillStyle = '#dfe2da'; rr(c, p.x - S * 0.28, y - S * 0.76, S * 0.36, S * 0.1, 6); c.fill();                            // top cap
+        c.strokeStyle = C.out; c.lineWidth = S * 0.03; rr(c, p.x - S * 0.28, y - S * 0.74, S * 0.36, S * 0.92, 6); c.stroke();
+        c.lineWidth = S * 0.02; line(c, p.x - S * 0.28, y - S * 0.36, p.x + S * 0.08, y - S * 0.36);                            // freezer seam
+        c.fillStyle = '#7d827a'; rr(c, p.x + S * 0.02, y - S * 0.66, S * 0.035, S * 0.18, 2); c.fill(); rr(c, p.x + S * 0.02, y - S * 0.3, S * 0.035, S * 0.22, 2); c.fill();   // handles
+        c.save(); rr(c, p.x - S * 0.28, y - S * 0.74, S * 0.36, S * 0.92, 6); c.clip();
+        stainBlob(c, p.x - S * 0.06, y + S * 0.02, S * 0.12, 'rgba(50,40,20,.3)'); drip(c, p.x - S * 0.16, y - S * 0.5, S * 0.2, S * 0.02, 'rgba(110,150,40,.4)');
+        c.fillStyle = 'rgba(30,30,24,.25)'; rr(c, p.x - S * 0.28, y + S * 0.04, S * 0.36, S * 0.14, 6); c.fill(); c.restore();   // dirty lower edge
+        break;
       case 'trash':
         c.fillStyle = '#3a4a32'; rr(c, p.x - S * 0.16, y - S * 0.2, S * 0.32, S * 0.36, 4); c.fill(); c.stroke();
         c.fillStyle = '#5a6a42'; rr(c, p.x - S * 0.19, y - S * 0.24, S * 0.38, S * 0.07, 3); c.fill();
@@ -423,50 +436,57 @@
   Renderer.prototype._stove = function (c, st, world, t, sel) {
     var p = this.project(st.x, st.y), S = this.S, x = p.x, y = p.y;
     if (this._selZ && (st.ready || st.burned)) this._hl(c, x, y + S * 0.2, S * 1.05, t);
-    this._shadow(c, x, y + S * 0.16, S * 0.4);
-    if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
-    if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
-    // body: right side face (dark) for depth, then the lit front face + top
-    c.fillStyle = shade(C.steelD, 0.62); rr(c, x - S * 0.30, y - S * 0.5, S * 0.78, S * 0.66, 8); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
-    c.fillStyle = sel ? '#566' : C.steelD; rr(c, x - S * 0.42, y - S * 0.5, S * 0.78, S * 0.66, 8); c.fill();
-    c.fillStyle = C.steel; rr(c, x - S * 0.42, y - S * 0.52, S * 0.78, S * 0.18, 8); c.fill();        // top plane (lighter)
-    c.fillStyle = 'rgba(255,255,255,.1)'; rr(c, x - S * 0.4, y - S * 0.5, S * 0.3, S * 0.5, 6); c.fill();  // left highlight
-    c.strokeStyle = C.out; c.lineWidth = S * 0.035; rr(c, x - S * 0.42, y - S * 0.5, S * 0.78, S * 0.66, 8); c.stroke();
-    // oven door + window
-    c.fillStyle = '#23262a'; rr(c, x - S * 0.3, y - S * 0.26, S * 0.6, S * 0.36, 5); c.fill();
-    c.fillStyle = '#3a3f45'; rr(c, x - S * 0.22, y - S * 0.2, S * 0.44, S * 0.24, 4); c.fill();
-    // knobs
-    c.fillStyle = C.gold; circle(c, x - S * 0.28, y - S * 0.4, S * 0.04); circle(c, x - S * 0.14, y - S * 0.4, S * 0.04);
-    // grease smudges + a drip down the front
-    c.save(); rr(c, x - S * 0.42, y - S * 0.5, S * 0.78, S * 0.66, 8); c.clip();
-    stainBlob(c, x + S * 0.12, y - S * 0.12, S * 0.12, 'rgba(40,30,16,.3)'); stainBlob(c, x - S * 0.22, y - S * 0.04, S * 0.08, 'rgba(40,30,16,.25)');
-    drip(c, x + S * 0.26, y - S * 0.34, S * 0.18, S * 0.02, 'rgba(110,150,40,.4)'); c.restore();
+    if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
+    if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
+    // ===== a real iso BOX: bottom diamond on the floor, extruded up =====
+    var fw = S * 0.42, fh = S * 0.2, bh = S * 0.52, topY = y - bh;
+    this._shadow(c, x, y + fh * 0.3, S * 0.52);
+    c.fillStyle = '#15160f'; rr(c, x - fw * 0.78, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill(); rr(c, x + fw * 0.6, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill();   // feet
+    var face = function (pts, col) { c.fillStyle = col; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke(); };
+    // right-front face (darkest)
+    face([[x, topY + fh], [x + fw, topY], [x + fw, y], [x, y + fh]], shade(C.steelD, 0.66));
+    // left-front face (mid) — carries the oven door
+    var lf = [[x - fw, topY], [x, topY + fh], [x, y + fh], [x - fw, y]];
+    face(lf, sel ? '#5a6168' : C.steelD);
+    // top burner plane (lightest) + burners
+    face([[x, topY - fh], [x + fw, topY], [x, topY + fh], [x - fw, topY]], C.steel);
+    c.fillStyle = '#2c3034'; circle(c, x - fw * 0.34, topY + fh * 0.1, S * 0.055); circle(c, x + fw * 0.34, topY - fh * 0.1, S * 0.055); circle(c, x, topY - fh * 0.4, S * 0.05); circle(c, x, topY + fh * 0.5, S * 0.05);
+    // oven door = inset of the left-front face, with a window
+    var cen = [(lf[0][0] + lf[1][0] + lf[2][0] + lf[3][0]) / 4, (lf[0][1] + lf[1][1] + lf[2][1] + lf[3][1]) / 4];
+    var ins = function (p, f) { return [p[0] + (cen[0] - p[0]) * f, p[1] + (cen[1] - p[1]) * f]; };
+    face([ins(lf[0], 0.2), ins(lf[1], 0.2), ins(lf[2], 0.12), ins(lf[3], 0.12)], '#23262a');
+    face([ins(lf[0], 0.4), ins(lf[1], 0.4), ins(lf[2], 0.34), ins(lf[3], 0.34)], '#3a4045');
+    c.fillStyle = C.gold; circle(c, (lf[0][0] + lf[1][0]) / 2 - fw * 0.06, (lf[0][1] + lf[1][1]) / 2 + fh * 0.1, S * 0.035); circle(c, (lf[0][0] + lf[1][0]) / 2 + fw * 0.04, (lf[0][1] + lf[1][1]) / 2, S * 0.035);   // knobs
+    // grease grime down the faces
+    c.save(); c.beginPath(); c.moveTo(lf[0][0], lf[0][1]); c.lineTo(lf[1][0], lf[1][1]); c.lineTo(lf[2][0], lf[2][1]); c.lineTo(lf[3][0], lf[3][1]); c.closePath(); c.clip();
+    stainBlob(c, x - fw * 0.4, y - bh * 0.3, S * 0.1, 'rgba(40,30,16,.32)'); drip(c, x - fw * 0.2, topY + fh * 0.2, S * 0.16, S * 0.02, 'rgba(110,150,40,.4)'); c.restore();
     var r = recipe(st.recipe) || { time: 1, emoji: '🍳', batch: 0 };
+    var topYref = topY;   // a pot sits here while cooking/ready
     c.textAlign = 'center'; c.textBaseline = 'middle';
+    var tagY = topY - fh - S * 0.16;          // status tags float above the box
     if (st.burned) {
-      // charred lump + rising smoke + a red CLEAR tag (Phase 4 burn state)
-      smoke(c, x, y - S * 0.3, S, t, '#555');
-      c.fillStyle = '#1c1c1c'; circle(c, x, y - S * 0.26, S * 0.12); c.fillStyle = '#333'; circle(c, x - S * 0.06, y - S * 0.3, S * 0.06);
-      c.fillStyle = C.blood; rr(c, x - S * 0.4, y - S * 0.7, S * 0.8, S * 0.2, 6); c.fill();
-      c.fillStyle = '#fff'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText('🔥 CLEAR', x, y - S * 0.6);
+      pot(c, x, topYref, S, '#2a2a2a');
+      smoke(c, x, topYref - S * 0.1, S, t, '#555');
+      c.fillStyle = C.blood; rr(c, x - S * 0.4, tagY, S * 0.8, S * 0.2, 6); c.fill();
+      c.fillStyle = '#fff'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText('🔥 CLEAR', x, tagY + S * 0.1);
     } else if (st.ready) {
-      if (st.burning) smoke(c, x, y - S * 0.34, S, t, '#777');
-      c.fillStyle = '#54585c'; rr(c, x - S * 0.16, y - S * 0.36, S * 0.32, S * 0.16, 4); c.fill();
-      c.font = (S * 0.26) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - S * 0.28);
+      pot(c, x, topYref, S, C.steel);
+      if (st.burning) smoke(c, x, topYref - S * 0.12, S, t, '#777');
+      c.font = (S * 0.24) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, topYref - S * 0.16);
       var rdy = st.burning ? C.blood : C.toxic;
-      c.fillStyle = rdy; rr(c, x - S * 0.36, y - S * 0.7, S * 0.72, S * 0.2, 6); c.fill();
-      c.fillStyle = st.burning ? '#fff' : '#07210a'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText(st.burning ? '⚠ BURNING' : 'SERVE ▸', x, y - S * 0.6);
-      if (r.batch) badge(c, x + S * 0.34, y - S * 0.66, '' + r.batch, C.blood, S);
+      c.fillStyle = rdy; rr(c, x - S * 0.36, tagY, S * 0.72, S * 0.2, 6); c.fill();
+      c.fillStyle = st.burning ? '#fff' : '#07210a'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText(st.burning ? '⚠ BURNING' : 'SERVE ▸', x, tagY + S * 0.1);
+      if (r.batch) badge(c, x + S * 0.34, tagY + S * 0.04, '' + r.batch, C.blood, S);
     } else if (st.recipe) {
-      for (var i = -1; i <= 1; i++) { c.fillStyle = i === 0 ? '#ffb43d' : '#ff7a2d'; circle(c, x + i * S * 0.1, y - S * 0.18 + Math.sin(t * 9 + i) * 2, S * 0.07); }
-      c.fillStyle = '#54585c'; rr(c, x - S * 0.16, y - S * 0.34, S * 0.32, S * 0.16, 4); c.fill();
-      c.font = (S * 0.22) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - S * 0.26);
+      pot(c, x, topYref, S, C.steel);
+      for (var i = -1; i <= 1; i++) { c.fillStyle = i === 0 ? '#ffb43d' : '#ff7a2d'; circle(c, x + i * S * 0.07, topYref - S * 0.04 + Math.sin(t * 9 + i) * 2, S * 0.04); }   // bubbling
+      c.font = (S * 0.2) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, topYref - S * 0.14);
       var frac = Math.min(1, (world.t - st.start) / r.time);
-      c.fillStyle = '#0c140e'; rr(c, x - S * 0.36, y - S * 0.66, S * 0.72, S * 0.1, 4); c.fill();
-      c.fillStyle = C.toxic; rr(c, x - S * 0.36, y - S * 0.66, S * 0.72 * frac, S * 0.1, 4); c.fill();
+      c.fillStyle = '#0c140e'; rr(c, x - S * 0.34, tagY + S * 0.05, S * 0.68, S * 0.1, 4); c.fill();
+      c.fillStyle = C.toxic; rr(c, x - S * 0.34, tagY + S * 0.05, S * 0.68 * frac, S * 0.1, 4); c.fill();
     } else {
-      c.fillStyle = C.toxic; c.font = 'bold ' + (S * 0.3) + 'px system-ui'; c.fillText('+', x, y - S * 0.2);
-      c.fillStyle = 'rgba(230,243,231,.6)'; c.font = 'bold ' + (S * 0.12) + 'px system-ui'; c.fillText('COOK', x, y - S * 0.02);
+      c.fillStyle = C.toxic; c.font = 'bold ' + (S * 0.26) + 'px system-ui'; c.fillText('+', x, topY);
+      c.fillStyle = 'rgba(230,243,231,.7)'; c.font = 'bold ' + (S * 0.11) + 'px system-ui'; c.fillText('COOK', x, topY + fh * 0.7);
     }
     if (sel) selRing(c, x, y - S * 0.15, S * 0.5);
   };
@@ -485,7 +505,7 @@
     c.fillStyle = dark; circle(c, x + r * 0.5, y + r * 0.42, r * 1.02);
     c.fillStyle = hi || 'rgba(255,255,255,.20)'; circle(c, x - r * 0.36, y - r * 0.4, r * 0.55);
     c.restore();
-    c.strokeStyle = C.out; c.lineWidth = Math.max(1.4, r * 0.16); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+    c.strokeStyle = C.out; c.lineWidth = Math.max(1.6, r * 0.19); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
   }
   // a shaded rounded box (torso, cushions, appliance faces)
   function volRR(c, x, y, w, h, rad, base, dark) {
@@ -501,12 +521,13 @@
     c.lineCap = 'round'; c.strokeStyle = dark; c.lineWidth = w; line(c, x1, y1, x2, y2);
     c.strokeStyle = col; c.lineWidth = w * 0.55; line(c, x1 - w * 0.12, y1 - w * 0.12, x2 - w * 0.12, y2 - w * 0.12);
   }
-  function foot(c, x, y, S) { c.fillStyle = '#1d1f1a'; c.beginPath(); c.ellipse(x, y, S * 0.075, S * 0.04, 0, 0, 7); c.fill(); }
+  function foot(c, x, y, S) { c.fillStyle = '#1d1f1a'; c.beginPath(); c.ellipse(x, y, S * 0.085, S * 0.045, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke(); c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.ellipse(x - S * 0.02, y - S * 0.01, S * 0.04, S * 0.02, 0, 0, 7); c.fill(); }
+  function hand(c, x, y, r, skin, skinD) { c.fillStyle = skinD; circle(c, x + r * 0.2, y + r * 0.2, r); c.fillStyle = skin; circle(c, x, y, r); c.strokeStyle = C.out; c.lineWidth = Math.max(1.1, r * 0.4); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); }
 
   // Shared character renderer. cfg: { skin, skinD, clothes, hunch, zombie,
   // expr, hair, hat, carry, carryEmoji, lift }
   Renderer.prototype._char = function (c, e, t, cfg) {
-    var S = this.S, p = this.project(e.x, e.y);
+    var S = this.S * (cfg.build || 1), p = this.project(e.x, e.y);   // body-type scale
     var up = e.face === 'U', lx = facing(e), walk = cfg.walk;
     var ph = e.step * 2;
     var swing = walk ? Math.sin(ph) * S * 0.11 : 0;        // leg/arm swing
@@ -525,9 +546,10 @@
     foot(c, lpx + S * 0.085, baseY - swing * 0.4, S);
     limb(c, lpx + S * 0.07, hipY, lpx + S * 0.085, baseY - swing * 0.4 - S * 0.02, shade(clo, 0.8), cloD, S * 0.12);
 
-    // 3. back arm (behind torso)
+    // 3. back arm (behind torso) + hand
     var armSwing = walk ? Math.sin(ph + Math.PI) * S * 0.06 : (cfg.hunch ? S * 0.03 : 0);
-    limb(c, x + lean + S * 0.12, chestY + S * 0.03, x + lean + S * 0.2, chestY + S * 0.2 + armSwing, skin, skinD, S * 0.085);
+    limb(c, x + lean + S * 0.12, chestY + S * 0.03, x + lean + S * 0.2, chestY + S * 0.2 + armSwing, skin, skinD, S * 0.09);
+    hand(c, x + lean + S * 0.2, chestY + S * 0.21 + armSwing, S * 0.055, skin, skinD);
 
     // 4. torso (with apron for zombies)
     var tw = S * 0.34, th = S * 0.42, tx = x + lean - tw / 2, ty = chestY - th * 0.35;
@@ -547,12 +569,15 @@
       if (cfg.carryEmoji) { c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(cfg.carryEmoji, plx, ply - S * 0.07); }
     } else {
       var fa = walk ? Math.sin(ph) * S * 0.06 : 0;
-      limb(c, x + lean - S * 0.12, chestY + S * 0.03, x + lean - S * 0.2, chestY + S * 0.2 + fa, skin, skinD, S * 0.085);
+      limb(c, x + lean - S * 0.12, chestY + S * 0.03, x + lean - S * 0.2, chestY + S * 0.2 + fa, skin, skinD, S * 0.09);
+      hand(c, x + lean - S * 0.2, chestY + S * 0.21 + fa, S * 0.055, skin, skinD);
     }
 
-    // 6. neck + head (a shaded ball, hunched slightly forward)
+    // 6. neck + ears + head (a shaded ball, hunched slightly forward)
     var hx = x + lean + (cfg.hunch ? lx * S * 0.02 : 0), hr = S * 0.205;
     c.fillStyle = skinD; rr(c, hx - S * 0.05, headY + hr * 0.7, S * 0.1, S * 0.12, 3); c.fill();
+    c.fillStyle = skin; circle(c, hx - hr * 0.84, headY + hr * 0.1, hr * 0.22); circle(c, hx + hr * 0.84, headY + hr * 0.1, hr * 0.22);   // ears
+    c.strokeStyle = C.out; c.lineWidth = Math.max(1.2, hr * 0.13); c.beginPath(); c.arc(hx - hr * 0.84, headY + hr * 0.1, hr * 0.22, 0, 7); c.stroke(); c.beginPath(); c.arc(hx + hr * 0.84, headY + hr * 0.1, hr * 0.22, 0, 7); c.stroke();
     volBall(c, hx, headY, hr, skin, skinD);
     if (cfg.zombie) { c.save(); c.beginPath(); c.arc(hx, headY, hr, 0, 7); c.clip(); c.fillStyle = shade(skin, 0.8); circle(c, hx + hr * 0.2, headY + hr * 0.55, hr * 0.7); c.restore(); }
 
@@ -595,8 +620,10 @@
     if (selMe) { c.strokeStyle = C.toxic; c.lineWidth = S * 0.05; c.setLineDash([S * 0.12, S * 0.08]); c.beginPath(); c.ellipse(p.x + S * 0.02, p.y + S * 0.05, S * 0.27, S * 0.13, 0, 0, 7); c.stroke(); c.setLineDash([]); }
     var expr = z.energy < 22 ? 'tired' : 'grin';
     var carry = z.carry || z.carryBatch;
+    // zombie skin varies a touch by id so the horde isn't uniform
+    var tint = (parseInt((z.id || '0').slice(-1), 36) % 3), zsk = tint === 0 ? C.zSkin : tint === 1 ? '#86c95f' : '#9bbf6a';
     this._char(c, z, t, {
-      skin: C.zSkin, skinD: C.zSkinD, clothes: '#6b5640', hunch: true, zombie: true, expr: expr,
+      skin: zsk, skinD: shade(zsk, 0.72), clothes: '#6b5640', hunch: true, zombie: true, expr: expr, build: 1.06,
       hat: 'chef', walk: (z.state !== 'idle' && z.state !== 'resting' && z.state !== 'daydream'),
       carry: !!carry, carryEmoji: (recipe(z.carry || (z.carryBatch || {}).id) || {}).emoji || '🍽️',
     });
@@ -615,7 +642,8 @@
     var angry = (cu.state === 'waiting' && (world.t - cu.wait) > (world.custPatience ? world.custPatience(cu) : world.patience()) * 0.6) || (cu.state === 'queued' && cu.annoyed);
     if (this._selZ && cu.state === 'waiting' && !cu.assigned && this._foodReady) this._hl(c, p.x, p.y + S * 0.06, S * 0.8, t);
     var expr = (cu.state === 'paying' || cu.state === 'eating') ? 'happy' : angry ? 'angry' : 'neutral';
-    this._char(c, cu, t, { skin: cu.skin, skinD: shade(cu.skin, 0.74), clothes: cu.color, hunch: false, zombie: false, expr: expr, hair: cu.hair || '#2b2b2b', hat: cu.hat, walk: walk });
+    var BUILD = { worker: 1.14, elder: 0.84, athlete: 1.0, punk: 1.04, oddball: 1.2, rich: 1.02, business: 1.04, tourist: 1.0, cook: 1.06, civilian: 0.96 };
+    this._char(c, cu, t, { skin: cu.skin, skinD: shade(cu.skin, 0.74), clothes: cu.color, hunch: false, zombie: false, expr: expr, hair: cu.hair || '#2b2b2b', hat: cu.hat, walk: walk, build: BUILD[cu.type] || 1 });
     // thought bubbles above the head
     var by = p.y - S * 0.82;
     if (cu.state === 'waiting') {
@@ -682,6 +710,19 @@
     else { var m = col.match(/\d+/g) || [120, 120, 120]; r = +m[0]; g = +m[1]; b = +m[2]; }
     var cl = function (v) { return Math.max(0, Math.min(255, Math.round(v))); };
     return 'rgb(' + cl(r * f) + ',' + cl(g * f) + ',' + cl(b * f) + ')';
+  }
+  // a chunky steel cooking pot sitting on the burner at (x, y)
+  function pot(c, x, y, S, col) {
+    c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(x, y + S * 0.04, S * 0.17, S * 0.06, 0, 0, 7); c.fill();
+    c.fillStyle = shade(col, 0.82); rr(c, x - S * 0.15, y - S * 0.16, S * 0.3, S * 0.2, S * 0.04); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
+    c.strokeStyle = shade(col, 0.65); c.lineWidth = S * 0.03; c.lineCap = 'round';
+    c.beginPath(); c.arc(x - S * 0.17, y - S * 0.07, S * 0.045, -1.2, 1.2); c.stroke();
+    c.beginPath(); c.arc(x + S * 0.17, y - S * 0.07, S * 0.045, Math.PI - 1.2, Math.PI + 1.2); c.stroke();
+    c.fillStyle = col; c.beginPath(); c.ellipse(x, y - S * 0.16, S * 0.16, S * 0.06, 0, 0, 7); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
+    c.fillStyle = '#1d2a16'; c.beginPath(); c.ellipse(x, y - S * 0.16, S * 0.12, S * 0.045, 0, 0, 7); c.fill();
+    c.fillStyle = shade(col, 1.18); c.beginPath(); c.ellipse(x - S * 0.05, y - S * 0.18, S * 0.06, S * 0.02, 0, 0, 7); c.fill();
   }
   function stroke(c, col, w) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; }
   function body(c, x, y, w, h, col) { c.fillStyle = col; rr(c, x - w / 2, y - h / 2, w, h, w * 0.4); c.fill(); c.strokeStyle = C.out; c.lineWidth = w * 0.09; c.stroke(); }

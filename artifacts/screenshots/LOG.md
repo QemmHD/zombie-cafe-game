@@ -34,6 +34,21 @@ States captured: starter / busy / dirty / cooking / foodReady / eating / infecti
 - ⬜ Tutorial chef + chalkboard dialogue + arrows = Stage 5.
 - ⬜ Store tray / placement ghost / cookbook / raid map+battle / panels themed = Stages 6–9.
 
+## Stage 3.5 + Stage 4 — presentation fill + sprite/object volume
+- 3.5: world canvas fills the screen; HUD/rail/toolbar overlay it; grass base
+  (no dark corners); café large + readable.
+- 4 (characters): body-type **build** scale per customer type (worker big, elder
+  small, oddball biggest), **ears**, **hands**, thicker head outline, better
+  shoes, per-zombie **skin-tint** variation. Directional facing + occlusion
+  already in from 2.2/3.
+- 4 (appliances): new **fridge** prop (front/side/top + handle + grime), sink
+  with dirty green water, counter side face, greasy stove. All grounded.
+
+**Still partial (Stage 4 polish to continue):** true hand-drawn outline wobble is
+light (thicker, not wobbly); cooking/cleaning have gesture poses but not full
+pose animation; customer outfit variety is mostly shirt+hat+build (not unique
+garments yet).
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).
