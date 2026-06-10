@@ -49,6 +49,24 @@ light (thicker, not wobbly); cooking/cleaning have gesture poses but not full
 pose animation; customer outfit variety is mostly shirt+hat+build (not unique
 garments yet).
 
+## Stage 4.6 — object volume + tile movement foundation
+- Part A: remaining decor given iso volume (plant pot, lamp base+pole+shade,
+  jukebox box+screen, blood fountain tiers, coffin cot) via the shared isoBox.
+- Part B: a real square **grid** is now the movement model — `tileOf/tileCenter`,
+  furniture **footprints block tiles** (incl. stoves + the pass counter),
+  reservation-aware BFS with **no smoothing** (strict tile-to-tile), workers stop
+  at **interaction tiles beside** objects (never inside), `_occupiedTiles`
+  prevents stacking, `pathExists`/`_pathFound` for no-path. **Debug grid overlay**
+  (`#debug` → toggle): red=blocked, blue=occupied, green=walkable, yellow=paths.
+- Tests: 33/33 (added grid round-trip, beside-object interaction tile, tile-centre
+  paths, no-path detection, queued-customers-don't-stack).
+
+**Still partial vs the full 21-point spec:** chairs aren't separate tile entities
+(one customer per table, seated at the table edge); reservation is "other
+characters' target tiles" not an explicit free/reserved/occupied enum per tile;
+build placement validates reachability but has no live per-tile green/red ghost
+yet; footprints are 1 tile each (no 2x2). Those are the next 4.6 sub-pass.
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

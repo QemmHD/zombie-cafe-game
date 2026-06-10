@@ -97,6 +97,7 @@
     }
     items.sort(function (a, b) { return a.d - b.d; });
     items.forEach(function (it) { it.fn(); });
+    if (ui.debugGrid) this._gridOverlay(c, world);
   };
 
   // ---- environment ----------------------------------------------------
@@ -248,6 +249,27 @@
     c.fillStyle = 'rgba(45,40,30,.22)'; stainBlob(c, this.project(W * 0.5, T * 1.2).x, this.project(W * 0.5, T * 1.2).y, S * 0.6, 'rgba(45,40,30,.22)');
     c.restore();
   };
+  // dev grid overlay: blocked=red, occupied=blue, walkable=green; + paths.
+  Renderer.prototype._gridOverlay = function (c, world) {
+    var COLS = Wld.COLS, ROWS = Wld.ROWS, T = Wld.TILE, blocked = world._blockedTiles(), occ = world._occupiedTiles(null);
+    for (var r = 0; r < ROWS; r++) for (var col = 0; col < COLS; col++) {
+      var k = col + ',' + r, p = this.project(col * T + T / 2, r * T + T / 2);
+      var fill = blocked[k] ? 'rgba(216,65,58,.34)' : occ[k] ? 'rgba(80,140,255,.34)' : 'rgba(124,255,90,.1)';
+      c.fillStyle = fill; c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.5)'; c.font = (this.S * 0.1) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(col + ',' + r, p.x, p.y);
+    }
+    // selected/working characters' paths
+    var self = this;
+    world.zombies.concat(world.customers).forEach(function (e) {
+      if (!e.path || !e.path.length) return;
+      c.strokeStyle = 'rgba(255,207,77,.9)'; c.lineWidth = 2.5; c.beginPath();
+      var p0 = self.project(e.x, e.y); c.moveTo(p0.x, p0.y);
+      e.path.forEach(function (w2) { var pp = self.project(w2.x, w2.y); c.lineTo(pp.x, pp.y); });
+      c.stroke();
+    });
+    var d = this.project(Wld.DOOR.x, Wld.DOOR.y); c.fillStyle = 'rgba(124,255,90,.8)'; circle(c, d.x, d.y, this.S * 0.06);   // door tile
+  };
   Renderer.prototype._grid = function (c, world, ui) {
     var cells = Wld.CELLS, sel = ui.selected ? ui.selected.id : null;
     for (var i = 0; i < cells.length; i++) {
@@ -372,27 +394,36 @@
 
   Renderer.prototype._decor = function (c, d, sel) {
     var p = this.project(d.x, d.y), S = this.S, it = shop(d.deco) || {}, lift = sel ? S * 0.18 : 0, y = p.y - lift;
-    if (['counter', 'sink', 'fridge', 'trash'].indexOf(it.art) < 0) this._shadow(c, p.x, p.y + S * 0.12, S * 0.32);   // box arts ground themselves
+    if (['counter', 'sink', 'fridge', 'trash', 'plant', 'jukebox', 'rest'].indexOf(it.art) < 0) this._shadow(c, p.x, p.y + S * 0.12, S * 0.34);   // box arts ground themselves
     c.lineWidth = S * 0.03; c.strokeStyle = C.out;
     switch (it.art) {
-      case 'plant':
-        c.fillStyle = '#7a4b2a'; rr(c, p.x - S * 0.16, y - S * 0.02, S * 0.32, S * 0.28, 4); c.fill(); c.stroke();
-        c.fillStyle = '#2f8f3a'; circle(c, p.x, y - S * 0.28, S * 0.26); c.fillStyle = '#3fb04a'; circle(c, p.x - S * 0.14, y - S * 0.42, S * 0.16); circle(c, p.x + S * 0.14, y - S * 0.38, S * 0.14); c.strokeStyle = C.out; c.beginPath(); c.arc(p.x, y - S * 0.28, S * 0.26, 0, 7); c.stroke(); break;
-      case 'lamp':
-        c.strokeStyle = '#2a2a2a'; c.lineWidth = S * 0.05; line(c, p.x, y + S * 0.3, p.x, y - S * 0.4);
-        c.fillStyle = C.gold; c.beginPath(); c.moveTo(p.x - S * 0.26, y - S * 0.34); c.lineTo(p.x + S * 0.26, y - S * 0.34); c.lineTo(p.x + S * 0.16, y - S * 0.64); c.lineTo(p.x - S * 0.16, y - S * 0.64); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
-        c.fillStyle = 'rgba(255,207,77,.22)'; circle(c, p.x, y - S * 0.3, S * 0.5); break;
+      case 'plant': {
+        var pb = isoBox(c, p.x, y, S * 0.16, S * 0.09, S * 0.2, '#9a5a32', '#74411f', false);   // terracotta pot
+        c.fillStyle = '#7a4422'; c.beginPath(); c.ellipse(pb.x, pb.topY, pb.fw * 0.9, pb.fh * 0.9, 0, 0, 7); c.fill();   // soil
+        c.fillStyle = '#2f8f3a'; circle(c, p.x, pb.topY - S * 0.2, S * 0.22); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.beginPath(); c.arc(p.x, pb.topY - S * 0.2, S * 0.22, 0, 7); c.stroke();
+        c.fillStyle = '#3fb04a'; circle(c, p.x - S * 0.13, pb.topY - S * 0.34, S * 0.14); circle(c, p.x + S * 0.13, pb.topY - S * 0.3, S * 0.12); circle(c, p.x, pb.topY - S * 0.42, S * 0.13);
+        c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, p.x - S * 0.06, pb.topY - S * 0.28, S * 0.08); break; }
+      case 'lamp': {
+        c.fillStyle = '#2a2a2a'; c.beginPath(); c.ellipse(p.x, y + S * 0.04, S * 0.14, S * 0.06, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();   // weighted base
+        c.fillStyle = '#3a3a3a'; rr(c, p.x - S * 0.1, y - S * 0.02, S * 0.2, S * 0.06, 3); c.fill();
+        c.strokeStyle = '#2a2a2a'; c.lineWidth = S * 0.05; c.lineCap = 'round'; line(c, p.x, y, p.x, y - S * 0.46);   // pole
+        c.fillStyle = 'rgba(255,207,77,.22)'; circle(c, p.x, y - S * 0.5, S * 0.5);
+        c.fillStyle = C.gold; c.beginPath(); c.moveTo(p.x - S * 0.26, y - S * 0.4); c.lineTo(p.x + S * 0.26, y - S * 0.4); c.lineTo(p.x + S * 0.16, y - S * 0.7); c.lineTo(p.x - S * 0.16, y - S * 0.7); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
+        c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(p.x - S * 0.2, y - S * 0.42); c.lineTo(p.x - S * 0.04, y - S * 0.42); c.lineTo(p.x - S * 0.1, y - S * 0.68); c.closePath(); c.fill(); break; }
       case 'rug':
         c.fillStyle = '#7a1f24'; iso(c, p.x, y, S * 1.1, S * 0.55); c.fill(); c.stroke();
         c.strokeStyle = C.gold; c.lineWidth = S * 0.04; iso(c, p.x, y, S * 0.8, S * 0.4); c.stroke(); break;
-      case 'jukebox':
-        c.fillStyle = '#5a2a6a'; rr(c, p.x - S * 0.24, y - S * 0.66, S * 0.48, S * 0.84, 8); c.fill(); c.stroke();
-        c.fillStyle = C.gold; rr(c, p.x - S * 0.16, y - S * 0.58, S * 0.32, S * 0.22, 4); c.fill();
-        c.fillStyle = '#b06bff'; circle(c, p.x, y - S * 0.12, S * 0.12); break;
+      case 'jukebox': {
+        var jb = isoBox(c, p.x, y, S * 0.26, S * 0.13, S * 0.74, '#7a3f8a', '#5a2a6a', true);
+        c.fillStyle = '#241026'; rr(c, jb.x - S * 0.16, p.y - S * 0.66, S * 0.32, S * 0.24, 5); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();   // screen
+        c.fillStyle = '#b06bff'; circle(c, jb.x, p.y - S * 0.54, S * 0.08); c.fillStyle = C.gold; circle(c, jb.x - S * 0.16, p.y - S * 0.2, S * 0.03); circle(c, jb.x + S * 0.16, p.y - S * 0.2, S * 0.03);
+        c.fillStyle = 'rgba(176,107,255,' + (0.2 + 0.1 * Math.sin((this._t || 0) * 4)) + ')'; circle(c, jb.x, p.y - S * 0.54, S * 0.16); break; }
       case 'fountain':
-        c.fillStyle = '#555'; c.beginPath(); c.ellipse(p.x, y + S * 0.1, S * 0.38, S * 0.2, 0, 0, 7); c.fill(); c.stroke();
-        c.fillStyle = '#7a1f24'; c.beginPath(); c.ellipse(p.x, y + S * 0.04, S * 0.3, S * 0.15, 0, 0, 7); c.fill();
-        c.fillStyle = C.blood; rr(c, p.x - S * 0.05, y - S * 0.34, S * 0.1, S * 0.4, 3); c.fill(); circle(c, p.x, y - S * 0.34, S * 0.09); break;
+        c.fillStyle = '#6a6e64'; c.beginPath(); c.ellipse(p.x, y + S * 0.12, S * 0.4, S * 0.2, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();   // base bowl
+        c.fillStyle = shade('#6a6e64', 0.8); c.beginPath(); c.ellipse(p.x, y + S * 0.16, S * 0.4, S * 0.2, 0, 0, 7); c.fill();
+        c.fillStyle = '#7a1f24'; c.beginPath(); c.ellipse(p.x, y + S * 0.08, S * 0.3, S * 0.14, 0, 0, 7); c.fill();   // bloody water
+        c.fillStyle = '#9a9d92'; rr(c, p.x - S * 0.06, y - S * 0.32, S * 0.12, S * 0.4, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();   // pillar
+        c.fillStyle = C.blood; circle(c, p.x, y - S * 0.34, S * 0.1); c.fillStyle = '#e06b6b'; for (var wi = 0; wi < 4; wi++) { var wa = wi / 4 * 6.28; circle(c, p.x + Math.cos(wa) * S * 0.16, y - S * 0.2 + Math.sin(wa) * S * 0.06, S * 0.02); } break;
       case 'counter': {
         var cb = isoBox(c, p.x, y, S * 0.4, S * 0.2, S * 0.34, C.steel, C.steelD, true);
         c.save(); topClip(c, cb); c.fillStyle = '#7a5a2a'; circle(c, cb.x - cb.fw * 0.2, cb.topY, S * 0.045); c.fillStyle = '#9bbf4a'; circle(c, cb.x + cb.fw * 0.25, cb.topY + cb.fh * 0.2, S * 0.03); stainBlob(c, cb.x + cb.fw * 0.1, cb.topY - cb.fh * 0.2, S * 0.08, 'rgba(40,30,16,.28)'); c.restore(); break; }
@@ -414,11 +445,11 @@
         c.fillStyle = '#6a7a4a'; c.beginPath(); c.ellipse(tb2.x, tb2.topY, tb2.fw * 1.05, tb2.fh * 1.05, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();   // lid
         c.fillStyle = '#9bbf4a'; circle(c, tb2.x + S * 0.03, tb2.topY - S * 0.04, S * 0.04); c.fillStyle = '#b04a2a'; circle(c, tb2.x - S * 0.05, tb2.topY - S * 0.03, S * 0.03);
         c.fillStyle = C.out; for (var ti = 0; ti < 2; ti++) { var ta = (this._t || 0) * 3 + ti * 3; circle(c, tb2.x + Math.cos(ta) * S * 0.16, tb2.topY - S * 0.1 + Math.sin(ta * 1.4) * S * 0.06, S * 0.012); } break; }
-      case 'rest':
-        c.fillStyle = C.woodD; iso(c, p.x, y + S * 0.02, S * 0.9, S * 0.42); c.fill(); c.stroke();
-        c.fillStyle = '#3a2a44'; rr(c, p.x - S * 0.28, y - S * 0.14, S * 0.56, S * 0.18, 5); c.fill();
-        c.fillStyle = '#cfc0e0'; rr(c, p.x + S * 0.12, y - S * 0.18, S * 0.16, S * 0.1, 3); c.fill();    // pillow
-        c.fillStyle = C.gold; c.font = (S * 0.16) + 'px system-ui'; c.textAlign = 'center'; c.fillText('✝', p.x - S * 0.18, y - S * 0.16); break;
+      case 'rest': {
+        var rb = isoBox(c, p.x, y, S * 0.44, S * 0.2, S * 0.18, '#6a4a2a', '#4a3018', false);   // coffin base
+        c.save(); topClip(c, rb); c.fillStyle = '#241026'; c.beginPath(); c.ellipse(rb.x, rb.topY, rb.fw * 0.78, rb.fh * 0.78, 0, 0, 7); c.fill();   // padded interior
+        c.fillStyle = '#cfc0e0'; c.beginPath(); c.ellipse(rb.x - rb.fw * 0.35, rb.topY - rb.fh * 0.1, rb.fw * 0.26, rb.fh * 0.4, 0, 0, 7); c.fill(); c.restore();   // pillow
+        c.fillStyle = C.gold; c.font = 'bold ' + (S * 0.14) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('✝', rb.x + rb.fw * 0.4, rb.topY); break; }
       default: c.fillStyle = '#556'; rr(c, p.x - S * 0.2, y - S * 0.2, S * 0.4, S * 0.4, 6); c.fill(); c.stroke();
     }
     if (sel) selRing(c, p.x, y, S * 0.4);

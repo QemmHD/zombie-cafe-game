@@ -123,7 +123,7 @@
     var dt = lastFrame ? (ts - lastFrame) / 1000 : 0; lastFrame = ts;
     if (!editMode) world.tick(dt);        // freeze the sim while rearranging
     drainEvents();
-    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected, selZ: selZ });
+    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected, selZ: selZ, debugGrid: !!window.__GRID__ });
     renderHUD();
     save(false);
     requestAnimationFrame(frame);

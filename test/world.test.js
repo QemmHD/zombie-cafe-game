@@ -381,6 +381,57 @@ test('build: walling a table off raises a layout warning (Phase 12)', () => {
   assert.ok(Array.isArray(warns), 'layoutWarnings returns a list');
 });
 
+test('grid: tile <-> world round-trips and centres are on the grid', () => {
+  const w = boot();
+  const t = w.tileOf(190, 250);            // col 1, row 2
+  assert.strictEqual(t[0], 1); assert.strictEqual(t[1], 2);
+  const ctr = w.tileCenter(1, 2);
+  assert.strictEqual(ctr.x, 1 * 120 + 60);
+  assert.strictEqual(ctr.y, 2 * 120 + 60);
+});
+
+test('interaction tile sits BESIDE an object, never on its blocked tile', () => {
+  const w = boot();
+  const st = w.stoves[0];
+  const it = w._freeTileNear(st.x, st.y, 'x', st.x, st.y);
+  const itTile = w.tileOf(it.x, it.y), stTile = w.tileOf(st.x, st.y);
+  assert.ok(itTile[0] !== stTile[0] || itTile[1] !== stTile[1], 'interaction tile differs from the object tile');
+  // and a commanded zombie aims at that beside-tile, not inside the stove
+  w.auto = false; w.startCook(st.id, 'coffee'); advance(w, 9);
+  w.commandZombie(w.zombies[0].id, { kind: 'stove', id: st.id });
+  const z = w.zombies[0], zt = w.tileOf(z.fx, z.fy);
+  assert.ok(zt[0] !== stTile[0] || zt[1] !== stTile[1], 'zombie stands beside the stove, not on it');
+});
+
+test('paths are strict tile-to-tile (waypoints land on tile centres)', () => {
+  const w = boot();
+  const a = w.tileCenter(0, 7), b = w.tileCenter(4, 1);
+  const path = w.findPath(a.x, a.y, b.x, b.y);
+  assert.ok(w._pathFound, 'a path exists across the floor');
+  path.forEach(function (p) {
+    assert.strictEqual(((p.x - 60) % 120 + 120) % 120, 0, 'waypoint x on grid');
+    assert.strictEqual(((p.y - 60) % 120 + 120) % 120, 0, 'waypoint y on grid');
+  });
+});
+
+test('no-path is detected when the start is walled in', () => {
+  const w = boot();
+  const s = w.tileCenter(3, 4), avoid = { '3,3': 1, '3,5': 1, '2,4': 1, '4,4': 1 };
+  const tgt = w.tileCenter(0, 0);
+  w.findPath(s.x, s.y, tgt.x, tgt.y, avoid);
+  assert.ok(!w._pathFound, 'enclosed start cannot reach the target');
+});
+
+test('queued customers do not stack — each sits on a distinct tile', () => {
+  const w = boot();
+  w.tables.forEach((t) => { t.dirty = true; });
+  let qs = [];
+  for (let i = 0; i < 500 && qs.length < 2; i++) { w.tick(0.2); qs = w.customers.filter((c) => c.state === 'queued'); }
+  assert.ok(qs.length >= 2, 'at least two customers waiting');
+  const t0 = w.tileOf(qs[0].fx, qs[0].fy), t1 = w.tileOf(qs[1].fx, qs[1].fy);
+  assert.ok(t0[0] !== t1[0] || t0[1] !== t1[1], 'two queued customers occupy different tiles');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);
