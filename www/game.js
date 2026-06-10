@@ -5,9 +5,10 @@
  * ===================================================================== */
 (function () {
   'use strict';
-  var SAVE_KEY = 'zombiecafe.save.v3';
+  var SAVE_KEY = 'zombiecafe.save.v4';
   var world, renderer, canvas, lastFrame = 0, lastSave = 0;
   var editMode = false, selected = null;   // build mode + currently lifted furniture
+  var selZ = null;                         // tap-command: currently selected zombie id
 
   function el(id) { return document.getElementById(id); }
   function now() { return Date.now() / 1000; }
@@ -80,29 +81,65 @@
     var dt = lastFrame ? (ts - lastFrame) / 1000 : 0; lastFrame = ts;
     if (!editMode) world.tick(dt);        // freeze the sim while rearranging
     drainEvents();
-    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected });
+    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected, selZ: selZ });
     renderHUD();
     save(false);
     requestAnimationFrame(frame);
   }
 
-  // ---- input on the cafe ---------------------------------------------
+  // ---- input on the cafe: tap-command grammar --------------------------
+  // tap zombie = select it; tap a valid target = command it; tap floor =
+  // deselect. With nothing selected, taps fall through to context actions.
   function onTap(clientX, clientY) {
     var w = renderer.toWorld(clientX, clientY);
     if (editMode) return onTapEdit(w);
-    var hit = world.pickAt(w.x, w.y);
-    if (!hit) return;
-    if (hit.kind === 'stove') {
-      var st = world.stoves.filter(function (s) { return s.id === hit.id; })[0];
-      if (st.ready) world.plateStove(st.id);          // tap-to-serve
-      else if (st.recipe) rushConfirm(st.id);          // rush a cooking dish
-      else openCook(st.id);                            // start a cook
-    } else if (hit.kind === 'customer') {
-      if (hit.paying) world.collectCustomer(hit.id);
-      else if (hit.infectable) infectConfirm(hit.id);
-      return;
+    var z = world.pickZombieAt(w.x, w.y);
+
+    if (selZ) {
+      if (!world.zombies.some(function (s) { return s.id === selZ; })) { deselect(); return; }
+      if (z && z.id !== selZ) { select(z.id); return; }          // switch selection
+      if (z && z.id === selZ) { openZombie(z.id); return; }      // tap again = info
+      var hit = world.pickTargetAt(w.x, w.y);
+      if (hit) {
+        if (hit.kind === 'customer' && hit.state === 'paying') { world.collectCustomer(hit.id); return; }
+        var res = world.commandZombie(selZ, hit);
+        if (res.ok) { if (res.msg) toast(res.msg); deselect(); }
+        else { redX(clientX, clientY); if (res.msg) toast(res.msg); }
+        return;
+      }
+      deselect(); return;                                        // empty floor
     }
-    if (!hit) { var z = world.pickZombieAt(w.x, w.y); if (z) openZombie(z.id); }
+
+    if (z) { select(z.id); return; }
+    var hit2 = world.pickAt(w.x, w.y);
+    if (!hit2) return;
+    if (hit2.kind === 'stove') {
+      var st = world.stoves.filter(function (s) { return s.id === hit2.id; })[0];
+      if (st.ready) {
+        if (world.auto) world.plateStove(st.id);                 // casual tap-to-serve
+        else { redX(clientX, clientY); toast('Auto is off — tap a zombie, then this stove'); }
+      } else if (st.recipe) rushConfirm(st.id);
+      else openCook(st.id);
+    } else if (hit2.kind === 'customer') {
+      if (hit2.paying) world.collectCustomer(hit2.id);
+      else if (hit2.infectable) infectConfirm(hit2.id);
+    }
+  }
+
+  function select(zid) {
+    selZ = zid;
+    var z = world.zombies.filter(function (s) { return s.id === zid; })[0]; if (!z) return;
+    var b = el('selbar'); if (b) b.remove();
+    b = document.createElement('div'); b.id = 'selbar'; b.className = 'buildbar selbar';
+    b.innerHTML = '🧟 <b>' + z.name + '</b> · ' + Math.round(z.energy) + '%⚡ — tap a glowing stove, hungry customer, or dirty table' +
+      '<button class="buy coin" data-act="sel-info">Info</button><button class="buy" data-act="sel-off" style="background:#2a3a2e;color:#cfe;">✕</button>';
+    document.body.appendChild(b);
+  }
+  function deselect() { selZ = null; var b = el('selbar'); if (b) b.remove(); }
+  function redX(cx, cy) {
+    var f = document.createElement('div'); f.className = 'float bad'; f.textContent = '✖';
+    f.style.left = cx + 'px'; f.style.top = cy + 'px';
+    el('fx').appendChild(f); setTimeout(function () { f.remove(); }, 700);
   }
 
   function openZombie(zid) {
@@ -131,8 +168,14 @@
     selected = world.pickFurnitureAt(w.x, w.y);
     if (!selected) toast('Tap a table, stove or decoration to move it');
   }
+  function updateAutoBtn() {
+    var b = el('autobtn'); if (!b) return;
+    b.innerHTML = (world.auto ? '🤖' : '👆') + '<span>Auto ' + (world.auto ? 'ON' : 'OFF') + '</span>';
+    b.classList.toggle('off', !world.auto);
+  }
   function setEdit(on) {
-    editMode = on; selected = null;
+    editMode = on; selected = null; deselect();
+    if (!on && world.repathAll) world.repathAll();   // furniture moved: re-route walkers
     var b = el('buildbar');
     if (on) { if (!b) { b = document.createElement('div'); b.id = 'buildbar'; b.className = 'buildbar'; b.innerHTML = '🔨 Build mode — tap a piece, then tap where to put it <button class="buy coin" data-act="build-done">Done</button>'; document.body.appendChild(b); } }
     else if (b) b.remove();
@@ -209,7 +252,8 @@
     function h(i, n, b) { return '<div class="row"><div class="r-ico">' + i + '</div><div class="r-body"><div class="r-name">' + n + '</div><div class="r-desc">' + b + '</div></div></div>'; }
     openSheet('<div class="sheet">' + head('❓ How to play') + '<div class="list">' +
       h('🔪', 'Cook', 'Tap a stove, pick a dish. It cooks in real time, then glows with a SERVE tag.') +
-      h('🍽️', 'Serve', 'Tap a glowing SERVE stove to plate the food. Your zombie staff then carry it from the pass to seated customers. More zombies = faster service.') +
+      h('👆', 'Command', 'Tap a zombie to select it (green ring), then tap a glowing target: a ready stove to carry food, a hungry customer to serve, a dirty table to clean. Tap the floor to deselect.') +
+      h('🤖', 'Auto', 'Auto ON: zombies find work themselves and tapping a SERVE stove plates instantly. Auto OFF: nothing happens until YOU command it — full Zombie Cafe style.') +
       h('🪙', 'Collect', 'When a customer shows a coin, tap them to grab coins + XP.') +
       h('🧟‍♀️', 'Infect', 'Tap a customer with a green 🧟 bubble to spend toxin and turn them into a new zombie worker.') +
       h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes — win loot and steal their recipe.') +
@@ -252,6 +296,9 @@
     else if (act === 'build-done') setEdit(false);
     else if (act === 'role') { world.setZombieRole(a.dataset.id, a.dataset.role); openZombie(a.dataset.id); }
     else if (act === 'feed') { world.feedZombie(a.dataset.id); openZombie(a.dataset.id); }
+    else if (act === 'sel-info') { if (selZ) openZombie(selZ); }
+    else if (act === 'sel-off') deselect();
+    else if (act === 'toggle-auto') { world.auto = !world.auto; updateAutoBtn(); toast(world.auto ? '🤖 Auto on — zombies work on their own' : '👆 Auto off — tap a zombie, then a target'); }
     renderHUD();
   });
 
@@ -266,6 +313,7 @@
       onTap(e.clientX, e.clientY);
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) save(true); });
+    updateAutoBtn();
     if (!existing) setTimeout(openHelp, 450);
     requestAnimationFrame(frame);
   }

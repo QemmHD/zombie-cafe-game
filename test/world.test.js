@@ -145,6 +145,67 @@ test('a rest-role zombie refuses work; a cleaner ignores serving', () => {
   assert.ok(w.ready.length >= 1, 'food stayed on the pass, unserved');
 });
 
+test('pathfinding: waypoints avoid blocked tiles', () => {
+  const w = boot();
+  w.coins = 99999;
+  while (w.firstFreeCell() >= 0 && w.tables.length < 12) w.buy('table');   // crowd the floor
+  const path = w.findPath(420, 930, 420, 90);            // door to kitchen
+  const blocked = w._blockedTiles();
+  // sample every segment of the route and assert it never crosses a blocked tile
+  let x = 420, y = 930;
+  for (const p of path.slice(0, -1)) {                   // last point may be a doorstep target
+    const d = Math.hypot(p.x - x, p.y - y), steps = Math.ceil(d / 20);
+    for (let i = 1; i < steps; i++) {
+      const sx = x + (p.x - x) * i / steps, sy = y + (p.y - y) * i / steps;
+      const k = Math.floor(sx / 120) + ',' + Math.floor(sy / 120);
+      assert.ok(!blocked[k], 'route crossed blocked tile ' + k);
+    }
+    x = p.x; y = p.y;
+  }
+});
+
+test('auto OFF: idle zombies take no jobs until commanded', () => {
+  const w = boot();
+  w.auto = false;
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9); w.plateStove(w.stoves[0].id);
+  let sat = null;
+  for (let i = 0; i < 200 && !sat; i++) { w.tick(0.2); sat = w.customers.find((c) => c.state === 'waiting'); }
+  assert.ok(sat, 'a customer sat down');
+  const readyBefore = w.ready.length;
+  advance(w, 8);
+  assert.strictEqual(w.served, 0, 'nobody was served without a command');
+  assert.strictEqual(w.ready.length, readyBefore, 'food stayed on the pass');
+  // now command the zombie to serve that customer
+  const res = w.commandZombie(w.zombies[0].id, { kind: 'customer', id: sat.id });
+  assert.ok(res.ok, 'command accepted: ' + res.msg);
+  let eating = false;
+  for (let i = 0; i < 300 && !eating; i++) { w.tick(0.2); const c = w.customers.find((q) => q.id === sat.id); eating = c && (c.state === 'eating' || c.state === 'paying'); }
+  assert.ok(eating, 'commanded zombie served the customer');
+});
+
+test('command: carry finished food from stove to the pass', () => {
+  const w = boot();
+  w.auto = false;
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9);
+  assert.ok(w.stoves[0].ready, 'stove finished');
+  const res = w.commandZombie(w.zombies[0].id, { kind: 'stove', id: w.stoves[0].id });
+  assert.ok(res.ok, 'collect command accepted');
+  let stocked = false;
+  for (let i = 0; i < 300 && !stocked; i++) { w.tick(0.2); stocked = w.ready.length >= 3; }
+  assert.ok(stocked, 'zombie carried the batch to the pass');
+  assert.strictEqual(w.stoves[0].recipe, null, 'stove freed');
+});
+
+test('command: invalid targets are refused with a message', () => {
+  const w = boot();
+  const clean = w.tables[0];
+  const res = w.commandZombie(w.zombies[0].id, { kind: 'table', id: clean.id });
+  assert.ok(!res.ok, 'cleaning a clean table is refused');
+  assert.ok(res.msg.length > 0, 'refusal carries a message');
+  const res2 = w.commandZombie(w.zombies[0].id, { kind: 'stove', id: w.stoves[0].id });
+  assert.ok(!res2.ok, 'collecting from an idle stove is refused');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

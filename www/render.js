@@ -56,6 +56,8 @@
   // ---- main draw ------------------------------------------------------
   Renderer.prototype.draw = function (world, t, ui) {
     ui = ui || {};
+    this._selZ = ui.selZ || null;                       // tap-command selection
+    this._foodReady = world.ready.length > 0;
     var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.fillStyle = C.outside; c.fillRect(0, 0, cvW, cvH);
@@ -188,8 +190,16 @@
     if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.textAlign = 'center'; c.fillText('PASS', p.x, p.y); }
   };
 
+  // pulsing valid-target marker shown while a zombie is selected
+  Renderer.prototype._hl = function (c, x, y, w, t) {
+    c.fillStyle = 'rgba(124,255,90,' + (0.16 + 0.1 * Math.sin(t * 5)) + ')';
+    c.strokeStyle = 'rgba(124,255,90,.8)'; c.lineWidth = 2.5;
+    iso(c, x, y, w, w * 0.5); c.fill(); c.stroke();
+  };
+
   Renderer.prototype._table = function (c, tb, sel, t) {
     var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.18 : 0; var y = p.y - lift;
+    if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
     // chairs (back then front drawn around)
     chair(c, p.x - S * 0.5, y - S * 0.12, S, 1);
     chair(c, p.x + S * 0.5, y - S * 0.12, S, 1);
@@ -247,6 +257,7 @@
 
   Renderer.prototype._stove = function (c, st, world, t, sel) {
     var p = this.project(st.x, st.y), S = this.S, x = p.x, y = p.y;
+    if (this._selZ && st.ready) this._hl(c, x, y + S * 0.2, S * 1.05, t);
     this._shadow(c, x, y + S * 0.16, S * 0.4);
     if (st.ready) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
     // body
@@ -285,8 +296,13 @@
 
   Renderer.prototype._zombie = function (c, z, t) {
     var p = this.project(z.x, z.y), S = this.S, walk = (z.state !== 'idle');
-    var bob = Math.sin(z.step * 2) * (walk ? S * 0.04 : S * 0.012);
+    var selMe = this._selZ === z.id;
+    var bob = Math.sin(z.step * 2) * (walk ? S * 0.04 : S * 0.012) + (selMe ? Math.abs(Math.sin(t * 6)) * S * 0.05 : 0);
     var x = p.x, y = p.y - bob, lx = facing(z);
+    if (selMe) {
+      c.strokeStyle = C.toxic; c.lineWidth = S * 0.06;
+      c.beginPath(); c.ellipse(p.x, p.y + S * 0.05, S * 0.3 + Math.sin(t * 5) * S * 0.02, S * 0.15, 0, 0, 7); c.stroke();
+    }
     this._shadow(c, p.x, p.y + S * 0.04, S * 0.26);
     var sw = Math.sin(z.step * 2) * (walk ? S * 0.08 : 0);
     // legs
@@ -296,7 +312,7 @@
     c.fillStyle = C.apron; rr(c, x - S * 0.13, y - S * 0.28, S * 0.26, S * 0.34, 5); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
     // arms (carry forward if holding a plate)
     stroke(c, C.zSkin, S * 0.085);
-    if (z.carry) { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.24, y - S * 0.42); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.24, y - S * 0.42); }
+    if (z.carry || z.carryBatch) { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.24, y - S * 0.42); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.24, y - S * 0.42); }
     else { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.22, y - S * 0.12); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.22, y - S * 0.12); }
     // big head
     var hy = y - S * 0.56;
@@ -320,6 +336,7 @@
     if (z.state === 'resting') bubble(c, x, y - S * 0.95, '💤', '#cfe', S);
     else if (z.state === 'cleaning' || z.state === 'toClean') bubble(c, x, y - S * 0.95, '🧽', '#fff', S);
     else if (z.carry) bubble(c, x, y - S * 0.95, (recipe(z.carry) || {}).emoji || '🍽️', '#fff', S);
+    else if (z.carryBatch) bubble(c, x, y - S * 0.95, (recipe(z.carryBatch.id) || {}).emoji || '🍽️', '#fff', S);
   };
 
   Renderer.prototype._customer = function (c, cu, world, t) {
@@ -327,6 +344,7 @@
     var walk = (cu.state === 'toTable' || cu.state === 'leaving');
     var bob = Math.sin(cu.step * 2) * (walk ? S * 0.04 : 0);
     var x = p.x, y = p.y - bob - (sitting ? S * 0.04 : 0), lx = facing(cu);
+    if (this._selZ && cu.state === 'waiting' && !cu.assigned && this._foodReady) this._hl(c, p.x, p.y + S * 0.06, S * 0.8, t);
     this._shadow(c, p.x, p.y + S * 0.04, S * 0.24);
     var sw = Math.sin(cu.step * 2) * (walk ? S * 0.08 : 0);
     stroke(c, '#33363a', S * 0.09); line(c, x - S * 0.06, y - S * 0.02, x - S * 0.06 + sw, y + S * 0.15); line(c, x + S * 0.06, y - S * 0.02, x + S * 0.06 - sw, y + S * 0.15);

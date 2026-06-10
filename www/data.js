@@ -37,7 +37,7 @@ window.SHOP = [
   // cafe to raise ambiance. `art` tells the renderer how to draw it.
   { id: 'plant',   kind: 'decor',  name: 'Potted Fern',   emoji: '🪴', art: 'plant',   cur: 'coin', base: 120,  grow: 1.25, ambiance: 5,  desc: '+5 ambiance. Customers arrive sooner & tip more.' },
   { id: 'lamp',    kind: 'decor',  name: 'Spooky Lamp',   emoji: '🕯️', art: 'lamp',   cur: 'coin', base: 300,  grow: 1.3,  ambiance: 9,  desc: '+9 ambiance.' },
-  { id: 'rug',     kind: 'decor',  name: 'Crimson Rug',   emoji: '🟥', art: 'rug',     cur: 'coin', base: 600,  grow: 1.3,  ambiance: 14, desc: '+14 ambiance.' },
+  { id: 'rug',     kind: 'decor',  name: 'Crimson Rug',   emoji: '🟥', art: 'rug',     cur: 'coin', base: 600,  grow: 1.3,  ambiance: 14, blocks: false, desc: '+14 ambiance. Walkable.' },
   { id: 'jukebox', kind: 'decor',  name: 'Haunted Jukebox', emoji: '🎷', art: 'jukebox', cur: 'coin', base: 1800, grow: 1.35, ambiance: 26, desc: '+26 ambiance.' },
   { id: 'fountain',kind: 'decor',  name: 'Blood Fountain',emoji: '⛲', art: 'fountain', cur: 'toxin', base: 8,   grow: 1.4,  ambiance: 50, desc: '+50 ambiance. The crowd loves it.' },
 ];

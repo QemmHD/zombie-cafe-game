@@ -67,7 +67,7 @@
   World.prototype._fresh = function () {
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
-    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = [];
+    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true;
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
     this.decors = [];
     this.tables = [ this._mkTable(0), this._mkTable(5), this._mkTable(2) ];
@@ -89,7 +89,7 @@
     for (var s = 0; s < STOVE_SLOTS.length; s++) { var used = false; for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === s) used = true; if (!used) return s; } return -1;
   };
   World.prototype._mkZombie = function (i, rar) { var h = home(i); rar = rar || rollRarity(); var s = statsFor(rar);
-    return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, carry: null, job: null, cleanId: null, face: 'L', step: Math.random() * 6,
+    return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, fx: h.x, fy: h.y, path: [], carry: null, carryBatch: null, job: null, cleanId: null, stoveId: null, face: 'L', step: Math.random() * 6,
       name: pick(ZNAMES), rarity: rar, role: 'auto', energy: 100, speed: s.speed, serve: s.serve, clean: s.clean }; };
 
   // ---- save / load ----------------------------------------------------
@@ -97,7 +97,7 @@
     return {
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
-      spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes,
+      spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
       stoves: this.stoves, tables: this.tables, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
@@ -105,9 +105,11 @@
     for (var k in s) this[k] = s[k];
     this.events = []; this.customers = this.customers || []; this.ready = this.ready || [];
     this.decor = this.decor || {}; this.decors = this.decors || [];
+    if (this.auto == null) this.auto = true;
     // forward-compat: ensure zombies have home + render fields
     var self = this;
-    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; });
+    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } });
+    (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } });
   };
   // Called once on load: finish cooks that completed offline; diners have left.
   World.prototype.fastForward = function (elapsed) {
@@ -290,12 +292,13 @@
     var free = this.tables.filter(function (tb) { return !tb.by && !tb.dirty; });
     if (!free.length) return;
     var tb = pick(free), c = {
-      id: uid(), x: DOOR.x, y: DOOR.y, tx: tb.x, ty: tb.y + 20, table: tb.id,
+      id: uid(), x: DOOR.x, y: DOOR.y, tx: DOOR.x, ty: DOOR.y, fx: DOOR.x, fy: DOOR.y, path: [], table: tb.id,
       state: 'toTable', wait: 0, eat: 0, pay: 0, xp: 0, dish: null,
       assigned: null, infectable: Math.random() < INFECT_CHANCE,
       color: pick(COLORS), skin: pick(SKINS), hair: pick(HAIRS), face: 'U', step: Math.random() * 6,
     };
     tb.by = c.id; this.customers.push(c);
+    routeTo(this, c, tb.x, tb.y + 20);
   };
 
   function moveTo(e, dt, spd) {
@@ -309,49 +312,153 @@
   }
   function zspeed(z) { return SPEED * (z.speed || 1) * (0.55 + 0.45 * (z.energy || 0) / 100); }
 
+  // ---- grid pathfinding: BFS over tiles + line-of-sight smoothing -----
+  // Tables and (blocking) decor occupy their tile; characters route around
+  // them instead of clipping through. Endpoint tiles are always steppable so
+  // seats beside tables stay reachable.
+  function clampi(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function tkey(c, r) { return c + ',' + r; }
+  World.prototype._blockedTiles = function () {
+    var set = {}, i;
+    for (i = 0; i < this.tables.length; i++) { var t = this.tables[i]; set[tkey(Math.floor(t.x / TILE), Math.floor(t.y / TILE))] = 1; }
+    for (i = 0; i < this.decors.length; i++) {
+      var d = this.decors[i], it = shopById(d.deco);
+      if (it && it.blocks === false) continue;
+      set[tkey(Math.floor(d.x / TILE), Math.floor(d.y / TILE))] = 1;
+    }
+    return set;
+  };
+  World.prototype._clearLine = function (blocked, x0, y0, x1, y1, allow) {
+    var d = Math.hypot(x1 - x0, y1 - y0), steps = Math.max(1, Math.ceil(d / 30));
+    for (var i = 1; i < steps; i++) {
+      var x = x0 + (x1 - x0) * i / steps, y = y0 + (y1 - y0) * i / steps;
+      var k = tkey(clampi(Math.floor(x / TILE), 0, COLS - 1), clampi(Math.floor(y / TILE), 0, ROWS - 1));
+      if (blocked[k] && !allow[k]) return false;
+    }
+    return true;
+  };
+  World.prototype.findPath = function (x0, y0, x1, y1) {
+    var blocked = this._blockedTiles();
+    var sc = clampi(Math.floor(x0 / TILE), 0, COLS - 1), sr = clampi(Math.floor(y0 / TILE), 0, ROWS - 1);
+    var tc = clampi(Math.floor(x1 / TILE), 0, COLS - 1), tr = clampi(Math.floor(y1 / TILE), 0, ROWS - 1);
+    var allow = {}; allow[tkey(sc, sr)] = 1; allow[tkey(tc, tr)] = 1;
+    if (this._clearLine(blocked, x0, y0, x1, y1, allow)) return [{ x: x1, y: y1 }];
+    var q = [[sc, sr]], prev = {}, seen = {}; seen[tkey(sc, sr)] = 1;
+    var found = false, DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    while (q.length) {
+      var cur = q.shift();
+      if (cur[0] === tc && cur[1] === tr) { found = true; break; }
+      for (var i = 0; i < 4; i++) {
+        var nc = cur[0] + DIRS[i][0], nr = cur[1] + DIRS[i][1], k = tkey(nc, nr);
+        if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || seen[k]) continue;
+        if (blocked[k] && !allow[k]) continue;
+        seen[k] = 1; prev[k] = cur; q.push([nc, nr]);
+      }
+    }
+    if (!found) return [{ x: x1, y: y1 }];                 // fallback: walk straight
+    var tiles = [], at = [tc, tr];
+    while (at && !(at[0] === sc && at[1] === sr)) { tiles.unshift(at); at = prev[tkey(at[0], at[1])]; }
+    var pts = tiles.map(function (t) { return { x: t[0] * TILE + TILE / 2, y: t[1] * TILE + TILE / 2 }; });
+    if (pts.length) pts[pts.length - 1] = { x: x1, y: y1 }; else pts = [{ x: x1, y: y1 }];
+    // greedy smoothing: skip waypoints we can see past
+    var out = [], cx = x0, cy = y0, i2 = 0;
+    while (i2 < pts.length) {
+      var j = pts.length - 1;
+      while (j > i2 && !this._clearLine(blocked, cx, cy, pts[j].x, pts[j].y, allow)) j--;
+      out.push(pts[j]); cx = pts[j].x; cy = pts[j].y; i2 = j + 1;
+    }
+    return out;
+  };
+  function routeTo(world, e, x, y) {
+    e.fx = x; e.fy = y;
+    e.path = world.findPath(e.x, e.y, x, y);
+    var n = e.path.shift();
+    e.tx = n.x; e.ty = n.y;
+  }
+  // advance along the routed path; true when the final point is reached
+  function step(world, e, dt, spd) {
+    if (!moveTo(e, dt, spd)) return false;
+    if (e.path && e.path.length) { var n = e.path.shift(); e.tx = n.x; e.ty = n.y; return false; }
+    return true;
+  }
+  // after the layout changes (build mode), re-route everyone mid-walk
+  World.prototype.repathAll = function () {
+    var self = this;
+    function rp(e) { if (e.fx != null && (e.x !== e.fx || e.y !== e.fy)) routeTo(self, e, e.fx, e.fy); }
+    this.zombies.forEach(rp); this.customers.forEach(rp);
+  };
+
   World.prototype._stepZombies = function (dt) {
     for (var i = 0; i < this.zombies.length; i++) {
       var z = this.zombies[i];
-      var working = z.state === 'toPass' || z.state === 'toCustomer' || z.state === 'toClean' || z.state === 'cleaning';
+      var working = z.state === 'toPass' || z.state === 'toCustomer' || z.state === 'toClean' || z.state === 'cleaning' || z.state === 'toStove' || z.state === 'toDeposit';
       if (working) z.energy = Math.max(0, z.energy - DRAIN * dt);
       else if (z.state === 'resting') z.energy = Math.min(100, z.energy + REGEN_REST * dt);
       else z.energy = Math.min(100, z.energy + REGEN_IDLE * dt);
 
-      // finished cooks: cleaning is a timed (non-moving) task
+      // cleaning is a timed (non-moving) task
       if (z.state === 'cleaning') {
         if (this.t - z.cleanStart >= CLEAN_TIME / (z.clean || 1)) {
           var ct = byId(this.tables, z.cleanId); if (ct) { ct.dirty = false; ct.cleaning = null; this.events.push({ type: 'cleaned', x: ct.x, y: ct.y }); }
-          z.cleanId = null; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy; this._gainXp(1);
+          z.cleanId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy); this._gainXp(1);
         }
         continue;
       }
       if (z.state === 'idle') {
-        if (z.role === 'rest' || z.energy < TIRED) { z.state = 'resting'; z.tx = z.hx; z.ty = z.hy; }
-        else this._assign(z);
+        if (z.role === 'rest' || z.energy < TIRED) { z.state = 'resting'; routeTo(this, z, z.hx, z.hy); }
+        else if (this.auto) this._assign(z);
       }
       if (z.state === 'resting') {
-        z.tx = z.hx; z.ty = z.hy; moveTo(z, dt, zspeed(z));
+        step(this, z, dt, zspeed(z));
         if (z.role !== 'rest' && z.energy >= RESTED) z.state = 'idle';
         continue;
       }
-      if (z.state === 'idle') { z.tx = z.hx; z.ty = z.hy; moveTo(z, dt, zspeed(z)); continue; }
-      var arr = moveTo(z, dt, zspeed(z));
+      if (z.state === 'idle') {
+        if (z.fx !== z.hx || z.fy !== z.hy) routeTo(this, z, z.hx, z.hy);
+        step(this, z, dt, zspeed(z)); continue;
+      }
+      var arr = step(this, z, dt, zspeed(z));
       if (!arr) continue;
       if (z.state === 'toPass') {
         var c = byId(this.customers, z.job);
-        if (c && c.state === 'waiting') { z.state = 'toCustomer'; z.tx = c.x; z.ty = c.y - 6; }
-        else { if (z.carry) this.ready.push(z.carry); z.carry = null; z.job = null; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy; }
+        if (c && c.state === 'waiting') { z.state = 'toCustomer'; routeTo(this, z, c.x, c.y - 6); }
+        else { this._releaseJob(z); z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
       } else if (z.state === 'toCustomer') {
         var cu = byId(this.customers, z.job);
-        if (cu && cu.state === 'waiting') { cu.state = 'eating'; cu.eat = this.t; cu.dish = z.carry; cu.assigned = null; }
-        else if (z.carry) this.ready.push(z.carry);
-        z.carry = null; z.job = null; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy;
+        if (cu && cu.state === 'waiting') { cu.state = 'eating'; cu.eat = this.t; cu.dish = z.carry; cu.assigned = null; z.carry = null; z.job = null; }
+        else this._releaseJob(z);
+        z.state = 'returning'; routeTo(this, z, z.hx, z.hy);
       } else if (z.state === 'toClean') {
         var dt2 = byId(this.tables, z.cleanId);
         if (dt2 && dt2.dirty) { z.state = 'cleaning'; z.cleanStart = this.t; }
-        else { if (dt2) dt2.cleaning = null; z.cleanId = null; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy; }
+        else { if (dt2) dt2.cleaning = null; z.cleanId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
+      } else if (z.state === 'toStove') {
+        // commanded carry: pick the finished batch up off the stove
+        var sst = byId(this.stoves, z.stoveId);
+        if (sst && sst.ready && sst.recipe) {
+          var rr2 = RECIPES[sst.recipe];
+          z.carryBatch = { id: sst.recipe, n: rr2.batch };
+          sst.recipe = null; sst.start = 0; sst.ready = false; sst.readyAt = 0;
+          z.state = 'toDeposit'; routeTo(this, z, PASS.x, PASS.y + 22);
+        } else { z.stoveId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
+      } else if (z.state === 'toDeposit') {
+        if (z.carryBatch) {
+          var added = 0;
+          for (var b = 0; b < z.carryBatch.n && this.ready.length < POOL_CAP; b++) { this.ready.push(z.carryBatch.id); added++; }
+          this.events.push({ type: 'plated', x: PASS.x, y: PASS.y, emoji: (RECIPES[z.carryBatch.id] || {}).emoji || '🍽️', n: added });
+          z.carryBatch = null;
+        }
+        z.stoveId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy);
       } else if (z.state === 'returning') { z.state = 'idle'; }
     }
+  };
+  // drop whatever the zombie was committed to (job swap or abort)
+  World.prototype._releaseJob = function (z) {
+    if (z.job) { var c = byId(this.customers, z.job); if (c && c.assigned === z.id) c.assigned = null; z.job = null; }
+    if (z.carry) { this.ready.push(z.carry); z.carry = null; }
+    if (z.carryBatch) { for (var b = 0; b < z.carryBatch.n && this.ready.length < POOL_CAP; b++) this.ready.push(z.carryBatch.id); z.carryBatch = null; }
+    if (z.cleanId) { var tb = byId(this.tables, z.cleanId); if (tb && tb.cleaning === z.id) tb.cleaning = null; z.cleanId = null; }
+    z.stoveId = null;
   };
   // Assign an idle zombie a task, respecting its role. 'auto' serves first,
   // then buses dirty tables; 'waiter'/'cleaner' only do their job.
@@ -363,21 +470,71 @@
         var c = this.customers[i];
         if (c.state === 'waiting' && !c.assigned) {
           c.assigned = z.id; z.job = c.id; z.carry = this.ready.pop();
-          z.state = 'toPass'; z.tx = PASS.x; z.ty = PASS.y + 22; return;
+          z.state = 'toPass'; routeTo(this, z, PASS.x, PASS.y + 22); return;
         }
       }
     }
     if (canClean) {
       for (var j = 0; j < this.tables.length; j++) {
         var tb = this.tables[j];
-        if (tb.dirty && !tb.cleaning) { tb.cleaning = z.id; z.cleanId = tb.id; z.state = 'toClean'; z.tx = tb.x; z.ty = tb.y + 10; return; }
+        if (tb.dirty && !tb.cleaning) { tb.cleaning = z.id; z.cleanId = tb.id; z.state = 'toClean'; routeTo(this, z, tb.x, tb.y + 10); return; }
       }
     }
   };
 
+  // ---- manual tap-commands: tap zombie, then tap a target -------------
+  // Returns { ok, msg } so the UI can confirm or flash an error.
+  World.prototype.commandZombie = function (zid, hit) {
+    var z = byId(this.zombies, zid); if (!z || !hit) return { ok: false, msg: '' };
+    if (z.state === 'cleaning') return { ok: false, msg: z.name + ' is mid-scrub' };
+    if (z.energy < TIRED && hit.kind !== 'rest') return { ok: false, msg: z.name + ' is exhausted — feed or let them rest' };
+    if (hit.kind === 'stove') {
+      var st = byId(this.stoves, hit.id); if (!st) return { ok: false, msg: '' };
+      if (!st.ready) return { ok: false, msg: st.recipe ? 'Still cooking' : 'Nothing to pick up — start a cook first' };
+      this._releaseJob(z);
+      z.state = 'toStove'; z.stoveId = st.id; routeTo(this, z, st.x, st.y + 40);
+      return { ok: true, msg: z.name + ' is collecting the food' };
+    }
+    if (hit.kind === 'customer') {
+      var c = byId(this.customers, hit.id);
+      if (!c || c.state !== 'waiting') return { ok: false, msg: 'They don\'t need service' };
+      if (c.assigned) return { ok: false, msg: 'Someone is already serving them' };
+      if (!this.ready.length) return { ok: false, msg: 'No food on the pass — cook & collect first' };
+      this._releaseJob(z);
+      c.assigned = z.id; z.job = c.id; z.carry = this.ready.pop();
+      z.state = 'toPass'; routeTo(this, z, PASS.x, PASS.y + 22);
+      return { ok: true, msg: z.name + ' is serving them' };
+    }
+    if (hit.kind === 'table') {
+      var tb = byId(this.tables, hit.id);
+      if (!tb || !tb.dirty) return { ok: false, msg: 'That table doesn\'t need cleaning' };
+      if (tb.cleaning) return { ok: false, msg: 'Already being cleaned' };
+      this._releaseJob(z);
+      tb.cleaning = z.id; z.cleanId = tb.id; z.state = 'toClean'; routeTo(this, z, tb.x, tb.y + 10);
+      return { ok: true, msg: z.name + ' is bussing that table' };
+    }
+    if (hit.kind === 'rest') {
+      this._releaseJob(z); z.state = 'resting'; routeTo(this, z, z.hx, z.hy);
+      return { ok: true, msg: z.name + ' is taking a break' };
+    }
+    return { ok: false, msg: '' };
+  };
+  // anything tappable as a command target near a point
+  World.prototype.pickTargetAt = function (x, y) {
+    var i;
+    for (i = 0; i < this.customers.length; i++) {
+      var c = this.customers[i];
+      if (c.state !== 'waiting' && c.state !== 'paying') continue;
+      if (dist(x, y, c.x, c.y - 16) < 46) return { kind: 'customer', id: c.id, state: c.state, infectable: c.infectable };
+    }
+    for (i = 0; i < this.stoves.length; i++) { var s = this.stoves[i]; if (dist(x, y, s.x, s.y) < 55) return { kind: 'stove', id: s.id, ready: s.ready, cooking: !!s.recipe }; }
+    for (i = 0; i < this.tables.length; i++) { var tb = this.tables[i]; if (tb.dirty && dist(x, y, tb.x, tb.y) < 55) return { kind: 'table', id: tb.id }; }
+    return null;
+  };
+
   World.prototype._stepCustomers = function (dt) {
     for (var i = this.customers.length - 1; i >= 0; i--) {
-      var c = this.customers[i], arr = moveTo(c, dt);
+      var c = this.customers[i], arr = step(this, c, dt, SPEED);
       if (c.state === 'toTable') { if (arr) { c.state = 'waiting'; c.wait = this.t; c.face = 'U'; } }
       else if (c.state === 'waiting') {
         if (!c.assigned && this.t - c.wait > this.patience()) { this._leave(c); }
@@ -396,7 +553,7 @@
   World.prototype._freeTable = function (c) { var tb = byId(this.tables, c.table); if (tb && tb.by === c.id) tb.by = null; };
   // Leaving after eating leaves a dirty table a zombie must clean; an impatient
   // walk-out leaves the table clean.
-  World.prototype._leave = function (c, ate) { var tb = byId(this.tables, c.table); if (tb && tb.by === c.id) { tb.by = null; if (ate) tb.dirty = true; } c.state = 'leaving'; c.assigned = null; c.tx = DOOR.x; c.ty = DOOR.y; };
+  World.prototype._leave = function (c, ate) { var tb = byId(this.tables, c.table); if (tb && tb.by === c.id) { tb.by = null; if (ate) tb.dirty = true; } c.state = 'leaving'; c.assigned = null; routeTo(this, c, DOOR.x, DOOR.y); };
 
   function byId(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
 
