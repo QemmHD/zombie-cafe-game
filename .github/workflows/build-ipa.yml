@@ -29,6 +29,21 @@ jobs:
           npx cap add ios
           npx cap sync ios
 
+      # Lock the app to LANDSCAPE on iPhone + iPad (fills the screen like the
+      # reference). Rewrites the supported-orientation arrays in Info.plist.
+      - name: Force landscape orientation
+        run: |
+          PLIST=ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationLandscapeLeft" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations:1 string UIInterfaceOrientationLandscapeRight" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad:0 string UIInterfaceOrientationLandscapeLeft" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad:1 string UIInterfaceOrientationLandscapeRight" "$PLIST"
+          echo "== orientations ==" && /usr/libexec/PlistBuddy -c "Print :UISupportedInterfaceOrientations" "$PLIST"
+
       # Generate the custom Zombie Cafe app icon from assets/icon.png into the
       # iOS AppIcon set. Non-fatal: if it fails the build still ships with the
       # default Capacitor icon.

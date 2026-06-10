@@ -19,13 +19,20 @@
 
   // palette
   var C = {
-    out: '#15160f', floorL: '#8b9088', floorD: '#7c827a', grout: '#5f655d',
-    wallL: '#6e8a72', wallR: '#566e5b', wallTop: '#84a085', skirt: '#3c4d40',
-    outside: '#1b2a1c', street: '#2a2c25',
+    out: '#15160f', floorL: '#8b9088', floorD: '#7c827a', grout: '#4f554c',
+    // grimy warm walls (left lighter / right darker) like a dingy diner
+    wallL: '#b89a3e', wallR: '#917529', wallTop: '#caa94a', skirt: '#2c3a2f',
+    // exterior block
+    grass: '#46622f', grassD: '#3a5328', grassL: '#577a39',
+    road: '#5f625b', roadD: '#4d504a', roadLine: '#e3c14a',
+    walk: '#9a9d92', walkD: '#80847b', walkSeam: '#6a6e64',
+    slime: '#8fd13a', stain: '#6a4a26',
     zSkin: '#7fcf57', zSkinD: '#5aa83f', apron: '#d8d2c0', hat: '#f4f1e8',
     cloth1: '#c44', cloth2: '#eee', wood: '#7a5436', woodD: '#5d3f28',
     steel: '#9aa0a6', steelD: '#6c7176', gold: '#ffcf4d', toxic: '#7cff5a', blood: '#d8413a',
   };
+  // deterministic value-noise rng (stable demo screenshots)
+  function rnd(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
   function Renderer(canvas) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this.resize(); }
 
@@ -37,17 +44,16 @@
     var cvW = this.cv.width, cvH = this.cv.height, W = Wld.W, H = Wld.H;
     var spanX = W + H;                                  // isoX ranges over [-H, W]
     var wallU = 210;                                    // wall height in KX units
-    var KXw = (cvW * 0.99) / spanX;                     // scale that fits the width
-    var KXh = (cvH * 0.95) / (spanX * 0.56 + wallU);    // scale that fills the height
-    // COVER the screen: fill the height (so the cafe is the whole screen, not a
-    // small diamond floating in black), but cap how much we zoom past the
-    // width-fit so we never crop the side walls too aggressively.
-    var KX = Math.min(Math.max(KXw, KXh), KXw * 1.5);
+    // CONTAIN the café with a margin so the exterior block (grass/road/
+    // sidewalk) frames it on all sides — works in landscape and portrait.
+    var KXw = (cvW * 0.90) / spanX;                     // diamond width <= 90% screen
+    var KXh = (cvH * 0.80) / (spanX * 0.56 + wallU);    // content height <= 80% screen
+    var KX = Math.min(KXw, KXh);
     var KY = KX * 0.56, wall = KX * wallU;
     var contentH = spanX * KY + wall;
     this.KX = KX; this.KY = KY; this.wall = wall;
     this.OX = cvW / 2 + ((H - W) / 2) * KX;             // centre the diamond horizontally
-    this.OY = (cvH - contentH) / 2 + wall + cvH * 0.02; // centre vertically, nudged down a touch
+    this.OY = (cvH - contentH) / 2 + wall + cvH * 0.03; // centre vertically, nudged down a touch
     this.S = this.TW = Wld.TILE * KX * 2;
     this.TH = Wld.TILE * KY * 2;
     this.TW = Wld.TILE * KX * 2;                        // on-screen tile diamond size
@@ -67,10 +73,9 @@
     this._t = t;
     var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0);
-    c.fillStyle = C.outside; c.fillRect(0, 0, cvW, cvH);
-    this._outside(c);
-    this._walls(c);
-    this._floor(c);
+    this._ground(c);            // exterior: grass + road + sidewalk (textured)
+    this._floor(c);             // grimy tiled floor + cutaway edge
+    this._walls(c);             // grimy walls with thickness
     if (ui.edit) this._grid(c, world, ui);
 
     // depth-sorted drawables (sorted by base/foot Y so things overlap right)
@@ -102,33 +107,94 @@
     var a = this.project(0, 0); c.moveTo(a.x, a.y);
     this._diamond(c, W, 0); this._diamond(c, W, H); this._diamond(c, 0, H); c.closePath();
   };
-  Renderer.prototype._outside = function (c) {
-    // a paved street margin just outside the room (front-left & front-right)
-    var W = Wld.W, H = Wld.H, m = Wld.TILE * 0.7;
-    c.fillStyle = C.street;
-    c.beginPath();
-    var pts = [ [0, H], [W, H], [W + m, H + m], [-m, H + m] ].map(function (p) { return this.project(p[0], p[1]); }, this);
-    c.moveTo(pts[0].x, pts[0].y); for (var i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y); c.closePath(); c.fill();
+  // fill a plane-aligned rectangle (projected to an iso quad)
+  Renderer.prototype._planeRect = function (c, x0, y0, x1, y1) {
+    var a = this.project(x0, y0), b = this.project(x1, y0), d = this.project(x1, y1), e = this.project(x0, y1);
+    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(d.x, d.y); c.lineTo(e.x, e.y); c.closePath();
+  };
+  // clip to a path, run a texture callback (bbox = whole canvas), then restore
+  Renderer.prototype._tex = function (c, pathFn, texFn) {
+    c.save(); pathFn.call(this); c.clip();
+    texFn.call(this, { x: 0, y: 0, w: this.cv.width, h: this.cv.height });
+    c.restore();
+  };
+  // The café sits inside a city block: concentric iso bands of grass → road →
+  // grass verge → sidewalk → floor, so it never floats in empty space.
+  Renderer.prototype._ground = function (c) {
+    var self = this, W = Wld.W, H = Wld.H, cvW = this.cv.width, cvH = this.cv.height, T = Wld.TILE, S = this.S;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#26361b'; c.fillRect(0, 0, cvW, cvH);
+    // outer grass
+    c.fillStyle = C.grass; this._planeRect(c, -T * 12, -T * 12, W + T * 12, H + T * 12); c.fill();
+    this._tex(c, function () { this._planeRect(c, -T * 12, -T * 12, W + T * 12, H + T * 12); }, function (bb) {
+      scatter(c, bb, 140, 7, function (x, y, r, i) { speck(c, x, y, S * (0.025 + r * 0.04), i % 3 ? C.grassD : C.grassL); });
+    });
+    // road ring (asphalt) + speckle
+    c.fillStyle = C.road; this._planeRect(c, -T * 3.2, -T * 3.2, W + T * 3.2, H + T * 3.2); c.fill();
+    this._tex(c, function () { this._planeRect(c, -T * 3.2, -T * 3.2, W + T * 3.2, H + T * 3.2); }, function (bb) {
+      scatter(c, bb, 90, 21, function (x, y, r) { speck(c, x, y, S * 0.025, r > 0.5 ? C.roadD : '#6c6f68'); });
+    });
+    // dashed centre line around the block
+    c.save(); c.strokeStyle = C.roadLine; c.lineWidth = Math.max(2, S * 0.05); c.setLineDash([S * 0.32, S * 0.34]);
+    this._planeRect(c, -T * 2.0, -T * 2.0, W + T * 2.0, H + T * 2.0); c.stroke(); c.setLineDash([]); c.restore();
+    // grass verge
+    c.fillStyle = C.grassD; this._planeRect(c, -T * 1.1, -T * 1.1, W + T * 1.1, H + T * 1.1); c.fill();
+    // sidewalk ring with slab seams + cracks
+    c.fillStyle = C.walk; this._planeRect(c, -T * 0.55, -T * 0.55, W + T * 0.55, H + T * 0.55); c.fill();
+    this._tex(c, function () { this._planeRect(c, -T * 0.55, -T * 0.55, W + T * 0.55, H + T * 0.55); }, function (bb) {
+      c.strokeStyle = C.walkSeam; c.lineWidth = Math.max(1.2, S * 0.02);
+      for (var s = -1; s <= Math.ceil((W + T) / T) + 1; s++) { var p = self.project(s * T, -T); var q = self.project(s * T, H + T); line(c, p.x, p.y, q.x, q.y); var p2 = self.project(-T, s * T); var q2 = self.project(W + T, s * T); line(c, p2.x, p2.y, q2.x, q2.y); }
+      scatter(c, bb, 16, 33, function (x, y, r) { crackLine(c, x, y, S * 0.5, r * 6.28, S * 0.015, C.walkD); });
+    });
+    // a contact drop-shadow just inside the sidewalk so the building sits down
+    c.fillStyle = 'rgba(0,0,0,.18)'; this._planeRect(c, -T * 0.18, -T * 0.18, W + T * 0.18, H + T * 0.18); c.fill();
   };
   Renderer.prototype._walls = function (c) {
-    var W = Wld.W, H = Wld.H, wall = this.wall;
+    var self = this, W = Wld.W, H = Wld.H, wall = this.wall, S = this.S, th = S * 0.12;
     var A = this.project(0, 0), B = this.project(W, 0), D = this.project(0, H);
-    // right-back wall (edge A-B)
+    // wall TOP caps (thickness slabs) so the walls read as solid
+    c.fillStyle = '#7b6320';
+    c.beginPath(); c.moveTo(A.x, A.y - wall); c.lineTo(B.x, B.y - wall); c.lineTo(B.x + th, B.y - wall - th * 0.5); c.lineTo(A.x, A.y - wall - th); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(A.x, A.y - wall); c.lineTo(D.x, D.y - wall); c.lineTo(D.x - th, D.y - wall - th * 0.5); c.lineTo(A.x, A.y - wall - th); c.closePath(); c.fill();
+    // right-back wall (edge A-B) — grimy
     c.fillStyle = C.wallR;
     c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.lineTo(B.x, B.y - wall); c.lineTo(A.x, A.y - wall); c.closePath(); c.fill();
-    // left-back wall (edge A-D)
+    this._wallGrime(c, A, B, wall, 71);
+    this._wallWindow(c, B, A, wall, 0.55);
+    // left-back wall (edge A-D) — grimier (it's the darker/shaded side)
     c.fillStyle = C.wallL;
     c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(D.x, D.y); c.lineTo(D.x, D.y - wall); c.lineTo(A.x, A.y - wall); c.closePath(); c.fill();
-    // top trims
-    c.fillStyle = C.wallTop;
-    c.beginPath(); c.moveTo(A.x, A.y - wall); c.lineTo(B.x, B.y - wall); c.lineTo(B.x, B.y - wall - 10); c.lineTo(A.x, A.y - wall - 10); c.closePath(); c.fill();
-    c.beginPath(); c.moveTo(A.x, A.y - wall); c.lineTo(D.x, D.y - wall); c.lineTo(D.x, D.y - wall - 10); c.lineTo(A.x, A.y - wall - 10); c.closePath(); c.fill();
-    // a window + a crooked picture on the walls for life
-    this._wallWindow(c, B, A, wall, 0.5);
-    this._wallPic(c, A, D, wall, 0.55);
+    this._wallGrime(c, A, D, wall, 97);
+    this._wallBoards(c, A, D, wall, 0.62);
+    // ambient occlusion in the inner corner
+    var g = c.createLinearGradient(A.x, A.y - wall, A.x, A.y); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.28)');
+    c.fillStyle = g; c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.lineTo(B.x, B.y - wall); c.lineTo(A.x, A.y - wall); c.lineTo(D.x, D.y - wall); c.lineTo(D.x, D.y); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(0,0,0,.22)'; c.fillRect(A.x - th * 0.5, A.y - wall, th, wall);   // corner seam shadow
     // skirting
-    c.strokeStyle = C.skirt; c.lineWidth = Math.max(2, this.KX * 14);
+    c.strokeStyle = C.skirt; c.lineWidth = Math.max(3, this.KX * 16);
     c.beginPath(); c.moveTo(B.x, B.y); c.lineTo(A.x, A.y); c.lineTo(D.x, D.y); c.stroke();
+  };
+  // grime on one wall face (edge P0->P1, extruded up by `wall`): stains, cracks, slime drips
+  Renderer.prototype._wallGrime = function (c, P0, P1, wall, seed) {
+    var self = this, S = this.S;
+    c.save();
+    c.beginPath(); c.moveTo(P0.x, P0.y); c.lineTo(P1.x, P1.y); c.lineTo(P1.x, P1.y - wall); c.lineTo(P0.x, P0.y - wall); c.closePath(); c.clip();
+    for (var i = 0; i < 7; i++) {
+      var f = rnd(seed + i), x = P0.x + (P1.x - P0.x) * f, y0 = P0.y + (P1.y - P0.y) * f;
+      var yy = y0 - wall * (0.2 + rnd(seed + i + 3) * 0.7);
+      if (i % 3 === 0) drip(c, x, yy - wall * 0.1, wall * (0.2 + rnd(seed + i) * 0.3), S * 0.04, 'rgba(110,170,40,.55)');   // slime drip
+      else if (i % 3 === 1) crackLine(c, x, yy, wall * 0.5, 1.3 + rnd(seed + i), S * 0.014, 'rgba(20,16,8,.5)');           // crack
+      else stainBlob(c, x, yy, S * (0.12 + rnd(seed + i) * 0.16), 'rgba(60,42,20,.32)');                                    // brown stain
+    }
+    // chipped plaster patches (lighter)
+    c.fillStyle = 'rgba(220,205,150,.18)'; stainBlob(c, P0.x + (P1.x - P0.x) * 0.3, P0.y - wall * 0.5, S * 0.18, 'rgba(220,205,150,.16)');
+    c.restore();
+  };
+  // boarded-up patch on a wall (planks over a hole)
+  Renderer.prototype._wallBoards = function (c, P0, P1, wall, f) {
+    var x = P0.x + (P1.x - P0.x) * f, y = P0.y + (P1.y - P0.y) * f - wall * 0.42, S = this.S;
+    c.save(); c.translate(x, y); c.rotate(((P1.y - P0.y) < 0 ? 1 : -1) * 0.0);
+    for (var i = -1; i <= 1; i++) { c.save(); c.rotate(i * 0.08); c.fillStyle = i ? C.woodD : C.wood; rr(c, -S * 0.26, i * S * 0.14 - S * 0.05, S * 0.52, S * 0.12, 2); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke(); c.fillStyle = '#2a2018'; circle(c, -S * 0.2, i * S * 0.14 + S * 0.01, S * 0.015); circle(c, S * 0.2, i * S * 0.14 + S * 0.01, S * 0.015); c.restore(); }
+    c.restore();
   };
   Renderer.prototype._wallWindow = function (c, P0, P1, wall, f) {
     var x = P0.x + (P1.x - P0.x) * f, y = P0.y + (P1.y - P0.y) * f, w = this.TW * 0.7, h = wall * 0.42;
@@ -148,20 +214,38 @@
     c.strokeStyle = C.out; c.lineWidth = 3; c.strokeRect(-s / 2, -s / 2, s, s); c.restore();
   };
   Renderer.prototype._floor = function (c) {
-    var W = Wld.W, H = Wld.H, T = Wld.TILE;
+    var self = this, W = Wld.W, H = Wld.H, T = Wld.TILE, S = this.S;
+    // cutaway edge: a dark slab dropping below the two open front edges
+    var drop = S * 0.34, fl = this.project(0, H), fr = this.project(W, H), fb = this.project(W, H);
+    var lEdge = this.project(0, H), bot = this.project(W, H), rEdge = this.project(W, H);
+    var pL = this.project(0, H), pB = this.project(W, H);
+    // front-left face (edge from (0,H) to (W,H)) and front-right (W,0)->(W,H)
+    c.fillStyle = '#3a4038';
+    var aa = this.project(0, H), bb2 = this.project(W, H), cc = this.project(W, 0);
+    c.beginPath(); c.moveTo(aa.x, aa.y); c.lineTo(bb2.x, bb2.y); c.lineTo(bb2.x, bb2.y + drop); c.lineTo(aa.x, aa.y + drop); c.closePath(); c.fill();
+    c.fillStyle = '#2f342d';
+    c.beginPath(); c.moveTo(bb2.x, bb2.y); c.lineTo(cc.x, cc.y); c.lineTo(cc.x, cc.y + drop); c.lineTo(bb2.x, bb2.y + drop); c.closePath(); c.fill();
+
     c.save(); this._roomPath(c); c.clip();
     for (var gy = 0; gy < H; gy += T) for (var gx = 0; gx < W; gx += T) {
       var cx = gx + T / 2, cy = gy + T / 2, p = this.project(cx, cy);
-      var even = ((gx / T) + (gy / T)) % 2 === 0;
+      var even = ((gx / T) + (gy / T)) % 2 === 0, wear = rnd(gx * 1.3 + gy * 0.7);
       c.fillStyle = even ? C.floorL : C.floorD;
       c.beginPath();
       c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill();
-      c.strokeStyle = C.grout; c.lineWidth = 1.2; c.stroke();
-      // a little grime / slime per some tiles (deterministic by tile)
-      var n = (gx * 13 + gy * 7) % 11;
-      if (n === 0) { c.fillStyle = 'rgba(60,90,40,.35)'; blob(c, p.x + 6, p.y + 3, this.TW * 0.12); }
-      else if (n === 3) { c.fillStyle = 'rgba(40,30,20,.30)'; blob(c, p.x - 8, p.y - 2, this.TW * 0.09); }
+      if (wear > 0.7) { c.fillStyle = 'rgba(40,44,38,' + (wear - 0.6) + ')'; c.fill(); }   // worn/dirty tiles
+      c.strokeStyle = C.grout; c.lineWidth = 1.4; c.stroke();
     }
+    // grime decals across the whole floor (deterministic) — stains, smears, cracks
+    var bbF = { x: this.project(0, H).x - this.TW, y: this.project(W, 0).y, w: (this.project(W, H).x - this.project(0, H).x) + this.TW * 2, h: this.project(0, H).y - this.project(W, 0).y };
+    scatter(c, bbF, 26, 51, function (x, y, r, i) {
+      if (i % 4 === 0) stainBlob(c, x, y, S * (0.1 + r * 0.18), 'rgba(60,90,40,.28)');           // slime
+      else if (i % 4 === 1) stainBlob(c, x, y, S * (0.08 + r * 0.14), 'rgba(50,34,20,.30)');       // grease
+      else if (i % 4 === 2) crackLine(c, x, y, S * 0.6, r * 6.28, S * 0.012, 'rgba(20,22,18,.4)'); // crack
+      else speck(c, x, y, S * 0.03, 'rgba(20,20,16,.5)');                                          // debris
+    });
+    // dirty trails near the kitchen wall + door
+    c.fillStyle = 'rgba(45,40,30,.22)'; stainBlob(c, this.project(W * 0.5, T * 1.2).x, this.project(W * 0.5, T * 1.2).y, S * 0.6, 'rgba(45,40,30,.22)');
     c.restore();
   };
   Renderer.prototype._grid = function (c, world, ui) {
@@ -284,14 +368,18 @@
         c.fillStyle = '#7a1f24'; c.beginPath(); c.ellipse(p.x, y + S * 0.04, S * 0.3, S * 0.15, 0, 0, 7); c.fill();
         c.fillStyle = C.blood; rr(c, p.x - S * 0.05, y - S * 0.34, S * 0.1, S * 0.4, 3); c.fill(); circle(c, p.x, y - S * 0.34, S * 0.09); break;
       case 'counter':
-        c.fillStyle = C.steelD; rr(c, p.x - S * 0.34, y - S * 0.18, S * 0.68, S * 0.34, 5); c.fill(); c.stroke();
-        c.fillStyle = C.steel; rr(c, p.x - S * 0.34, y - S * 0.18, S * 0.68, S * 0.1, 5); c.fill();
-        c.fillStyle = '#7a5a2a'; circle(c, p.x - S * 0.12, y - S * 0.08, S * 0.04); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.1, y - S * 0.05, S * 0.03); break;
+        c.fillStyle = shade(C.steelD, 0.7); rr(c, p.x - S * 0.28, y - S * 0.18, S * 0.62, S * 0.34, 5); c.fill();   // side face
+        c.fillStyle = C.steelD; rr(c, p.x - S * 0.34, y - S * 0.18, S * 0.62, S * 0.34, 5); c.fill(); c.stroke();
+        c.fillStyle = C.steel; rr(c, p.x - S * 0.34, y - S * 0.2, S * 0.62, S * 0.1, 5); c.fill();
+        c.fillStyle = '#7a5a2a'; circle(c, p.x - S * 0.12, y - S * 0.08, S * 0.04); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.1, y - S * 0.05, S * 0.03);
+        stainBlob(c, p.x + S * 0.06, y, S * 0.07, 'rgba(40,30,16,.28)'); break;
       case 'sink':
-        c.fillStyle = C.steelD; rr(c, p.x - S * 0.3, y - S * 0.2, S * 0.6, S * 0.36, 5); c.fill(); c.stroke();
+        c.fillStyle = shade(C.steelD, 0.7); rr(c, p.x - S * 0.24, y - S * 0.2, S * 0.56, S * 0.38, 5); c.fill();
+        c.fillStyle = C.steelD; rr(c, p.x - S * 0.3, y - S * 0.2, S * 0.56, S * 0.38, 5); c.fill(); c.stroke();
         c.fillStyle = '#2c3a3f'; rr(c, p.x - S * 0.2, y - S * 0.12, S * 0.4, S * 0.18, 4); c.fill();
         c.strokeStyle = C.steel; c.lineWidth = S * 0.04; c.beginPath(); c.moveTo(p.x, y - S * 0.12); c.lineTo(p.x, y - S * 0.3); c.lineTo(p.x + S * 0.1, y - S * 0.3); c.stroke();
-        c.fillStyle = 'rgba(120,200,255,.5)'; circle(c, p.x, y - S * 0.02, S * 0.05); break;
+        c.fillStyle = 'rgba(120,200,90,.6)'; c.beginPath(); c.ellipse(p.x, y - S * 0.02, S * 0.16, S * 0.07, 0, 0, 7); c.fill();   // dirty green water
+        c.fillStyle = 'rgba(150,220,110,.5)'; circle(c, p.x - S * 0.05, y - S * 0.03, S * 0.025); break;
       case 'trash':
         c.fillStyle = '#3a4a32'; rr(c, p.x - S * 0.16, y - S * 0.2, S * 0.32, S * 0.36, 4); c.fill(); c.stroke();
         c.fillStyle = '#5a6a42'; rr(c, p.x - S * 0.19, y - S * 0.24, S * 0.38, S * 0.07, 3); c.fill();
@@ -324,6 +412,10 @@
     c.fillStyle = '#3a3f45'; rr(c, x - S * 0.22, y - S * 0.2, S * 0.44, S * 0.24, 4); c.fill();
     // knobs
     c.fillStyle = C.gold; circle(c, x - S * 0.28, y - S * 0.4, S * 0.04); circle(c, x - S * 0.14, y - S * 0.4, S * 0.04);
+    // grease smudges + a drip down the front
+    c.save(); rr(c, x - S * 0.42, y - S * 0.5, S * 0.78, S * 0.66, 8); c.clip();
+    stainBlob(c, x + S * 0.12, y - S * 0.12, S * 0.12, 'rgba(40,30,16,.3)'); stainBlob(c, x - S * 0.22, y - S * 0.04, S * 0.08, 'rgba(40,30,16,.25)');
+    drip(c, x + S * 0.26, y - S * 0.34, S * 0.18, S * 0.02, 'rgba(110,150,40,.4)'); c.restore();
     var r = recipe(st.recipe) || { time: 1, emoji: '🍳', batch: 0 };
     c.textAlign = 'center'; c.textBaseline = 'middle';
     if (st.burned) {
@@ -530,6 +622,26 @@
   function circle(c, x, y, r) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
   function blob(c, x, y, r) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0, 0, 7); c.fill(); }
   function line(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+
+  // ---- reusable texture / grime decals (Stage 3) ----------------------
+  // scatter `n` decals deterministically inside a screen bbox
+  function scatter(c, bb, n, seed, fn) { for (var i = 0; i < n; i++) { var x = bb.x + rnd(seed + i) * bb.w, y = bb.y + rnd(seed + i * 1.7 + 9) * bb.h, r = rnd(seed + i * 3.3 + 4); fn(x, y, r, i); } }
+  function speck(c, x, y, r, col) { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, r, r * 0.7, 0, 0, 7); c.fill(); }
+  function stainBlob(c, x, y, r, col) {
+    c.fillStyle = col; c.beginPath();
+    for (var a = 0; a < 7; a++) { var ang = a / 7 * 6.283, rr2 = r * (0.7 + rnd(x + y + a) * 0.5); var px = x + Math.cos(ang) * rr2, py = y + Math.sin(ang) * rr2 * 0.62; a ? c.lineTo(px, py) : c.moveTo(px, py); }
+    c.closePath(); c.fill();
+  }
+  function crackLine(c, x, y, len, ang, w, col) {
+    c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(x, y);
+    var px = x, py = y;
+    for (var i = 1; i <= 4; i++) { ang += (rnd(x + i) - 0.5) * 0.9; px += Math.cos(ang) * len / 4; py += Math.sin(ang) * len / 4; c.lineTo(px, py); if (rnd(y + i) > 0.7) { c.moveTo(px, py); c.lineTo(px + Math.cos(ang + 1) * len * 0.15, py + Math.sin(ang + 1) * len * 0.15); c.moveTo(px, py); } }
+    c.stroke();
+  }
+  function drip(c, x, y, len, w, col) {
+    c.fillStyle = col; c.beginPath(); c.moveTo(x - w, y); c.quadraticCurveTo(x - w * 0.6, y + len * 0.7, x, y + len); c.quadraticCurveTo(x + w * 0.6, y + len * 0.7, x + w, y); c.closePath(); c.fill();
+    c.beginPath(); c.ellipse(x, y + len, w * 1.3, w * 1.1, 0, 0, 7); c.fill();
+  }
   // rising puffs of smoke for burning/burnt food
   function smoke(c, x, y, S, t, col) {
     for (var i = 0; i < 3; i++) {

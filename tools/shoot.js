@@ -70,7 +70,7 @@ function main() {
   const all = probe.window.DEMO_LIST || [];
   const want = process.argv.slice(2);
   const states = want.length ? want : all;
-  const W = 390 * 2, H = 844 * 2;     // iPhone-ish portrait at dpr 2
+  const W = 844 * 2, H = 390 * 2;     // iPhone-ish LANDSCAPE at dpr 2
   states.forEach((s) => {
     if (!all.includes(s)) { console.warn('unknown demo state:', s, '\n  available:', all.join(', ')); return; }
     const f = capture(s, W, H);

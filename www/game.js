@@ -44,15 +44,15 @@
     var act = world.activeZombies().length, slots = world.activeSlots(), stored = world.storedZombies().length;
     el('hud').innerHTML =
       '<div class="hud-left">' +
-        '<div class="cafename">' + world.cafeName + '</div>' +
-        '<div class="hud-row"><span class="rating' + flashCls + '">' + stars() + '</span>' +
-          '<span class="lvbadge">LV ' + world.level + '</span>' + raidNote + '</div>' +
-        '<div class="xpbar"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="cafe-line"><span class="lvbadge">' + world.level + '</span>' +
+          '<div class="cafe-id"><div class="cafename">' + world.cafeName + '</div>' +
+          '<div class="rating' + flashCls + '">' + stars() + '</div></div>' + raidNote + '</div>' +
+        '<div class="xpbar"><i style="width:' + pct + '%"></i><b>' + fmt(world.xp) + '/' + fmt(need) + '</b></div>' +
       '</div>' +
       '<div class="hud-right">' +
-        '<div class="stat coins"><span class="ico">🪙</span>' + fmt(world.coins) + '</div>' +
-        '<div class="stat toxin"><span class="ico">☣️</span>' + fmt(world.toxin) + '</div>' +
-        '<div class="stat zombies" data-act="open-roster"><span class="ico">🧟</span>' + act + '/' + slots + (stored ? '<small>+' + stored + '</small>' : '') + '</div>' +
+        '<div class="stat coins"><span class="ico">🪙</span>' + fmt(world.coins) + '<button class="plus" data-act="open-shop">+</button></div>' +
+        '<div class="stat toxin"><span class="ico">☣️</span>' + fmt(world.toxin) + '<button class="plus" data-act="open-roster">+</button></div>' +
+        '<div class="logo-badge" data-act="open-help">🧟</div>' +
       '</div>';
   }
 

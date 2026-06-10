@@ -4,7 +4,7 @@
   "description": "Run a restaurant staffed by the undead. Cook cursed food, serve customers, and infect humans into new zombie staff.",
   "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "background_color": "#0b0f0c",
   "theme_color": "#0b0f0c",
   "icons": [
