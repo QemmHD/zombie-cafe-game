@@ -100,7 +100,25 @@
     } else if (hit.kind === 'customer') {
       if (hit.paying) world.collectCustomer(hit.id);
       else if (hit.infectable) infectConfirm(hit.id);
+      return;
     }
+    if (!hit) { var z = world.pickZombieAt(w.x, w.y); if (z) openZombie(z.id); }
+  }
+
+  function openZombie(zid) {
+    var z = world.zombies.filter(function (s) { return s.id === zid; })[0]; if (!z) return;
+    var rar = z.rarity === 'elite' ? '⭐ Elite' : z.rarity === 'rare' ? '🔹 Rare' : 'Common';
+    var ecol = z.energy > 45 ? 'var(--toxic)' : z.energy > 22 ? 'var(--gold)' : 'var(--blood)';
+    var roles = [['auto', 'Auto'], ['waiter', 'Waiter'], ['cleaner', 'Cleaner'], ['rest', 'Rest']];
+    var rb = roles.map(function (r) { return '<button class="rolebtn' + (z.role === r[0] ? ' on' : '') + '" data-act="role" data-id="' + zid + '" data-role="' + r[0] + '">' + r[1] + '</button>'; }).join('');
+    var stat = function (n, v) { return '<div class="zstat"><span>' + n + '</span><b>' + v + '</b></div>'; };
+    openSheet('<div class="sheet">' + head('🧟 ' + z.name) +
+      '<p class="hint">' + rar + ' zombie · doing: <b>' + (z.state === 'resting' ? 'resting' : z.role) + '</b></p>' +
+      '<div class="ebar"><i style="width:' + Math.max(0, z.energy) + '%;background:' + ecol + '"></i></div>' +
+      '<div class="zstats">' + stat('Energy', Math.round(z.energy) + '%') + stat('Speed', '×' + z.speed.toFixed(2)) + stat('Serve', '×' + z.serve.toFixed(2)) + stat('Clean', '×' + z.clean.toFixed(2)) + '</div>' +
+      '<div class="r-meta" style="margin:12px 2px 6px;">Job</div><div class="rolerow">' + rb + '</div>' +
+      '<button class="buy toxin" data-act="feed" data-id="' + zid + '" style="width:100%;justify-content:center;margin-top:12px;">☣️ Feed (1 toxin) — refill energy</button>' +
+      '</div>');
   }
   // Build mode: first tap lifts a piece; next tap on a spot drops it there.
   function onTapEdit(w) {
@@ -195,6 +213,8 @@
       h('🪙', 'Collect', 'When a customer shows a coin, tap them to grab coins + XP.') +
       h('🧟‍♀️', 'Infect', 'Tap a customer with a green 🧟 bubble to spend toxin and turn them into a new zombie worker.') +
       h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes — win loot and steal their recipe.') +
+      h('😴', 'Staff', 'Tap a zombie to see its energy & stats. Working tires them; tired zombies rest. Set a job (Auto/Waiter/Cleaner/Rest) or Feed them toxin to refill.') +
+      h('🧽', 'Clean', 'After customers eat, tables get dirty (flies!). Zombies bus them so new customers can sit.') +
       h('🔨', 'Build', 'Tap Build, then tap a table / stove / decoration and tap where to move it. Rearrange your whole cafe.') +
       h('🛒', 'Grow', 'Buy stoves, tables, staff and decor in the Shop. Decor sits on the floor and raises ambiance (faster, richer customers).') +
       '</div></div>');
@@ -230,6 +250,8 @@
     else if (act === 'open-help') openHelp();
     else if (act === 'open-build') setEdit(true);
     else if (act === 'build-done') setEdit(false);
+    else if (act === 'role') { world.setZombieRole(a.dataset.id, a.dataset.role); openZombie(a.dataset.id); }
+    else if (act === 'feed') { world.feedZombie(a.dataset.id); openZombie(a.dataset.id); }
     renderHUD();
   });
 

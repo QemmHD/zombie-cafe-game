@@ -59,6 +59,16 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
 .raidbar, .raidpill2 { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:13px; color:var(--text); margin-bottom:12px; }
 .buildbar { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(76px + var(--safe-bottom)); z-index:60; display:flex; align-items:center; gap:10px; background:rgba(10,16,11,.97); border:1px solid var(--toxic); color:var(--text); padding:8px 10px 8px 14px; border-radius:999px; font-size:13px; font-weight:700; max-width:94%; box-shadow:0 0 20px rgba(124,255,90,.25); }
 .buildbar .buy { padding:7px 14px; }
+.ebar { height:12px; background:#0c140e; border:1px solid var(--line); border-radius:999px; overflow:hidden; margin:4px 0 12px; }
+.ebar > i { display:block; height:100%; border-radius:999px; transition:width .3s; }
+.zstats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.zstat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 4px; text-align:center; }
+.zstat span { display:block; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+.zstat b { font-size:15px; }
+.rolerow { display:flex; gap:8px; }
+.rolebtn { flex:1; background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 4px; font-weight:700; font-size:13px; }
+.rolebtn.on { background:linear-gradient(180deg,var(--toxic),var(--toxic-dim)); color:#07210a; border-color:var(--toxic); }
+.rolebtn:active { transform:scale(.96); }
 
 /* raid result */
 .result { text-align:center; padding:14px 6px 6px; }

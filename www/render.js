@@ -69,7 +69,7 @@
     function add(x, y, fn) { items.push({ d: x + y, fn: fn }); }
     add(Wld.PASS.x, Wld.PASS.y - 1, function () { self._pass(c, world); });
     world.decors.forEach(function (d) { add(d.x, d.y, function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
-    world.tables.forEach(function (tb) { add(tb.x, tb.y, function () { self._table(c, tb, ui.selected && ui.selected.id === tb.id); }); });
+    world.tables.forEach(function (tb) { add(tb.x, tb.y, function () { self._table(c, tb, ui.selected && ui.selected.id === tb.id, t); }); });
     world.stoves.forEach(function (st) { add(st.x, st.y, function () { self._stove(c, st, world, t, ui.selected && ui.selected.id === st.id); }); });
     if (!ui.edit) {
       world.customers.forEach(function (cu) { add(cu.x, cu.y, function () { self._customer(c, cu, world, t); }); });
@@ -188,7 +188,7 @@
     if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.textAlign = 'center'; c.fillText('PASS', p.x, p.y); }
   };
 
-  Renderer.prototype._table = function (c, tb, sel) {
+  Renderer.prototype._table = function (c, tb, sel, t) {
     var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.18 : 0; var y = p.y - lift;
     // chairs (back then front drawn around)
     chair(c, p.x - S * 0.5, y - S * 0.12, S, 1);
@@ -207,6 +207,13 @@
     c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.stroke();
     // a plate on top
     c.fillStyle = '#fff'; c.beginPath(); c.ellipse(p.x, y - 2, S * 0.12, S * 0.06, 0, 0, 7); c.fill();
+    if (tb.dirty) {
+      // grimy plate, scraps, green stain + buzzing flies
+      c.fillStyle = '#7a5a2a'; circle(c, p.x, y - 3, S * 0.05); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.05, y - 1, S * 0.025);
+      c.fillStyle = 'rgba(120,200,90,.22)'; c.beginPath(); c.ellipse(p.x, y, S * 0.2, S * 0.1, 0, 0, 7); c.fill();
+      c.fillStyle = C.out; for (var fi = 0; fi < 3; fi++) { var a = (t || 0) * 3 + fi * 2.1; circle(c, p.x + Math.cos(a) * S * 0.16, y - S * 0.12 + Math.sin(a * 1.4) * S * 0.07, S * 0.013); }
+      if (tb.cleaning) { c.fillStyle = '#bfe6ff'; c.font = (S * 0.18) + 'px system-ui'; c.textAlign = 'center'; c.fillText('✦', p.x - S * 0.12, y - S * 0.14); }
+    }
     if (sel) selRing(c, p.x, y, S * 0.5);
   };
 
@@ -305,7 +312,14 @@
     c.fillStyle = '#bfe6c0'; circle(c, x + S * 0.06, hy + S * 0.13, S * 0.018);
     // chef hat
     c.fillStyle = C.hat; rr(c, x - S * 0.14, hy - S * 0.3, S * 0.28, S * 0.12, 4); c.fill(); circle(c, x - S * 0.1, hy - S * 0.32, S * 0.07); circle(c, x, hy - S * 0.35, S * 0.08); circle(c, x + S * 0.1, hy - S * 0.32, S * 0.07); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.beginPath(); c.rect(x - S * 0.14, hy - S * 0.22, S * 0.28, S * 0.05); c.stroke();
-    if (z.carry) bubble(c, x, y - S * 0.92, (recipe(z.carry) || {}).emoji || '🍽️', '#fff', S);
+    // rarity gem on the apron
+    if (z.rarity && z.rarity !== 'common') { c.fillStyle = z.rarity === 'elite' ? C.gold : '#7fd0ff'; circle(c, x, y - S * 0.2, S * 0.035); }
+    // energy bar when tired-ish
+    if (z.energy < 65) { var bw = S * 0.42; c.fillStyle = 'rgba(0,0,0,.55)'; rr(c, x - bw / 2, hy - S * 0.42, bw, S * 0.07, 3); c.fill(); var ef = Math.max(0, z.energy) / 100; c.fillStyle = z.energy > 45 ? C.toxic : z.energy > 22 ? C.gold : C.blood; rr(c, x - bw / 2, hy - S * 0.42, bw * ef, S * 0.07, 3); c.fill(); }
+    // status / carry bubble
+    if (z.state === 'resting') bubble(c, x, y - S * 0.95, '💤', '#cfe', S);
+    else if (z.state === 'cleaning' || z.state === 'toClean') bubble(c, x, y - S * 0.95, '🧽', '#fff', S);
+    else if (z.carry) bubble(c, x, y - S * 0.95, (recipe(z.carry) || {}).emoji || '🍽️', '#fff', S);
   };
 
   Renderer.prototype._customer = function (c, cu, world, t) {

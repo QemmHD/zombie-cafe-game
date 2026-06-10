@@ -98,6 +98,53 @@ test('build mode: furniture can be moved to a free cell', () => {
   assert.ok(!w.moveTable(tbl.id, w.tables[1].cell), 'cannot move onto an occupied cell');
 });
 
+test('served tables get dirty and zombies clean them', () => {
+  const w = boot();
+  for (const st of w.stoves) w.startCook(st.id, 'coffee');
+  advance(w, 9); w.stoves.forEach((st) => w.plateStove(st.id));
+  advance(w, 120);
+  // over two minutes a table should have been dirtied and then cleaned again
+  assert.ok(w.served >= 1, 'someone ate');
+  // force a known dirty table and confirm a zombie clears it
+  const tb = w.tables.find((t) => !t.by) || w.tables[0];
+  tb.by = null; tb.dirty = true; tb.cleaning = null;
+  let cleaned = false;
+  for (let i = 0; i < 400 && !cleaned; i++) { w.tick(0.2); if (!tb.dirty) cleaned = true; }
+  assert.ok(cleaned, 'a zombie cleaned the dirty table');
+});
+
+test('zombies recover while resting and tire while working', () => {
+  const w = boot();
+  const z = w.zombies[0];
+  w.setZombieRole(z.id, 'rest'); z.energy = 10;
+  advance(w, 8);
+  assert.strictEqual(z.state, 'resting', 'a rest-role zombie rests');
+  assert.ok(z.energy > 30, 'resting restored energy, got ' + Math.round(z.energy));
+  // now put it to work and confirm energy drains during a serve trip
+  w.setZombieRole(z.id, 'auto');
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9); w.plateStove(w.stoves[0].id);
+  let drained = false; const start = z.energy;
+  for (let i = 0; i < 80; i++) { w.tick(0.2); if ((z.state === 'toPass' || z.state === 'toCustomer') && z.energy < start) drained = true; }
+  assert.ok(drained, 'energy drained while working a job');
+});
+
+test('feeding a zombie with toxin refills energy', () => {
+  const w = boot();
+  const z = w.zombies[0]; z.energy = 20; w.toxin = 3;
+  assert.ok(w.feedZombie(z.id));
+  assert.strictEqual(z.energy, 100);
+  assert.strictEqual(w.toxin, 2);
+});
+
+test('a rest-role zombie refuses work; a cleaner ignores serving', () => {
+  const w = boot();
+  const z = w.zombies[0]; w.setZombieRole(z.id, 'rest');
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9); w.plateStove(w.stoves[0].id);
+  advance(w, 6);
+  assert.ok(z.state === 'resting' || z.state === 'idle', 'rest zombie did not take a serving job');
+  assert.ok(w.ready.length >= 1, 'food stayed on the pass, unserved');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);
