@@ -531,6 +531,29 @@ test('queue forms a readable line — distinct, descending slots', () => {
   assert.ok(ta[0] !== td[0] || ta[1] !== td[1], 'queue slots span distinct tiles');
 });
 
+test('anchors: every object resolves to an explicit anchor type (4.6E)', () => {
+  const w = boot(); w.coins = 99999;
+  assert.strictEqual(w.anchorOf(w.tables[0]), 'TABLE_CENTER');
+  assert.strictEqual(w.anchorOf(w.chairs[0]), 'CHAIR_SEAT_POINT');
+  assert.strictEqual(w.anchorOf(w.stoves[0]), 'WALL_BACK_FLUSH');
+  w.buy('fridge'); w.buy('sink'); w.buy('counter');
+  const find = (id) => w.decors.find((d) => d.deco === id);
+  assert.strictEqual(w.anchorOf(find('fridge')), 'FRIDGE_WALL_EDGE');
+  assert.strictEqual(w.anchorOf(find('sink')), 'SINK_WALL_EDGE');
+  assert.strictEqual(w.anchorOf(find('counter')), 'COUNTER_FRONT_EDGE');
+  assert.ok(w.isWallAnchor(w.anchorOf(find('fridge'))), 'fridge uses a wall anchor');
+});
+
+test('the pass is a real 2x1 counter and blocks both its tiles (4.6E)', () => {
+  const w = boot();
+  const blocked = w._blockedTiles();
+  assert.ok(blocked['3,1'] && blocked['4,1'], 'pass blocks both of its footprint tiles');
+  // a worker still finds a walkable interaction tile in front of the long counter
+  const it = w._freeTileNear(420, 168, '_', 420, 300);
+  const t = w.tileOf(it.x, it.y);
+  assert.ok(!blocked[t[0] + ',' + t[1]], 'pass interaction tile is walkable (in front)');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

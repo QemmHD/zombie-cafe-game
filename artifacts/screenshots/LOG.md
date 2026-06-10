@@ -109,6 +109,26 @@ wall-snap yet); the full per-object anchor-type catalogue (counterFront/
 fridgeWallSide/etc.) is represented pragmatically (offset + seat slot), not as a
 named enum; multi-tile objects still don't visually span (none shipped).
 
+## Stage 4.6E — isometric placement composer + wall-anchored layout
+- **Explicit anchor types** (`data.js ANCHORS` + `anchorOf()`): TABLE_CENTER,
+  CHAIR_SEAT_POINT, WALL_BACK_FLUSH (stoves), FRIDGE_WALL_EDGE, SINK_WALL_EDGE,
+  COUNTER_FRONT_EDGE, FLOOR_BASE_CENTER… every object resolves to one.
+- **Real 2x1 pass counter**: blocks two tiles, renders as one long service
+  counter spanning its footprint (visible, not two cubes), dishes spread along it.
+- **Composed default layout** (busy demo): a wall-anchored **kitchen line** along
+  the back (stoves → long pass → sink → fridge, flush to the wall) with a worker
+  aisle in front; **dining tables spaced** with walking lanes; decor in the
+  corners; the **queue in a line** by the door. Reads as a hand-arranged café,
+  not a grid demo — while the debug overlay still proves the tile grid.
+- Tests: **43/43** (anchor types incl. wall-flush kitchen objects; pass 2x1
+  blocks both tiles + keeps a walkable interaction tile in front).
+
+**Honest partials:** wall-snapping is applied in the composed demo and via
+anchors, but the live BUILD flow doesn't auto-snap a freshly placed appliance to
+the nearest wall yet; only the pass ships as a default multi-tile object (shop
+counter is still 1x1 in build); object orientation is south-facing default
+(no per-object rotation UI).
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

@@ -124,3 +124,23 @@ window.RIVALS = [
   { id: 'sushi',   name: 'Kraken Sushi Co.',    emoji: '🍣', defense: 200, squad: 6, time: 480,  reward: 4200,  toxin: 3, level: 8, recipe: 'cake' },
   { id: 'casino',  name: 'Necropolis Casino',   emoji: '🎰', defense: 380, squad: 8, time: 900,  reward: 11000, toxin: 6, level: 10, recipe: 'pie' },
 ];
+
+/*
+ * Visual ANCHOR types (Stage 4.6E). The LOGIC grid places objects on tiles; the
+ * VISUAL composer draws them from an anchor + orientation so they read as
+ * hand-arranged furniture (wall-flush appliances, table sets) — never as cubes
+ * centred on cells. `anchorOf()` in world.js resolves an object to one of these.
+ */
+window.ANCHORS = [
+  'FLOOR_BASE_CENTER', 'FLOOR_BASE_FRONT', 'FLOOR_BASE_BACK',
+  'WALL_BACK_FLUSH', 'WALL_LEFT_FLUSH', 'WALL_RIGHT_FLUSH', 'WALL_MOUNTED_BACK',
+  'COUNTER_FRONT_EDGE', 'STOVE_FRONT_EDGE', 'FRIDGE_WALL_EDGE', 'SINK_WALL_EDGE',
+  'TABLE_CENTER', 'CHAIR_SEAT_POINT', 'DOOR_THRESHOLD', 'QUEUE_POINT',
+  'CHARACTER_FEET', 'PLATE_ON_TABLE', 'PLATE_ON_COUNTER',
+];
+// the anchor each decor `art` (and core object) uses
+window.ANCHOR_BY_ART = {
+  counter: 'COUNTER_FRONT_EDGE', sink: 'SINK_WALL_EDGE', fridge: 'FRIDGE_WALL_EDGE',
+  jukebox: 'WALL_MOUNTED_BACK', plant: 'FLOOR_BASE_CENTER', lamp: 'FLOOR_BASE_CENTER',
+  rug: 'FLOOR_BASE_CENTER', trash: 'FLOOR_BASE_CENTER', fountain: 'FLOOR_BASE_CENTER', rest: 'FLOOR_BASE_CENTER',
+};

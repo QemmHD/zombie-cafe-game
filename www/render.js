@@ -345,14 +345,15 @@
   Renderer.prototype._shadow = function (c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.36)'; c.beginPath(); c.ellipse(x, y, w, w * 0.42, 0, 0, 7); c.fill(); };
 
   Renderer.prototype._pass = function (c, world) {
-    var p = this.project(Wld.PASS.x, Wld.PASS.y), S = this.S;
-    var b = isoBox(c, p.x, p.y + S * 0.16, S * 0.78, S * 0.34, S * 0.36, C.steel, C.steelD);
-    // top detail + grime
-    c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.3, b.topY + b.fh * 0.2, b.fw * 0.4); c.restore();
-    // ready dishes stacked on the top plane
-    var n = world.ready.length, show = Math.min(n, 5);
+    var S = this.S, T = Wld.TILE;
+    // a real 2-tile service counter: centred between its two footprint tiles
+    var p = this.project(Wld.PASS.x + T * (Wld.PASS_W - 1) / 2, Wld.PASS.y);
+    var b = isoBox(c, p.x, p.y + S * 0.16, S * 1.05, S * 0.42, S * 0.36, C.steel, C.steelD);
+    c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.35, b.topY + b.fh * 0.2, b.fw * 0.35); c.restore();
+    // ready dishes spread along the long top plane
+    var n = world.ready.length, show = Math.min(n, 6);
     for (var i = 0; i < show; i++) {
-      var dx = b.x - (show - 1) * S * 0.15 + i * S * 0.3, dy = b.topY + S * 0.02;
+      var dx = b.x - (show - 1) * S * 0.16 + i * S * 0.32, dy = b.topY + S * 0.02;
       c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(dx, dy + S * 0.03, S * 0.13, S * 0.05, 0, 0, 7); c.fill();
       c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(dx, dy, S * 0.13, S * 0.06, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
       c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';

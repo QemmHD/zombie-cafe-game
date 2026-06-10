@@ -41,17 +41,30 @@
     starter: function (w) { return {}; },
 
     busy: function (w) {
+      // A HAND-COMPOSED café (Stage 4.6E): a wall-anchored kitchen line along the
+      // back, spaced dining sets in the middle with aisles, decor in the corners.
       w.coins = 5000; w.toxin = 20;
-      w.buy('table'); w.buy('table'); w.buy('plant'); w.buy('lamp'); w.buy('counter'); w.buy('fridge'); w.buy('sink');
-      w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 25;     // mid-cook
+      w.buy('counter'); w.buy('fridge'); w.buy('sink'); w.buy('plant'); w.buy('lamp');
+      var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._placed; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._placed = 1; } };
+      // kitchen line flush along the back wall (row 0)
+      put('counter', 330, 80); put('sink', 560, 80); put('fridge', 680, 80);
+      // decor in the corners / by seating
+      put('plant', 760, 300); put('lamp', 250, 470);
+      // dining sets spread with walking aisles
+      var moveTbl = function (tb, x, y) { tb.x = x; tb.y = y; tb.cell = -1; }; var T = w.tables;
+      if (T[0]) moveTbl(T[0], 250, 600); if (T[1]) moveTbl(T[1], 560, 560); if (T[2]) moveTbl(T[2], 430, 760);
+      w._syncChairs();
+      // cooking + a full pass
+      w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 25;
       w.startCook(w.stoves[1].id, 'coffee'); w.stoves[1].ready = true; w.stoves[1].readyAt = w.t;
-      w.ready = ['coffee', 'coffee', 'burger'];
-      var free = w.tables.filter(function (t) { return !t.by; });
-      var states = ['waiting', 'eating', 'paying', 'waiting'];
-      free.forEach(function (tb, i) { if (i < 4) seat(w, tb, states[i], i + 1, ['U', 'D', 'L', 'R'][i % 4]); });
+      w.ready = ['coffee', 'coffee', 'burger', 'soup'];
+      // seat diners at their chairs (varied types/states)
+      var states = ['waiting', 'eating', 'paying'];
+      T.forEach(function (tb, i) { if (i < 3) seat(w, tb, states[i], i + 1, 'U'); });
       for (var q = 0; q < 3; q++) queue(w, q, q);
-      var z = w.zombies[0]; z.carry = 'coffee'; z.state = 'toCustomer'; z.face = 'R';
-      z.x = PASS.x + 40; z.y = PASS.y + 120; z.step = 1.2;
+      // a zombie carrying a plate down the aisle toward a diner
+      var z = w.zombies[0]; z.carry = 'coffee'; z.state = 'toCustomer'; z.face = 'D';
+      z.x = 430; z.y = 360; z.fx = 430; z.fy = 360; z.step = 1.2;
       return {};
     },
 

@@ -580,7 +580,8 @@
     var block = function (obj) { self.footprintTiles(obj).forEach(function (t) { set[tkey(t[0], t[1])] = 1; }); };
     this.tables.forEach(block);
     this.stoves.forEach(block);
-    set[tkey(Math.floor(PASS.x / TILE), Math.floor(PASS.y / TILE))] = 1;     // the serving counter
+    var pc = Math.floor(PASS.x / TILE), pr = Math.floor(PASS.y / TILE);
+    set[tkey(pc, pr)] = 1; set[tkey(pc + 1, pr)] = 1;                        // pass = a 2x1 counter
     for (i = 0; i < this.decors.length; i++) {
       var d = this.decors[i], it = shopById(d.deco);
       if (it && it.blocks === false) continue;
@@ -619,6 +620,17 @@
   World.prototype.tileCenter = function (c, r) { return { x: c * TILE + TILE / 2, y: r * TILE + TILE / 2 }; };
   World.prototype.tileOf = function (x, y) { return [tcol(x), trow(y)]; };
   World.prototype.inBounds = function (c, r) { return c >= 0 && r >= 0 && c < COLS && r < ROWS; };
+  // resolve any object to its explicit visual ANCHOR type (Stage 4.6E)
+  World.prototype.anchorOf = function (obj) {
+    if (!obj) return 'FLOOR_BASE_CENTER';
+    if (obj.deco) return (window.ANCHOR_BY_ART && window.ANCHOR_BY_ART[(shopById(obj.deco) || {}).art]) || 'FLOOR_BASE_CENTER';
+    if ('recipe' in obj) return 'WALL_BACK_FLUSH';        // stove
+    if ('table' in obj) return 'CHAIR_SEAT_POINT';         // chair
+    if ('dirty' in obj) return 'TABLE_CENTER';            // table
+    if (obj === PASS || obj.pass) return 'COUNTER_FRONT_EDGE';
+    return 'FLOOR_BASE_CENTER';
+  };
+  World.prototype.isWallAnchor = function (a) { return ('' + a).indexOf('WALL_') === 0 || a === 'FRIDGE_WALL_EDGE' || a === 'SINK_WALL_EDGE' || a === 'STOVE_FRONT_EDGE' || a === 'COUNTER_FRONT_EDGE'; };
 
   // ---- explicit per-tile claims (reserved vs occupied) ----------------
   // The grid is the source of truth: a tile is free only if it is in-bounds,
@@ -1007,7 +1019,7 @@
   };
 
   // expose constants the renderer needs
-  World.W = W; World.H = H; World.PASS = PASS; World.DOOR = DOOR; World.STOVE_SLOTS = STOVE_SLOTS; World.CELLS = CELLS;
+  World.W = W; World.H = H; World.PASS = PASS; World.PASS_W = 2; World.DOOR = DOOR; World.STOVE_SLOTS = STOVE_SLOTS; World.CELLS = CELLS;
   World.TILE = TILE; World.COLS = COLS; World.ROWS = ROWS;
   window.createWorld = function (saved) { return new World(saved); };
   window.World = World;
