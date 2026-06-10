@@ -432,6 +432,75 @@ test('queued customers do not stack — each sits on a distinct tile', () => {
   assert.ok(t0[0] !== t1[0] || t0[1] !== t1[1], 'two queued customers occupy different tiles');
 });
 
+test('tiles: explicit reserve/occupy/release + blocked/free state (4.6B)', () => {
+  const w = boot();
+  assert.ok(w.tileFree(5, 3, 'a'));
+  assert.ok(w.reserveTile('a', 5, 3));
+  assert.ok(!w.reserveTile('b', 5, 3), 'a reserved tile rejects another reservation');
+  assert.ok(!w.occupyTile('b', 5, 3), 'a reserved tile rejects a second occupant');
+  assert.strictEqual(w.tileState(5, 3), 'reserved');
+  w.releaseTiles('a');
+  assert.ok(w.occupyTile('b', 5, 3));
+  assert.strictEqual(w.tileState(5, 3), 'occupied');
+  const tb = w.tables[0], tc = Math.floor(tb.x / 120), tr = Math.floor(tb.y / 120);
+  assert.ok(!w.tileFree(tc, tr, 'z'), 'a furniture tile is never free');
+  assert.strictEqual(w.tileState(tc, tr), 'blocked');
+});
+
+test('chairs: real entities — link, reserve, dirty-block, add/remove capacity (4.6B)', () => {
+  const w = boot();
+  assert.strictEqual(w.chairs.length, w.tables.length, 'one chair per table');
+  const tb = w.tables[0], ch = w.chairsOf(tb.id)[0];
+  assert.strictEqual(ch.table, tb.id);
+  assert.strictEqual(w.chairState(ch), 'empty');
+  const mk = (id) => ({ id, x: 60, y: 600, tx: 60, ty: 600, fx: 60, fy: 600, path: [], state: 'queued', wait: 0, type: 'civilian', color: '#0f0', skin: '#eee', hair: '#000', face: 'U', step: 0 });
+  const c = mk('cc'); w.customers.push(c);
+  w.tables.slice(1).forEach((t) => { t.dirty = true; });          // only table 0 seatable
+  assert.ok(w._trySeat(c), 'customer reserves a specific chair');
+  assert.strictEqual(ch.reserved, 'cc');
+  assert.strictEqual(w.chairState(ch), 'reserved');
+  const c2 = mk('cc2'); w.customers.push(c2);
+  assert.ok(!w._trySeat(c2), 'two customers cannot reserve the same chair');
+  tb.dirty = true; assert.strictEqual(w.chairState(ch), 'blocked', 'dirty table blocks its chair');
+  tb.dirty = false; ch.reserved = null; assert.strictEqual(w.chairState(ch), 'empty', 'cleaning re-enables it');
+  const before = w.seatCount();
+  assert.ok(w.removeChair(tb.id)); assert.strictEqual(w.seatCount(), before - 1, 'removing a chair drops capacity');
+  assert.strictEqual(w.tableState(tb), 'invalidNoChairs');
+  assert.ok(w.addChair(tb.id)); assert.strictEqual(w.seatCount(), before, 'adding a chair restores capacity');
+});
+
+test('footprints: 1x1 blocks one tile, a multi-tile object blocks all of them', () => {
+  const w = boot();
+  const tb = w.tables[0];
+  assert.strictEqual(w.footprintTiles(tb).length, 1);
+  tb.w = 2;                                                        // pretend it's a 2x1
+  const ft = w.footprintTiles(tb);
+  assert.strictEqual(ft.length, 2, 'a 2x1 footprint is two tiles');
+  const blocked = w._blockedTiles();
+  ft.forEach((t) => assert.ok(blocked[t[0] + ',' + t[1]], 'every footprint tile is blocked'));
+  tb.w = 1;
+});
+
+test('placement validity: free=ok, overlap=red, and reasons are given (4.6B)', () => {
+  const w = boot();
+  const free = w.firstFreeCell();
+  assert.ok(w.placementValidity('table', free).ok, 'a free cell is valid (green)');
+  const r = w.placementValidity('table', w.tables[0].cell);
+  assert.ok(!r.ok, 'overlapping an existing table is invalid (red)');
+  assert.ok(/overlap/i.test(r.reason), 'gives an overlap reason: ' + r.reason);
+  assert.ok(!w.placementValidity('table', -1).ok, 'outside café is invalid');
+});
+
+test('interaction tiles: a reserved tile is not handed to a second worker', () => {
+  const w = boot();
+  const st = w.stoves[0];
+  const it = w._freeTileNear(st.x, st.y, 'z1', st.x, st.y);
+  w.reserveTile('z1', Math.floor(it.x / 120), Math.floor(it.y / 120));
+  const it2 = w._freeTileNear(st.x, st.y, 'z2', st.x, st.y);
+  const a = [Math.floor(it.x / 120), Math.floor(it.y / 120)], b = [Math.floor(it2.x / 120), Math.floor(it2.y / 120)];
+  assert.ok(a[0] !== b[0] || a[1] !== b[1], 'second worker gets a different interaction tile');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

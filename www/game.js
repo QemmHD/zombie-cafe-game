@@ -8,6 +8,7 @@
   var SAVE_KEY = 'zombiecafe.save.v4';
   var world, renderer, canvas, lastFrame = 0, lastSave = 0;
   var editMode = false, selected = null;   // build mode + currently lifted furniture
+  var ghost = null;                        // live placement preview {cell, ok, reason, stove}
   var selZ = null;                         // tap-command: currently selected zombie id
 
   function el(id) { return document.getElementById(id); }
@@ -123,7 +124,7 @@
     var dt = lastFrame ? (ts - lastFrame) / 1000 : 0; lastFrame = ts;
     if (!editMode) world.tick(dt);        // freeze the sim while rearranging
     drainEvents();
-    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected, selZ: selZ, debugGrid: !!window.__GRID__ });
+    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected, selZ: selZ, ghost: ghost, debugGrid: !!window.__GRID__ });
     renderHUD();
     save(false);
     requestAnimationFrame(frame);
@@ -200,13 +201,25 @@
       '<button class="buy toxin" data-act="feed" data-id="' + zid + '" style="width:100%;justify-content:center;margin-top:12px;">☣️ Feed (1 toxin) — refill energy</button>' +
       '</div>');
   }
-  // Build mode: tap a piece to lift it (Move/Store/Sell bar appears); tap a
-  // valid spot to drop it there.
-  function onTapEdit(w) {
+  // Build mode: tap a piece to lift it; live ghost shows green/red; tap a VALID
+  // spot to drop it. Invalid spots are rejected with the reason.
+  function updateGhost(clientX, clientY) {
+    if (!editMode || !selected) { ghost = null; return; }
+    var w = renderer.toWorld(clientX, clientY);
+    var cell = selected.kind === 'stove' ? world.stoveSlotAt(w.x, w.y) : world.cellAt(w.x, w.y);
+    var v = cell < 0 ? { ok: false, reason: 'Outside café' } : world.placementValidity(selected.kind, cell, selected.id);
+    ghost = { cell: cell, stove: selected.kind === 'stove', ok: v.ok, reason: v.reason };
+    buildBar();
+  }
+  function onTapEdit(w, clientX, clientY) {
     if (selected) {
-      if (selected.kind === 'stove') { var slot = world.stoveSlotAt(w.x, w.y); if (slot >= 0 && world.moveStove(selected.id, slot)) { selected = null; buildBar(); return; } }
-      else { var cell = world.cellAt(w.x, w.y); if (cell >= 0) { var ok = selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell); if (ok) { selected = null; buildBar(); checkLayout(); return; } } }
-      var p = world.pickFurnitureAt(w.x, w.y); selected = p || null; buildBar(); return;
+      var cell = selected.kind === 'stove' ? world.stoveSlotAt(w.x, w.y) : world.cellAt(w.x, w.y);
+      var v = cell < 0 ? { ok: false, reason: 'Outside café' } : world.placementValidity(selected.kind, cell, selected.id);
+      if (cell >= 0 && v.ok) {
+        var ok = selected.kind === 'stove' ? world.moveStove(selected.id, cell) : selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell);
+        if (ok) { selected = null; ghost = null; buildBar(); checkLayout(); return; }
+      } else if (cell >= 0) { toast('⛔ ' + (v.reason || 'Invalid spot')); }
+      var p = world.pickFurnitureAt(w.x, w.y); if (p) { selected = p; } buildBar(); return;
     }
     selected = world.pickFurnitureAt(w.x, w.y); buildBar();
     if (!selected) toast('Tap a table, stove or decoration to move, store or sell it');
@@ -215,7 +228,8 @@
     var b = el('buildbar'); if (!b) return;
     if (selected) {
       var sellv = selected.kind === 'table' ? 40 : selected.kind === 'stove' ? 60 : ((shopItem((world.decors.filter(function (d) { return d.id === selected.id; })[0] || {}).deco) || {}).sell || 0);
-      b.innerHTML = '✋ Tap a spot to move · or ' +
+      var status = ghost && ghost.cell >= 0 ? (ghost.ok ? '<b style="color:var(--toxic)">✓ valid spot</b>' : '<b style="color:var(--blood)">⛔ ' + (ghost.reason || 'invalid') + '</b>') : '✋ tap a spot to move';
+      b.innerHTML = status + ' · ' +
         '<button class="mini" data-act="build-store">📦 Store</button>' +
         '<button class="mini coin" data-act="build-sell">💰 Sell 🪙' + sellv + '</button>' +
         '<button class="mini" data-act="build-done">Done</button>';
@@ -487,6 +501,8 @@
       if (el('modal-root').firstChild) return;
       onTap(e.clientX, e.clientY);
     });
+    // live placement ghost follows the finger/cursor while a piece is lifted
+    canvas.addEventListener('pointermove', function (e) { if (editMode && selected && !el('modal-root').firstChild) updateGhost(e.clientX, e.clientY); });
     document.addEventListener('visibilitychange', function () { if (document.hidden) save(true); });
     window.__setWorld = function (nw) { world = nw; selZ = null; selected = null; editMode = false; deselect(); renderHUD(); };   // debug loader hook
     updateAutoBtn();

@@ -84,9 +84,42 @@
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
     this.decors = [];
     this.tables = [ this._mkTable(0), this._mkTable(5), this._mkTable(2) ];
+    this.chairs = [];
     this.customers = [];
     this.zombies = [ this._mkZombie(0) ];
+    this._syncChairs();
   };
+  // ---- chairs as first-class, reservable seat entities (4.6B) ---------
+  // Each table is linked to one chair (the seat at its front edge). Chairs are
+  // authoritative: a customer reserves then occupies a specific chair, never
+  // just a table. Dirty/unreachable tables block their chairs.
+  World.prototype._mkChair = function (tb) { return { id: uid(), table: tb.id, c: Math.floor(tb.x / TILE), r: Math.floor(tb.y / TILE), x: tb.x, y: tb.y + 20, facing: 'U', by: null, reserved: null }; };
+  World.prototype._syncChairs = function () {
+    this.chairs = this.chairs || []; var self = this, tids = {};
+    this.tables.forEach(function (tb) { tids[tb.id] = tb; });
+    // drop chairs whose table is gone
+    this.chairs = this.chairs.filter(function (ch) { return tids[ch.table]; });
+    // keep chair tile/sitPoint in sync with its (possibly moved) table
+    this.chairs.forEach(function (ch) { var tb = tids[ch.table]; ch.c = Math.floor(tb.x / TILE); ch.r = Math.floor(tb.y / TILE); ch.x = tb.x; ch.y = tb.y + 20; });
+    // ensure each table that should have a chair has exactly one
+    this.tables.forEach(function (tb) {
+      if (tb.noChair) return;
+      if (!self.chairs.some(function (ch) { return ch.table === tb.id; })) self.chairs.push(self._mkChair(tb));
+    });
+  };
+  World.prototype.chairsOf = function (tableId) { return this.chairs.filter(function (ch) { return ch.table === tableId; }); };
+  World.prototype.chairState = function (ch) {
+    var tb = byId(this.tables, ch.table);
+    if (!tb) return 'invalidNoTable';
+    if (tb.dirty || tb.cleaning) return 'blocked';
+    if (!this.reachableTable(tb)) return 'unreachable';
+    if (ch.by) return 'occupied';
+    if (ch.reserved) return 'reserved';
+    return 'empty';
+  };
+  World.prototype.addChair = function (tableId) { var tb = byId(this.tables, tableId); if (!tb) return false; tb.noChair = false; if (!this.chairsOf(tableId).length) this.chairs.push(this._mkChair(tb)); return true; };
+  World.prototype.removeChair = function (tableId) { var tb = byId(this.tables, tableId); if (!tb) return false; this.chairs = this.chairs.filter(function (ch) { return ch.table !== tableId; }); tb.noChair = true; return true; };
+  World.prototype.seatCount = function () { var self = this; return this.chairs.filter(function (ch) { var s = self.chairState(ch); return s !== 'invalidNoTable'; }).length; };
   World.prototype._mkStove  = function (slot) { var s = STOVE_SLOTS[slot]; return { id: uid(), slot: slot, x: s.x, y: s.y, recipe: null, start: 0, ready: false }; };
   World.prototype._mkTable  = function (cell) { var s = CELLS[cell]; return { id: uid(), cell: cell, x: s.x, y: s.y, by: null, reserved: null, dirty: false, cleaning: null }; };
   World.prototype._mkDecor  = function (deco, cell) { var s = CELLS[cell]; return { id: uid(), deco: deco, cell: cell, x: s.x, y: s.y }; };
@@ -120,7 +153,7 @@
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
       spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
       rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, cafeName: this.cafeName,
-      stoves: this.stoves, tables: this.tables, decors: this.decors, zombies: this.zombies, customers: this.customers,
+      stoves: this.stoves, tables: this.tables, chairs: this.chairs, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
   World.prototype._restore = function (s) {
@@ -136,6 +169,7 @@
     (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; });
     (this.tables || []).forEach(function (tb) { if (tb.reserved === undefined) tb.reserved = null; });
     (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } if (!c.type) c.type = 'civilian'; });
+    this.tileClaim = {}; this.chairs = this.chairs || []; this._syncChairs();
   };
 
   // ---- rating / reputation (Phase 11) --------------------------------
@@ -244,6 +278,7 @@
     this._gainXp((c.xp || 2) * 2);
     this.events.push({ type: 'CustomerInfected', x: c.x, y: c.y, zombie: z, stored: !wentActive });
     this._freeTable(c); var qi = this.queue ? this.queue.indexOf(c.id) : -1; if (qi >= 0) this.queue.splice(qi, 1);
+    this.releaseTiles(c.id);
     this.customers.splice(this.customers.indexOf(c), 1);
     return true;
   };
@@ -280,6 +315,7 @@
     if (bag === 'coin') this.coins -= cost; else this.toxin -= cost;
     if (it.kind === 'stove') this.stoves.push(this._mkStove(this.freeStoveSlot()));
     else if (it.kind === 'table') this.tables.push(this._mkTable(this.firstFreeCell()));
+    if (it.kind === 'table') this._syncChairs();
     else if (it.kind === 'zombie') this._addZombie(this._mkZombie(this.zombies.length));
     else if (it.kind === 'decor') this.decors.push(this._mkDecor(it.id, this.firstFreeCell()));
     this.events.push({ type: 'bought', item: it });
@@ -287,12 +323,12 @@
   };
 
   // ---- build mode: move / sell furniture -----------------------------
-  World.prototype.moveTable = function (id, cell) { var t = byId(this.tables, id); if (!t || !this.cellFree(cell, id)) return false; t.cell = cell; t.x = CELLS[cell].x; t.y = CELLS[cell].y; return true; };
+  World.prototype.moveTable = function (id, cell) { var t = byId(this.tables, id); if (!t || !this.cellFree(cell, id)) return false; t.cell = cell; t.x = CELLS[cell].x; t.y = CELLS[cell].y; this._syncChairs(); return true; };
   World.prototype.moveDecor = function (id, cell) { var d = byId(this.decors, id); if (!d || !this.cellFree(cell, id)) return false; d.cell = cell; d.x = CELLS[cell].x; d.y = CELLS[cell].y; return true; };
   World.prototype.moveStove = function (id, slot) { var s = byId(this.stoves, id); for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === slot && this.stoves[i].id !== id) return false; if (!s) return false; s.slot = slot; s.x = STOVE_SLOTS[slot].x; s.y = STOVE_SLOTS[slot].y; return true; };
   // ---- build mode: store (stash) or sell furniture (Phase 9/12) -------
   World.prototype._removeFurniture = function (kind, id) {
-    if (kind === 'table') { var ti = this.tables.findIndex(function (t) { return t.id === id; }); if (ti < 0) return null; var tb = this.tables[ti]; if (tb.by || tb.reserved) { this.events.push({ type: 'warn', msg: 'Someone is using that table' }); return null; } this.tables.splice(ti, 1); return { kind: 'table' }; }
+    if (kind === 'table') { var ti = this.tables.findIndex(function (t) { return t.id === id; }); if (ti < 0) return null; var tb = this.tables[ti]; if (tb.by || tb.reserved) { this.events.push({ type: 'warn', msg: 'Someone is using that table' }); return null; } this.tables.splice(ti, 1); this._syncChairs(); return { kind: 'table' }; }
     if (kind === 'stove') { var si = this.stoves.findIndex(function (s) { return s.id === id; }); if (si < 0) return null; var st = this.stoves[si]; if (st.recipe) { this.events.push({ type: 'warn', msg: 'Finish or clear the stove first' }); return null; } this.stoves.splice(si, 1); return { kind: 'stove' }; }
     if (kind === 'decor') { var di = this.decors.findIndex(function (d) { return d.id === id; }); if (di < 0) return null; var deco = this.decors[di].deco; this.decors.splice(di, 1); return { kind: 'decor', deco: deco }; }
     return null;
@@ -314,7 +350,7 @@
     var it = this.storage[idx]; if (!it) return false;
     if (it.kind === 'stove') { var slot = this.freeStoveSlot(); if (slot < 0) { this.events.push({ type: 'warn', msg: 'Kitchen is full' }); return false; } this.stoves.push(this._mkStove(slot)); }
     else { var cell = this.firstFreeCell(); if (cell < 0) { this.events.push({ type: 'warn', msg: 'No floor space' }); return false; }
-      if (it.kind === 'table') this.tables.push(this._mkTable(cell)); else this.decors.push(this._mkDecor(it.deco, cell)); }
+      if (it.kind === 'table') { this.tables.push(this._mkTable(cell)); this._syncChairs(); } else this.decors.push(this._mkDecor(it.deco, cell)); }
     this.storage.splice(idx, 1); this.events.push({ type: 'rosterChanged' }); return true;
   };
   World.prototype.cellAt = function (x, y) {
@@ -356,7 +392,7 @@
   };
   World.prototype.storeZombie = function (id) {
     var z = byId(this.zombies, id); if (!z || z.stored) return false;
-    this._releaseJob(z); z.stored = true; z.state = 'idle'; z.x = z.hx; z.y = z.hy; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy;
+    this._releaseJob(z); this.releaseTiles(z.id); z.stored = true; z.state = 'idle'; z.x = z.hx; z.y = z.hy; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy;
     this.events.push({ type: 'rosterChanged' }); return true;
   };
   World.prototype.activateZombie = function (id) {
@@ -381,6 +417,7 @@
   };
   World.prototype.startRaid = function (rivalId) {
     var rv = RIVAL[rivalId]; if (!this.canRaid(rivalId)) return false;
+    for (var sq = 0; sq < rv.squad; sq++) this.releaseTiles(this.zombies[sq].id);
     this.zombies.splice(0, rv.squad);                 // they march off
     this.raid = { rival: rivalId, squad: rv.squad, returnsAt: this.t + rv.time };
     this.events.push({ type: 'raidStart', rival: rv });
@@ -464,14 +501,14 @@
     }
     return false;
   };
-  // try to reserve a free, clean, reachable table for a customer
+  // reserve a specific empty, reachable CHAIR (not just a table) for a customer
   World.prototype._trySeat = function (c) {
-    for (var i = 0; i < this.tables.length; i++) {
-      var tb = this.tables[i];
-      if (tb.by || tb.reserved || tb.dirty || tb.cleaning) continue;
-      if (!this.reachableTable(tb)) continue;
-      tb.reserved = c.id; c.table = tb.id; c.state = 'toTable';
-      routeTo(this, c, tb.x, tb.y + 20); return true;
+    for (var i = 0; i < this.chairs.length; i++) {
+      var ch = this.chairs[i];
+      if (this.chairState(ch) !== 'empty') continue;
+      var tb = byId(this.tables, ch.table); if (!tb) continue;
+      ch.reserved = c.id; tb.reserved = c.id; c.chair = ch.id; c.table = tb.id; c.state = 'toTable';
+      routeTo(this, c, ch.x, ch.y); return true;
     }
     return false;
   };
@@ -517,18 +554,45 @@
   // seats beside tables stay reachable.
   function clampi(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
   function tkey(c, r) { return c + ',' + r; }
+  // tiles an object occupies, honouring a w x h footprint (default 1x1)
+  World.prototype.footprintTiles = function (obj) {
+    var c0 = Math.floor(obj.x / TILE), r0 = Math.floor(obj.y / TILE), w = obj.w || 1, h = obj.h || 1, out = [];
+    for (var dx = 0; dx < w; dx++) for (var dy = 0; dy < h; dy++) out.push([c0 + dx, r0 + dy]);
+    return out;
+  };
   World.prototype._blockedTiles = function () {
-    var set = {}, i;
-    // furniture footprints occupy (block) their tile
-    for (i = 0; i < this.tables.length; i++) { var t = this.tables[i]; set[tkey(Math.floor(t.x / TILE), Math.floor(t.y / TILE))] = 1; }
-    for (i = 0; i < this.stoves.length; i++) { var s = this.stoves[i]; set[tkey(Math.floor(s.x / TILE), Math.floor(s.y / TILE))] = 1; }
+    var set = {}, self = this, i;
+    var block = function (obj) { self.footprintTiles(obj).forEach(function (t) { set[tkey(t[0], t[1])] = 1; }); };
+    this.tables.forEach(block);
+    this.stoves.forEach(block);
     set[tkey(Math.floor(PASS.x / TILE), Math.floor(PASS.y / TILE))] = 1;     // the serving counter
     for (i = 0; i < this.decors.length; i++) {
       var d = this.decors[i], it = shopById(d.deco);
       if (it && it.blocks === false) continue;
-      set[tkey(Math.floor(d.x / TILE), Math.floor(d.y / TILE))] = 1;
+      block(d);
     }
+    if (this._tempBlock) for (var k in this._tempBlock) set[k] = 1;          // hypothetical (build preview)
     return set;
+  };
+  // Live build validation: would placing/moving `kind` at `cell` be valid?
+  // Returns { ok, reason }. Used by the placement ghost (green/red).
+  World.prototype.placementValidity = function (kind, cell, exceptId) {
+    if (kind === 'stove') {
+      if (cell == null || cell < 0) return { ok: false, reason: 'Outside café' };
+      for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === cell && this.stoves[i].id !== exceptId) return { ok: false, reason: 'Overlaps furniture' };
+      return { ok: true };
+    }
+    if (cell == null || cell < 0) return { ok: false, reason: 'Outside café' };
+    if (!this.cellFree(cell, exceptId)) return { ok: false, reason: 'Overlaps furniture' };
+    var tc = Math.floor(CELLS[cell].x / TILE), tr = Math.floor(CELLS[cell].y / TILE);
+    if (tc === Math.floor(DOOR.x / TILE) && tr === Math.floor(DOOR.y / TILE)) return { ok: false, reason: 'Blocks the entrance' };
+    // simulate the new blocker and check every table is still reachable + the door
+    this._tempBlock = {}; this._tempBlock[tkey(tc, tr)] = 1;
+    var ok = true, reason = null, blocked = this._blockedTiles();
+    if (blocked[tkey(Math.floor(DOOR.x / TILE), Math.floor(DOOR.y / TILE))]) { ok = false; reason = 'Blocks the entrance'; }
+    for (var j = 0; ok && j < this.tables.length; j++) { if (this.tables[j].id === exceptId) continue; if (!this.reachableTable(this.tables[j])) { ok = false; reason = 'No path to a table'; } }
+    this._tempBlock = null;
+    return { ok: ok, reason: reason };
   };
   // ---- logical square grid (the movement model) ----------------------
   // The view is isometric but the LOGIC is a COLS x ROWS square grid. Tiles are
@@ -539,11 +603,38 @@
   function trow(y) { return clampi(Math.floor(y / TILE), 0, ROWS - 1); }
   World.prototype.tileCenter = function (c, r) { return { x: c * TILE + TILE / 2, y: r * TILE + TILE / 2 }; };
   World.prototype.tileOf = function (x, y) { return [tcol(x), trow(y)]; };
-  // tiles where OTHER active characters intend to stand (their fx,fy) — used so
-  // pathing routes around them and two characters never target the same tile.
+  World.prototype.inBounds = function (c, r) { return c >= 0 && r >= 0 && c < COLS && r < ROWS; };
+
+  // ---- explicit per-tile claims (reserved vs occupied) ----------------
+  // The grid is the source of truth: a tile is free only if it is in-bounds,
+  // not blocked by a footprint, and not claimed by another character.
+  World.prototype._claims = function () { return this.tileClaim || (this.tileClaim = {}); };
+  World.prototype.tileFree = function (c, r, id) {
+    if (!this.inBounds(c, r)) return false;
+    if (this._blockedTiles()[tkey(c, r)]) return false;
+    var cl = this._claims()[tkey(c, r)];
+    return !cl || cl.id === id;
+  };
+  World.prototype.reserveTile = function (id, c, r) { if (!this.tileFree(c, r, id)) return false; this._claims()[tkey(c, r)] = { id: id, kind: 'res' }; return true; };
+  World.prototype.occupyTile = function (id, c, r) { if (!this.tileFree(c, r, id)) return false; this._claims()[tkey(c, r)] = { id: id, kind: 'occ' }; return true; };
+  World.prototype.releaseTiles = function (id) { var cl = this._claims(); for (var k in cl) if (cl[k].id === id) delete cl[k]; };
+  World.prototype.tileClaimedBy = function (c, r) { var cl = this._claims()[tkey(c, r)]; return cl ? cl.id : null; };
+  // explicit, queryable state for one tile (debug + the grid-is-truth contract)
+  World.prototype.tileState = function (c, r) {
+    if (!this.inBounds(c, r)) return 'outsideCafe';
+    var k = tkey(c, r);
+    if (k === tkey(tcol(DOOR.x), trow(DOOR.y))) return 'door';
+    if (this._blockedTiles()[k]) return 'blocked';
+    var cl = this._claims()[k];
+    if (cl) return cl.kind === 'occ' ? 'occupied' : 'reserved';
+    return 'walkable';
+  };
+  // tiles claimed by OTHER characters (so pathing routes around them)
   World.prototype._occupiedTiles = function (exceptId) {
-    var set = {};
-    var add = function (e) { if (!e || e.id === exceptId || e.stored) return; var fx = e.fx == null ? e.x : e.fx, fy = e.fy == null ? e.y : e.fy; set[tkey(tcol(fx), trow(fy))] = 1; };
+    var set = {}, cl = this._claims(), k;
+    for (k in cl) if (cl[k].id !== exceptId) set[k] = 1;
+    // also treat each other character's current tile as taken (defensive)
+    var add = function (e) { if (!e || e.id === exceptId || e.stored) return; set[tkey(tcol(e.x), trow(e.y))] = 1; };
     this.zombies.forEach(add); this.customers.forEach(add);
     return set;
   };
@@ -593,6 +684,8 @@
   World.prototype.pathExists = function (x0, y0, x1, y1) { this.findPath(x0, y0, x1, y1); return this._pathFound; };
   function routeTo(world, e, x, y) {
     e.fx = x; e.fy = y;
+    world.releaseTiles(e.id);                              // drop our old claim
+    world.reserveTile(e.id, tcol(x), trow(y));             // claim the destination tile
     e.path = world.findPath(e.x, e.y, x, y, world._occupiedTiles(e.id));
     e.noPath = !world._pathFound;
     var n = e.path.shift(); e.tx = n.x; e.ty = n.y;
@@ -821,8 +914,9 @@
         if (qw > qpat) { this._nudgeRep(-1.5, 'no free table'); this.events.push({ type: 'CustomerLeftAngry', x: c.x, y: c.y, reason: 'noseat' }); this._leave(c); }
       } else if (c.state === 'toTable') {
         if (arr) {
-          var tb0 = byId(this.tables, c.table);
+          var tb0 = byId(this.tables, c.table), ch0 = byId(this.chairs, c.chair);
           if (tb0) { tb0.by = c.id; tb0.reserved = null; }
+          if (ch0) { ch0.by = c.id; ch0.reserved = null; }     // now OCCUPYING the chair
           c.state = 'waiting'; c.wait = this.t; c.face = 'U';
           this.events.push({ type: 'CustomerSeated', x: c.x, y: c.y });
         }
@@ -847,22 +941,25 @@
       } else if (c.state === 'paying') {
         if (this.t - c.payAt >= AUTO_PAY) { this._payAndLeave(c); }
       } else if (c.state === 'leaving') {
-        if (arr) this.customers.splice(i, 1);
+        if (arr) { this.releaseTiles(c.id); this.customers.splice(i, 1); }
       }
     }
   };
-  World.prototype._freeTable = function (c) { var tb = byId(this.tables, c.table); if (tb) { if (tb.by === c.id) tb.by = null; if (tb.reserved === c.id) tb.reserved = null; } };
+  World.prototype._freeChair = function (c) { var ch = byId(this.chairs, c.chair); if (ch) { if (ch.by === c.id) ch.by = null; if (ch.reserved === c.id) ch.reserved = null; } c.chair = null; };
+  World.prototype._freeTable = function (c) { var tb = byId(this.tables, c.table); if (tb) { if (tb.by === c.id) tb.by = null; if (tb.reserved === c.id) tb.reserved = null; } this._freeChair(c); };
   // Leaving after eating leaves a dirty table a zombie must clean; an impatient
   // walk-out frees the (still-clean) table and lets the next person sit.
   World.prototype._leave = function (c, ate) {
     var tb = byId(this.tables, c.table);
     if (tb) { if (tb.by === c.id) { tb.by = null; if (ate) tb.dirty = true; } if (tb.reserved === c.id) tb.reserved = null; }
+    this._freeChair(c);
     c.state = 'leaving'; c.assigned = null; routeTo(this, c, DOOR.x, DOOR.y);
   };
   // table state enum (Phase 6) for UI / tests
   World.prototype.tableState = function (tb) {
     if (tb.cleaning) return 'beingCleaned';
     if (tb.dirty) return 'dirty';
+    if (!this.chairsOf(tb.id).length) return 'invalidNoChairs';
     if (!this.reachableTable(tb)) return 'unreachable';
     if (tb.by) { var c = byId(this.customers, tb.by); if (c) { if (c.state === 'eating') return 'eating'; if (c.state === 'paying') return 'finished'; if (c.assigned || c.state === 'waiting') return 'occupiedWaiting'; } return 'occupiedServed'; }
     if (tb.reserved) return 'reserved';

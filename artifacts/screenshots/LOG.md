@@ -67,6 +67,30 @@ characters' target tiles" not an explicit free/reserved/occupied enum per tile;
 build placement validates reachability but has no live per-tile green/red ghost
 yet; footprints are 1 tile each (no 2x2). Those are the next 4.6 sub-pass.
 
+## Stage 4.6B — chair entities, tile-state enum, footprints, placement ghost
+- **Explicit tile state** (`tileState`): walkable/blocked/reserved/occupied/door/
+  outsideCafe, backed by `reserveTile/occupyTile/releaseTiles/tileFree` claims —
+  the grid is the source of truth (not just rendering).
+- **Chairs are real entities** (`chairs[]`): linked to a table, with states
+  empty/reserved/occupied/blocked/unreachable/invalidNoTable. Customers reserve a
+  SPECIFIC chair then occupy it; two can't share; dirty tables block their chair;
+  `_syncChairs` keeps links correct on add/move/remove; `addChair/removeChair`
+  change `seatCount`.
+- **Multi-tile footprints**: `footprintTiles(obj)` honours `w x h`; `_blockedTiles`
+  blocks all of them (default objects stay 1x1).
+- **Live placement ghost**: build mode shows the hovered cell **green=valid /
+  red=⛔invalid** with the reason in the build bar; invalid spots can't be
+  confirmed (`placementValidity` → {ok, reason}).
+- **Debug overlay upgraded**: tile-state colours + purple **chair seats with
+  table links**, orange queue slots, gold paths, cyan door.
+- Tests: **38/38** (added tile reserve/occupy/release, chair link/reserve/dirty/
+  capacity, footprint blocking, placement validity, interaction-tile reservation).
+
+**Honest partials:** chairs are one-per-table at the table edge (not a separate
+adjacent seat tile, not separately buyable in the shop yet); multi-tile footprint
+is supported + tested but no 2x2 object ships by default; interaction-tile
+reservation rides the unified claim system rather than a dedicated call.
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

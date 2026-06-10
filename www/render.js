@@ -97,6 +97,7 @@
     }
     items.sort(function (a, b) { return a.d - b.d; });
     items.forEach(function (it) { it.fn(); });
+    if (ui.edit && ui.ghost && ui.ghost.cell >= 0) this._ghostCell(c, world, ui.ghost, t);
     if (ui.debugGrid) this._gridOverlay(c, world);
   };
 
@@ -249,18 +250,30 @@
     c.fillStyle = 'rgba(45,40,30,.22)'; stainBlob(c, this.project(W * 0.5, T * 1.2).x, this.project(W * 0.5, T * 1.2).y, S * 0.6, 'rgba(45,40,30,.22)');
     c.restore();
   };
-  // dev grid overlay: blocked=red, occupied=blue, walkable=green; + paths.
+  // dev grid overlay — proves the tile-state model:
+  // green=walkable, red=blocked, blue=occupied, yellow=reserved, cyan=door,
+  // purple=chair seats (+ links to tables), orange=queue, gold=paths.
   Renderer.prototype._gridOverlay = function (c, world) {
-    var COLS = Wld.COLS, ROWS = Wld.ROWS, T = Wld.TILE, blocked = world._blockedTiles(), occ = world._occupiedTiles(null);
+    var COLS = Wld.COLS, ROWS = Wld.ROWS, T = Wld.TILE, self = this;
+    var COL = { walkable: 'rgba(124,255,90,.1)', blocked: 'rgba(216,65,58,.36)', occupied: 'rgba(80,140,255,.4)', reserved: 'rgba(255,207,77,.4)', door: 'rgba(80,220,230,.4)', outsideCafe: 'rgba(60,60,60,.25)' };
     for (var r = 0; r < ROWS; r++) for (var col = 0; col < COLS; col++) {
-      var k = col + ',' + r, p = this.project(col * T + T / 2, r * T + T / 2);
-      var fill = blocked[k] ? 'rgba(216,65,58,.34)' : occ[k] ? 'rgba(80,140,255,.34)' : 'rgba(124,255,90,.1)';
-      c.fillStyle = fill; c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 1;
+      var st = world.tileState(col, r), p = this.project(col * T + T / 2, r * T + T / 2);
+      c.fillStyle = COL[st] || COL.walkable; c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 1;
       c.beginPath(); c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill(); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,.5)'; c.font = (this.S * 0.1) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(col + ',' + r, p.x, p.y);
+      c.fillStyle = 'rgba(255,255,255,.5)'; c.font = (this.S * 0.09) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(col + ',' + r, p.x, p.y);
     }
-    // selected/working characters' paths
-    var self = this;
+    // chair seats (purple) linked to their tables
+    (world.chairs || []).forEach(function (ch) {
+      var tb = world.tables.filter(function (t) { return t.id === ch.table; })[0]; if (!tb) return;
+      var cp = self.project(ch.x, ch.y), tp = self.project(tb.x, tb.y);
+      c.strokeStyle = 'rgba(176,107,255,.8)'; c.lineWidth = 2; line(c, cp.x, cp.y, tp.x, tp.y);
+      var stt = world.chairState(ch);
+      c.fillStyle = stt === 'occupied' ? '#5a8cff' : stt === 'reserved' ? C.gold : stt === 'blocked' ? C.blood : '#b06bff';
+      circle(c, cp.x, cp.y, self.S * 0.06); c.strokeStyle = C.out; c.lineWidth = 1.5; c.beginPath(); c.arc(cp.x, cp.y, self.S * 0.06, 0, 7); c.stroke();
+    });
+    // queue slots (orange) for queued customers
+    world.customers.forEach(function (cu) { if (cu.state !== 'queued') return; var qp = self.project(cu.fx, cu.fy); c.fillStyle = 'rgba(255,150,40,.6)'; circle(c, qp.x, qp.y, self.S * 0.05); });
+    // active paths (gold)
     world.zombies.concat(world.customers).forEach(function (e) {
       if (!e.path || !e.path.length) return;
       c.strokeStyle = 'rgba(255,207,77,.9)'; c.lineWidth = 2.5; c.beginPath();
@@ -268,7 +281,18 @@
       e.path.forEach(function (w2) { var pp = self.project(w2.x, w2.y); c.lineTo(pp.x, pp.y); });
       c.stroke();
     });
-    var d = this.project(Wld.DOOR.x, Wld.DOOR.y); c.fillStyle = 'rgba(124,255,90,.8)'; circle(c, d.x, d.y, this.S * 0.06);   // door tile
+    var d = this.project(Wld.DOOR.x, Wld.DOOR.y); c.fillStyle = 'rgba(80,220,230,.9)'; circle(c, d.x, d.y, this.S * 0.06);   // door
+  };
+  // live placement ghost: the hovered cell flashes green (valid) or red (invalid)
+  Renderer.prototype._ghostCell = function (c, world, g, t) {
+    var pos = g.stove ? Wld.STOVE_SLOTS[g.cell] : Wld.CELLS[g.cell]; if (!pos) return;
+    var p = this.project(pos.x, pos.y), pulse = 0.28 + 0.14 * Math.sin(t * 6);
+    c.fillStyle = g.ok ? 'rgba(124,255,90,' + pulse + ')' : 'rgba(216,65,58,' + pulse + ')';
+    c.strokeStyle = g.ok ? 'rgba(124,255,90,.95)' : 'rgba(216,65,58,.95)'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill(); c.stroke();
+    // a translucent piece marker floating on the cell
+    c.globalAlpha = 0.55; c.fillStyle = '#fff'; c.font = (this.S * 0.3) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(g.ok ? '✅' : '⛔', p.x, p.y - this.S * 0.2); c.globalAlpha = 1;
   };
   Renderer.prototype._grid = function (c, world, ui) {
     var cells = Wld.CELLS, sel = ui.selected ? ui.selected.id : null;
