@@ -264,6 +264,107 @@ test('command: invalid targets are refused with a message', () => {
   assert.ok(!res2.ok, 'collecting from an idle stove is refused');
 });
 
+function ctype(w, id) { return w === null ? null : null; }   // placeholder (kept for clarity)
+
+test('infection inherits stats from the customer type (Phase 9)', () => {
+  const w = boot();
+  w.toxin = 99; w.coins = 9999;
+  // craft a known "athlete" customer seated and ready to infect
+  const c = { id: 'cz', x: 300, y: 400, tx: 300, ty: 400, fx: 300, fy: 400, path: [], table: null,
+    state: 'waiting', wait: 0, type: 'athlete', rarity: 'rare', infectable: true, color: '#0f0', skin: '#eee', hair: '#000', face: 'U', step: 0 };
+  w.customers.push(c);
+  const before = w.zombies.length;
+  assert.ok(w.infect('cz'), 'infected the athlete');
+  assert.strictEqual(w.zombies.length, before + 1, 'gained a zombie');
+  const z = w.zombies[w.zombies.length - 1];
+  assert.strictEqual(z.kind, 'Runner', 'athlete becomes a Runner');
+  assert.ok(z.speed >= 1.4, 'inherited high speed, got ' + z.speed);
+  assert.strictEqual(z.trait, 'Sprinter');
+  // a worker yields a very different zombie
+  const c2 = { ...c, id: 'cz2', type: 'worker', rarity: 'common' };
+  w.customers.push(c2);
+  assert.ok(w.infect('cz2'));
+  const z2 = w.zombies[w.zombies.length - 1];
+  assert.strictEqual(z2.kind, 'Bruiser');
+  assert.ok(z2.maxEnergy > z.maxEnergy, 'worker has more stamina than athlete');
+  assert.ok(z2.attack > z.attack, 'worker hits harder');
+});
+
+test('roster: overflow zombies go to the Meat Locker; store/activate swaps', () => {
+  const w = boot();
+  const cap = w.activeSlots();
+  // fill active slots
+  while (w.activeZombies().length < cap) w._addZombie(w._mkZombie(w.zombies.length));
+  assert.strictEqual(w.activeZombies().length, cap, 'active is full');
+  // one more overflows into storage
+  const z = w._mkZombie(99); const wentActive = w._addZombie(z);
+  assert.ok(!wentActive && z.stored, 'overflow zombie is stored');
+  assert.ok(!w.activateZombie(z.id), 'cannot activate while active is full');
+  // store an active one, then the stored one can come in
+  const active = w.activeZombies()[0];
+  assert.ok(w.storeZombie(active.id), 'stored an active zombie');
+  assert.ok(active.stored, 'it is now in the locker');
+  assert.ok(w.activateZombie(z.id), 'now the stored zombie activates');
+  assert.ok(!z.stored, 'it joined the floor');
+});
+
+test('stored zombies do not work the floor', () => {
+  const w = boot();
+  const z = w.zombies[0]; w.storeZombie(z.id);
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9); w.plateStove(w.stoves[0].id);
+  advance(w, 30);
+  assert.strictEqual(w.served, 0, 'a locker-bound zombie served nobody');
+  assert.ok(w.pickZombieAt(z.hx, z.hy) == null, 'stored zombie is not tappable on the floor');
+});
+
+test('customers queue when no clean table and seat when one frees (Phase 5)', () => {
+  const w = boot();
+  w.tables.forEach((t) => { t.dirty = true; });          // no clean seats
+  let queued = null;
+  for (let i = 0; i < 200 && !queued; i++) { w.tick(0.2); queued = w.customers.find((c) => c.state === 'queued'); }
+  assert.ok(queued, 'a customer waits in line when the floor is full');
+  w.tables[0].dirty = false; w.tables[0].cleaning = null;  // a table opens up
+  let seated = false;
+  for (let i = 0; i < 100 && !seated; i++) { w.tick(0.2); const c = w.customers.find((x) => x.id === queued.id); seated = c && (c.state === 'toTable' || c.state === 'waiting'); }
+  assert.ok(seated, 'the queued customer walks to the freed table');
+});
+
+test('a reserved table cannot be double-seated', () => {
+  const w = boot();
+  w.tables.forEach((t, i) => { if (i > 0) { t.dirty = true; } });   // only table 0 is free
+  const a = { id: 'a', x: 420, y: 930, tx: 420, ty: 930, fx: 420, fy: 930, path: [], state: 'queued', wait: 0, type: 'civilian', infectable: true, color: '#0f0', skin: '#eee', hair: '#000', face: 'U', step: 0 };
+  const b = { ...a, id: 'b' };
+  w.customers.push(a, b);
+  assert.ok(w._trySeat(a), 'first customer reserves the table');
+  assert.strictEqual(w.tables[0].reserved, 'a');
+  assert.ok(!w._trySeat(b), 'second customer cannot take the reserved table');
+});
+
+test('build: furniture can be stored and re-placed, or sold for coins', () => {
+  const w = boot();
+  const t = w.tables[0]; const n = w.tables.length;
+  assert.ok(w.storeFurniture('table', t.id), 'stored a table');
+  assert.strictEqual(w.tables.length, n - 1, 'removed from the floor');
+  assert.strictEqual(w.storage.length, 1, 'now in storage');
+  assert.ok(w.placeFromStorage(0), 're-placed from storage');
+  assert.strictEqual(w.tables.length, n, 'back on the floor');
+  assert.strictEqual(w.storage.length, 0, 'storage emptied, no repurchase');
+  // selling refunds coins
+  const coins = w.coins, t2 = w.tables[0];
+  assert.ok(w.sellFurniture('table', t2.id), 'sold a table');
+  assert.ok(w.coins > coins, 'got a refund');
+});
+
+test('table state enum reflects the simulation (Phase 6)', () => {
+  const w = boot();
+  const tb = w.tables[0];
+  assert.strictEqual(w.tableState(tb), 'cleanEmpty');
+  tb.reserved = 'someone';
+  assert.strictEqual(w.tableState(tb), 'reserved');
+  tb.reserved = null; tb.dirty = true;
+  assert.strictEqual(w.tableState(tb), 'dirty');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

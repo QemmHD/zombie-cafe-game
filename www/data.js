@@ -28,18 +28,32 @@ window.RECIPES = [
  * `cur` is the currency ('coin' or 'toxin'). For repeatable structural items
  * the price scales with how many you already own (see priceFor in game.js).
  */
+// `cat` groups items in the Store tabs. `sell` is the coin refund when sold in
+// build mode; `store` means it can be stashed (and re-placed free) instead of
+// sold. Decor/utility props sit on a floor cell (so they trade off seating) and
+// `art` tells the renderer how to draw them. `blocks:false` = walkable.
 window.SHOP = [
-  { id: 'stove',   kind: 'stove',  name: 'Cursed Stove',  emoji: '🔥', cur: 'coin',  base: 150,  grow: 1.8, desc: 'Another station to cook on.' },
-  { id: 'table',   kind: 'table',  name: 'Bistro Table',  emoji: '🪑', cur: 'coin',  base: 100,  grow: 1.6, desc: 'Seat one more customer at a time.' },
-  { id: 'zombie',  kind: 'zombie', name: 'Hire Zombie',   emoji: '🧟', cur: 'toxin', base: 3,    grow: 1.5, desc: 'Staff serve customers. More = faster service.' },
+  // --- Furniture ---
+  { id: 'table',   cat: 'Furniture', kind: 'table',  name: 'Bistro Table',  emoji: '🪑', cur: 'coin',  base: 100,  grow: 1.6, sell: 40, store: true, desc: 'Seat one more customer at a time.' },
 
-  // Decor is placed on the floor (takes a cell) and is repeatable — fill the
-  // cafe to raise ambiance. `art` tells the renderer how to draw it.
-  { id: 'plant',   kind: 'decor',  name: 'Potted Fern',   emoji: '🪴', art: 'plant',   cur: 'coin', base: 120,  grow: 1.25, ambiance: 5,  desc: '+5 ambiance. Customers arrive sooner & tip more.' },
-  { id: 'lamp',    kind: 'decor',  name: 'Spooky Lamp',   emoji: '🕯️', art: 'lamp',   cur: 'coin', base: 300,  grow: 1.3,  ambiance: 9,  desc: '+9 ambiance.' },
-  { id: 'rug',     kind: 'decor',  name: 'Crimson Rug',   emoji: '🟥', art: 'rug',     cur: 'coin', base: 600,  grow: 1.3,  ambiance: 14, blocks: false, desc: '+14 ambiance. Walkable.' },
-  { id: 'jukebox', kind: 'decor',  name: 'Haunted Jukebox', emoji: '🎷', art: 'jukebox', cur: 'coin', base: 1800, grow: 1.35, ambiance: 26, desc: '+26 ambiance.' },
-  { id: 'fountain',kind: 'decor',  name: 'Blood Fountain',emoji: '⛲', art: 'fountain', cur: 'toxin', base: 8,   grow: 1.4,  ambiance: 50, desc: '+50 ambiance. The crowd loves it.' },
+  // --- Kitchen ---
+  { id: 'stove',   cat: 'Kitchen',   kind: 'stove',  name: 'Cursed Stove',  emoji: '🔥', cur: 'coin',  base: 150,  grow: 1.8, sell: 60, store: true, desc: 'Another station to cook on.' },
+  { id: 'counter', cat: 'Kitchen',   kind: 'decor',  name: 'Prep Counter',  emoji: '🍴', art: 'counter', cur: 'coin', base: 220, grow: 1.3, ambiance: 7, sell: 80, store: true, desc: '+7 ambiance. Grimy prep station.' },
+  { id: 'sink',    cat: 'Kitchen',   kind: 'decor',  name: 'Rusty Sink',    emoji: '🚰', art: 'sink',    cur: 'coin', base: 260, grow: 1.3, ambiance: 8, sell: 90, store: true, desc: '+8 ambiance.' },
+
+  // --- Staff ---
+  { id: 'zombie',  cat: 'Staff',     kind: 'zombie', name: 'Hire Zombie',   emoji: '🧟', cur: 'toxin', base: 3,    grow: 1.5, desc: 'Staff cook, serve & clean. Goes to the Meat Locker if your active slots are full.' },
+
+  // --- Decor (ambiance) ---
+  { id: 'plant',   cat: 'Decor',  kind: 'decor',  name: 'Potted Fern',   emoji: '🪴', art: 'plant',   cur: 'coin', base: 120,  grow: 1.25, ambiance: 5,  sell: 50,  store: true, desc: '+5 ambiance. Customers arrive sooner & tip more.' },
+  { id: 'lamp',    cat: 'Decor',  kind: 'decor',  name: 'Spooky Lamp',   emoji: '🕯️', art: 'lamp',    cur: 'coin', base: 300,  grow: 1.3,  ambiance: 9,  sell: 120, store: true, desc: '+9 ambiance.' },
+  { id: 'rug',     cat: 'Decor',  kind: 'decor',  name: 'Crimson Rug',   emoji: '🟥', art: 'rug',      cur: 'coin', base: 600,  grow: 1.3,  ambiance: 14, blocks: false, sell: 240, store: true, desc: '+14 ambiance. Walkable.' },
+  { id: 'trash',   cat: 'Decor',  kind: 'decor',  name: 'Trash Heap',    emoji: '🗑️', art: 'trash',   cur: 'coin', base: 90,   grow: 1.2,  ambiance: 4,  sell: 30,  store: true, desc: '+4 ambiance. Customers love grime.' },
+  { id: 'jukebox', cat: 'Decor',  kind: 'decor',  name: 'Haunted Jukebox', emoji: '🎷', art: 'jukebox', cur: 'coin', base: 1800, grow: 1.35, ambiance: 26, sell: 700, store: true, desc: '+26 ambiance.' },
+  { id: 'fountain',cat: 'Decor',  kind: 'decor',  name: 'Blood Fountain',emoji: '⛲', art: 'fountain', cur: 'toxin', base: 8,    grow: 1.4,  ambiance: 50, sell: 0,   store: true, desc: '+50 ambiance. The crowd loves it.' },
+
+  // --- Utility ---
+  { id: 'rest',    cat: 'Utility', kind: 'decor', name: 'Coffin Cot',     emoji: '⚰️', art: 'rest',    cur: 'coin', base: 400, grow: 1.3, ambiance: 0, utility: 'rest', sell: 150, store: true, desc: 'A spot for tired staff to rest faster.' },
 ];
 
 // Shirt colours for the humans who wander in — drawn procedurally on canvas.
@@ -48,6 +62,50 @@ window.CUSTOMER_COLORS = [
   '#ffd966', '#8e7cc3', '#76a5af', '#d5a6bd', '#a4c2f4',
 ];
 window.SKIN_TONES = ['#f1c89b', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
+
+/*
+ * CUSTOMER_TYPES — the different humans who walk in (Phase 5). `weight` is the
+ * base spawn chance; `levelReq`/`ratingReq` gate rarer guests behind progress.
+ *   pay     : payment multiplier on the dish price
+ *   tip     : chance of an extra tip
+ *   patience: multiplier on base patience (how long they wait)
+ *   infect  : recruitment cost { toxin, cash } to turn them into a zombie
+ *   z       : the zombie they BECOME — role + stat multipliers + a trait, so
+ *             infecting different people yields genuinely different workers.
+ *   shirt/hat: drive the procedural sprite so types read at a glance.
+ */
+window.CUSTOMER_TYPES = [
+  { id: 'civilian', name: 'Civilian',     rarity: 'common', weight: 30, levelReq: 1, ratingReq: 0,
+    pay: 1.0, tip: 0.15, patience: 1.0, infect: { toxin: 2 }, shirt: '#6fa8dc', hat: null,
+    z: { role: 'Server',  speed: 1.0, serve: 1.05, clean: 1.0, cook: 1.0, attack: 8,  maxEnergy: 100, patience: 1.0, rarity: 'common', trait: 'Reliable' } },
+  { id: 'worker',   name: 'Dock Worker',  rarity: 'common', weight: 16, levelReq: 1, ratingReq: 0,
+    pay: 1.0, tip: 0.10, patience: 1.1, infect: { toxin: 3 }, shirt: '#f6b26b', hat: 'hardhat',
+    z: { role: 'Bruiser', speed: 0.85, serve: 0.95, clean: 1.1, cook: 1.0, attack: 18, maxEnergy: 135, patience: 1.2, rarity: 'common', trait: 'Sturdy' } },
+  { id: 'cook',     name: 'Line Cook',    rarity: 'rare',   weight: 8,  levelReq: 1, ratingReq: 0,
+    pay: 1.1, tip: 0.15, patience: 1.0, infect: { toxin: 4 }, shirt: '#dddddd', hat: 'chef',
+    z: { role: 'Chef',    speed: 1.0, serve: 1.1, clean: 1.0, cook: 1.6, attack: 10, maxEnergy: 105, patience: 1.0, rarity: 'rare',   trait: 'Fast Cook' } },
+  { id: 'athlete',  name: 'Athlete',      rarity: 'rare',   weight: 9,  levelReq: 1, ratingReq: 0,
+    pay: 1.0, tip: 0.20, patience: 0.9, infect: { toxin: 4 }, shirt: '#93c47d', hat: 'visor',
+    z: { role: 'Runner',  speed: 1.45, serve: 1.3, clean: 1.05, cook: 1.0, attack: 12, maxEnergy: 110, patience: 0.9, rarity: 'rare',  trait: 'Sprinter' } },
+  { id: 'business', name: 'Executive',    rarity: 'rare',   weight: 9,  levelReq: 2, ratingReq: 0,
+    pay: 1.4, tip: 0.40, patience: 1.0, infect: { toxin: 4, cash: 200 }, shirt: '#3a3f55', hat: null,
+    z: { role: 'Host',    speed: 1.05, serve: 1.15, clean: 1.0, cook: 1.0, attack: 9, maxEnergy: 100, patience: 1.1, rarity: 'rare',  trait: 'Big Tipper' } },
+  { id: 'elder',    name: 'Pensioner',    rarity: 'common', weight: 8,  levelReq: 1, ratingReq: 0,
+    pay: 0.9, tip: 0.15, patience: 1.7, infect: { toxin: 2 }, shirt: '#c27ba0', hat: null,
+    z: { role: 'Busser',  speed: 0.7, serve: 0.85, clean: 1.3, cook: 1.0, attack: 7, maxEnergy: 100, patience: 1.6, rarity: 'common', trait: 'Patient' } },
+  { id: 'punk',     name: 'Punk',         rarity: 'rare',   weight: 7,  levelReq: 2, ratingReq: 0,
+    pay: 0.9, tip: 0.10, patience: 0.7, infect: { toxin: 3 }, shirt: '#8e7cc3', hat: 'mohawk',
+    z: { role: 'Bruiser', speed: 1.1, serve: 1.0, clean: 0.95, cook: 1.0, attack: 22, maxEnergy: 105, patience: 0.6, rarity: 'rare',  trait: 'Rowdy' } },
+  { id: 'tourist',  name: 'Tourist',      rarity: 'rare',   weight: 7,  levelReq: 3, ratingReq: 0,
+    pay: 1.1, tip: 0.30, patience: 1.0, infect: { toxin: 4 }, shirt: '#ffd966', hat: 'sun',
+    z: { role: 'Server',  speed: 1.05, serve: 1.1, clean: 1.05, cook: 1.0, attack: 10, maxEnergy: 110, patience: 1.1, rarity: 'rare', trait: 'Generous' } },
+  { id: 'rich',     name: 'Socialite',    rarity: 'elite',  weight: 4,  levelReq: 4, ratingReq: 3,
+    pay: 2.0, tip: 0.60, patience: 1.0, infect: { toxin: 8, cash: 500 }, shirt: '#d4af37', hat: 'tophat',
+    z: { role: 'Host',    speed: 1.2, serve: 1.3, clean: 1.15, cook: 1.1, attack: 14, maxEnergy: 120, patience: 1.2, rarity: 'elite', trait: 'Lavish' } },
+  { id: 'oddball',  name: 'Oddball',      rarity: 'elite',  weight: 2,  levelReq: 5, ratingReq: 3.5,
+    pay: 1.5, tip: 0.50, patience: 1.2, infect: { toxin: 6 }, shirt: '#5fae8f', hat: 'wizard',
+    z: { role: 'Cryptid', speed: 1.35, serve: 1.35, clean: 1.35, cook: 1.35, attack: 25, maxEnergy: 140, patience: 1.4, rarity: 'elite', trait: 'Eldritch' } },
+];
 
 /*
  * RIVALS — the other cafes you can raid ("take over other places"). Send a

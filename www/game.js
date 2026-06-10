@@ -41,13 +41,19 @@
     var raidNote = world.raid ? '<span class="raidpill">⚔️ ' + clock(world.raid.returnsAt - world.t) + '</span>' : '';
     var flashCls = repFlash > 0 ? (repFlashDir > 0 ? ' up' : ' down') : '';
     if (repFlash > 0) repFlash--;
+    var act = world.activeZombies().length, slots = world.activeSlots(), stored = world.storedZombies().length;
     el('hud').innerHTML =
-      '<div class="stat coins"><span class="ico">🪙</span>' + fmt(world.coins) + '</div>' +
-      '<div class="stat toxin"><span class="ico">☣️</span>' + fmt(world.toxin) + '</div>' +
-      '<div class="level-wrap"><div class="level-row"><span class="rating' + flashCls + '">' + stars() + '</span>' +
-      '<span>Lv <b>' + world.level + '</b></span>' + raidNote + '</div>' +
-      '<div class="xpbar"><i style="width:' + pct + '%"></i></div></div>' +
-      '<div class="stat zombies"><span class="ico">🧟</span>' + world.zombies.length + (world.raid ? '<small>+' + world.raid.squad + '</small>' : '') + '</div>';
+      '<div class="hud-left">' +
+        '<div class="cafename">' + world.cafeName + '</div>' +
+        '<div class="hud-row"><span class="rating' + flashCls + '">' + stars() + '</span>' +
+          '<span class="lvbadge">LV ' + world.level + '</span>' + raidNote + '</div>' +
+        '<div class="xpbar"><i style="width:' + pct + '%"></i></div>' +
+      '</div>' +
+      '<div class="hud-right">' +
+        '<div class="stat coins"><span class="ico">🪙</span>' + fmt(world.coins) + '</div>' +
+        '<div class="stat toxin"><span class="ico">☣️</span>' + fmt(world.toxin) + '</div>' +
+        '<div class="stat zombies" data-act="open-roster"><span class="ico">🧟</span>' + act + '/' + slots + (stored ? '<small>+' + stored + '</small>' : '') + '</div>' +
+      '</div>';
   }
 
   // ---- FX -------------------------------------------------------------
@@ -71,6 +77,25 @@
     document.body.appendChild(wrap); setTimeout(function () { wrap.remove(); }, 1900);
   }
 
+  // green toxin cloud where a customer was infected
+  function transformFx(wx, wy) {
+    var p = renderer.toClient(wx, wy - 20);
+    var cloud = document.createElement('div'); cloud.className = 'toxcloud';
+    cloud.style.left = p.x + 'px'; cloud.style.top = p.y + 'px'; cloud.textContent = '☣️';
+    el('fx').appendChild(cloud); setTimeout(function () { cloud.remove(); }, 900);
+  }
+  // "new recruit" card popup after an infection
+  function zombiePopup(z, stored) {
+    if (!z) return;
+    var wrap = document.createElement('div'); wrap.className = 'levelup';
+    wrap.innerHTML = '<div class="card-up"><div class="lu-big">🧟</div>' +
+      '<div class="lu-t">' + z.name + '!</div>' +
+      '<div class="lu-s">' + (z.kind || 'Server') + (z.trait ? ' · ' + z.trait : '') + '<br>' +
+      '⚡×' + z.speed.toFixed(2) + ' · 🍽️×' + z.serve.toFixed(2) + ' · 👊' + z.attack +
+      (stored ? '<br>📦 Sent to the Meat Locker' : '<br>🟢 Joined your staff') + '</div></div>';
+    document.body.appendChild(wrap); setTimeout(function () { wrap.remove(); }, 2100);
+  }
+
   function drainEvents() {
     var evs = world.events; world.events = [];
     evs.forEach(function (e) {
@@ -78,10 +103,11 @@
       else if (e.type === 'level') levelBanner(e.level, e.newly, e.toxin);
       else if (e.type === 'warn') toast(e.msg);
       else if (e.type === 'bought') toast(e.item.emoji + ' ' + e.item.name + ' added!');
-      else if (e.type === 'infect') { floatText(e.x, e.y - 30, '🧟 +1 staff', 'tox'); }
+      else if (e.type === 'CustomerInfected') { transformFx(e.x, e.y); setTimeout(function () { zombiePopup(e.zombie, e.stored); }, 650); }
       else if (e.type === 'plated') { floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox'); }
       else if (e.type === 'raidStart') toast('⚔️ Squad sent to raid ' + e.rival.name);
       else if (e.type === 'raidEnd') raidResult(e);
+      else if (e.type === 'sold') toast('💰 Sold for 🪙' + e.coins);
       else if (e.type === 'fridge') floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox');
       else if (e.type === 'FoodBurned') { floatText(e.x, e.y - 30, '🔥 burnt!', 'bad'); toast('🔥 A dish burned — move finished food to the pass faster!'); }
       else if (e.type === 'ZombieScaredCustomer') { floatText(e.x, e.y - 20, '😱', 'bad'); toast('😱 A starving zombie scared a customer off! Feed your staff.'); }
@@ -139,7 +165,7 @@
       else openCook(st.id);
     } else if (hit2.kind === 'customer') {
       if (hit2.paying) world.collectCustomer(hit2.id);
-      else if (hit2.infectable) infectConfirm(hit2.id);
+      else openCustomer(hit2.id);                 // tap a seated/queued customer -> recruit panel
     }
   }
 
@@ -174,16 +200,28 @@
       '<button class="buy toxin" data-act="feed" data-id="' + zid + '" style="width:100%;justify-content:center;margin-top:12px;">☣️ Feed (1 toxin) — refill energy</button>' +
       '</div>');
   }
-  // Build mode: first tap lifts a piece; next tap on a spot drops it there.
+  // Build mode: tap a piece to lift it (Move/Store/Sell bar appears); tap a
+  // valid spot to drop it there.
   function onTapEdit(w) {
     if (selected) {
-      if (selected.kind === 'stove') { var slot = world.stoveSlotAt(w.x, w.y); if (slot >= 0 && world.moveStove(selected.id, slot)) { selected = null; return; } }
-      else { var cell = world.cellAt(w.x, w.y); if (cell >= 0) { var ok = selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell); if (ok) { selected = null; return; } } }
-      // tapped elsewhere: try to pick a different piece, else deselect
-      var p = world.pickFurnitureAt(w.x, w.y); selected = p || null; return;
+      if (selected.kind === 'stove') { var slot = world.stoveSlotAt(w.x, w.y); if (slot >= 0 && world.moveStove(selected.id, slot)) { selected = null; buildBar(); return; } }
+      else { var cell = world.cellAt(w.x, w.y); if (cell >= 0) { var ok = selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell); if (ok) { selected = null; buildBar(); return; } } }
+      var p = world.pickFurnitureAt(w.x, w.y); selected = p || null; buildBar(); return;
     }
-    selected = world.pickFurnitureAt(w.x, w.y);
-    if (!selected) toast('Tap a table, stove or decoration to move it');
+    selected = world.pickFurnitureAt(w.x, w.y); buildBar();
+    if (!selected) toast('Tap a table, stove or decoration to move, store or sell it');
+  }
+  function buildBar() {
+    var b = el('buildbar'); if (!b) return;
+    if (selected) {
+      var sellv = selected.kind === 'table' ? 40 : selected.kind === 'stove' ? 60 : ((shopItem((world.decors.filter(function (d) { return d.id === selected.id; })[0] || {}).deco) || {}).sell || 0);
+      b.innerHTML = '✋ Tap a spot to move · or ' +
+        '<button class="mini" data-act="build-store">📦 Store</button>' +
+        '<button class="mini coin" data-act="build-sell">💰 Sell 🪙' + sellv + '</button>' +
+        '<button class="mini" data-act="build-done">Done</button>';
+    } else {
+      b.innerHTML = '🔨 Build — tap a table / stove / decoration to move, store or sell <button class="mini coin" data-act="build-done">Done</button>';
+    }
   }
   function updateAutoBtn() {
     var b = el('autobtn'); if (!b) return;
@@ -194,7 +232,7 @@
     editMode = on; selected = null; deselect();
     if (!on && world.repathAll) world.repathAll();   // furniture moved: re-route walkers
     var b = el('buildbar');
-    if (on) { if (!b) { b = document.createElement('div'); b.id = 'buildbar'; b.className = 'buildbar'; b.innerHTML = '🔨 Build mode — tap a piece, then tap where to put it <button class="buy coin" data-act="build-done">Done</button>'; document.body.appendChild(b); } }
+    if (on) { if (!b) { b = document.createElement('div'); b.id = 'buildbar'; b.className = 'buildbar'; document.body.appendChild(b); } buildBar(); }
     else if (b) b.remove();
     renderHUD();
   }
@@ -216,21 +254,35 @@
     openSheet('<div class="sheet">' + head('🔪 Cook a dish') + '<p class="hint">Pay ingredients now; it cooks in real time, then your zombies serve it.</p><div class="list">' + rows + '</div></div>');
   }
 
-  function openShop() {
-    function section(title, items) {
-      return '<div class="r-meta" style="margin:14px 2px 6px;font-size:13px;">' + title + '</div><div class="list">' + items.map(function (it) {
-        var cost = world.priceFor(it), bag = it.cur, owned = it.kind === 'decor' && world.decor[it.id];
-        var full = (it.kind === 'stove' && world.stoves.length >= 6) || (it.kind === 'table' && world.tables.length >= 16);
-        var have = bag === 'coin' ? world.coins : world.toxin, aff = have >= cost && !owned && !full;
-        var label = owned ? 'Owned' : full ? 'Max' : (bag === 'coin' ? '🪙 ' : '☣️ ') + fmt(cost);
-        var note = it.kind === 'stove' ? ' · have ' + world.stoves.length : it.kind === 'table' ? ' · have ' + world.tables.length : it.kind === 'zombie' ? ' · have ' + world.zombies.length : '';
-        return '<div class="row' + (aff || owned ? '' : ' locked') + '"><div class="r-ico">' + it.emoji + '</div><div class="r-body"><div class="r-name">' + it.name + note + '</div><div class="r-desc">' + it.desc + '</div></div>' +
+  var shopTab = 'Furniture';
+  function openShop(tab) {
+    if (tab) shopTab = tab;
+    var cats = ['Furniture', 'Kitchen', 'Staff', 'Decor', 'Utility', 'Storage'];
+    var tabs = cats.map(function (cat) { return '<button class="tab' + (cat === shopTab ? ' on' : '') + '" data-act="shop-tab" data-id="' + cat + '">' + cat + '</button>'; }).join('');
+    var body;
+    if (shopTab === 'Storage') {
+      body = world.storage.length ? '<div class="list">' + world.storage.map(function (it, i) {
+        var name = it.kind === 'decor' ? (shopItem(it.deco) || {}).name : it.kind === 'table' ? 'Bistro Table' : 'Cursed Stove';
+        var emoji = it.kind === 'decor' ? (shopItem(it.deco) || {}).emoji : it.kind === 'table' ? '🪑' : '🔥';
+        return '<div class="row"><div class="r-ico">' + emoji + '</div><div class="r-body"><div class="r-name">' + name + '</div><div class="r-desc">Stashed — place it back free.</div></div>' +
+          '<button class="buy coin" data-act="place-storage" data-id="' + i + '">Place</button></div>';
+      }).join('') + '</div>' : '<p class="hint">Nothing stashed. Store furniture in Build mode to keep it without selling.</p>';
+    } else {
+      var items = (window.SHOP || []).filter(function (s) { return (s.cat || 'Decor') === shopTab; });
+      body = '<div class="list">' + (items.length ? items.map(function (it) {
+        var cost = world.priceFor(it), bag = it.cur;
+        var full = (it.kind === 'stove' && world.freeStoveSlot() < 0) || ((it.kind === 'table' || it.kind === 'decor') && world.firstFreeCell() < 0);
+        var have = bag === 'coin' ? world.coins : world.toxin, aff = have >= cost && !full;
+        var label = full ? 'No room' : (bag === 'coin' ? '🪙 ' : '☣️ ') + fmt(cost);
+        var note = it.kind === 'stove' ? ' · have ' + world.stoves.length : it.kind === 'table' ? ' · have ' + world.tables.length : it.kind === 'zombie' ? ' · ' + world.activeZombies().length + '/' + world.activeSlots() : '';
+        return '<div class="row' + (aff ? '' : ' locked') + '"><div class="r-ico">' + it.emoji + '</div><div class="r-body"><div class="r-name">' + it.name + note + '</div><div class="r-desc">' + it.desc + '</div></div>' +
           '<button class="buy ' + bag + '" data-act="buy" data-id="' + it.id + '"' + (aff ? '' : ' disabled') + '>' + label + '</button></div>';
-      }).join('') + '</div>';
+      }).join('') : '<p class="hint">Nothing here yet.</p>') + '</div>';
     }
-    var b = (window.SHOP || []).filter(function (s) { return s.kind !== 'decor'; }), d = (window.SHOP || []).filter(function (s) { return s.kind === 'decor'; });
-    openSheet('<div class="sheet">' + head('🛒 Shop') + '<p class="hint">Ambiance: <b>' + world.ambiance() + '</b> — higher means customers arrive faster and tip more.</p>' + section('🏗️ Expand', b) + section('🖼️ Decor', d) + '</div>');
+    openSheet('<div class="sheet">' + head('🛒 Store') + '<div class="tabs">' + tabs + '</div>' +
+      '<p class="hint">Ambiance <b>' + world.ambiance() + '</b> · pieces sit on the floor — rearrange or sell them in 🔨 Build.</p>' + body + '</div>');
   }
+  function shopItem(id) { return (window.SHOP || []).filter(function (s) { return s.id === id; })[0]; }
 
   function openRecipes() {
     var rows = (window.RECIPES || []).map(function (r) {
@@ -265,17 +317,88 @@
       '<button class="buy coin" data-act="close" style="margin-top:14px;justify-content:center;width:100%;">Nice</button></div></div>');
   }
 
+  function ctype(id) { return (window.CUSTOMER_TYPES || []).filter(function (t) { return t.id === id; })[0] || (window.CUSTOMER_TYPES || [])[0]; }
+  function rarTag(r) { return r === 'elite' ? '<span class="rar elite">★ Elite</span>' : r === 'rare' ? '<span class="rar rare">◆ Rare</span>' : '<span class="rar">Common</span>'; }
+  function ebar(z) { var p = Math.max(0, z.energy / (z.maxEnergy || 100) * 100); var col = p > 45 ? 'var(--toxic)' : p > 22 ? 'var(--gold)' : 'var(--blood)'; return '<div class="ebar"><i style="width:' + p + '%;background:' + col + '"></i></div>'; }
+
+  // ---- Staff roster / Meat Locker (Phase 10) -------------------------
+  function zombieCard(z) {
+    var reanim = z.reanimateUntil > world.t;
+    var statePill = z.stored ? (reanim ? '🩸 reanimating ' + clock(z.reanimateUntil - world.t) : '📦 in locker') :
+      (z.state === 'resting' ? '😴 resting' : z.state === 'daydream' ? '💭 dazed' : z.role === 'rest' ? '😴 off-duty' : '🟢 ' + (z.state === 'idle' ? 'ready' : 'working'));
+    var stats = '<div class="zstats">' +
+      zs('⚡', 'Spd', '×' + z.speed.toFixed(2)) + zs('🍽️', 'Srv', '×' + z.serve.toFixed(2)) +
+      zs('🧽', 'Cln', '×' + z.clean.toFixed(2)) + zs('🍳', 'Cook', '×' + (z.cook || 1).toFixed(2)) +
+      zs('👊', 'Atk', '' + z.attack) + zs('🧠', 'Pat', (z.patience || 1).toFixed(1)) + '</div>';
+    var btns = '<div class="zbtns">';
+    if (z.stored) btns += '<button class="mini coin" data-act="z-activate" data-id="' + z.id + '"' + (reanim ? ' disabled' : '') + '>Assign</button>';
+    else { btns += '<button class="mini" data-act="z-store" data-id="' + z.id + '">Store</button>'; btns += '<button class="mini" data-act="z-rest" data-id="' + z.id + '">Rest</button>'; }
+    btns += '<button class="mini toxin" data-act="z-feed" data-id="' + z.id + '">☣ Refill</button>';
+    btns += '<button class="mini" data-act="z-rename" data-id="' + z.id + '">Rename</button>';
+    btns += '<button class="mini" data-act="z-raid" data-id="' + z.id + '" disabled>Raid</button>';
+    btns += '</div>';
+    return '<div class="zcard"><div class="zhead"><span class="zportrait">🧟</span>' +
+      '<div class="zmeta"><div class="zname">' + z.name + ' ' + rarTag(z.rarity) + '</div>' +
+      '<div class="zsub">' + (z.kind || 'Server') + (z.trait ? ' · ' + z.trait : '') + ' · ' + statePill + '</div></div>' +
+      '<div class="zen">' + Math.round(z.energy) + '/' + (z.maxEnergy || 100) + '⚡</div></div>' +
+      ebar(z) + stats + btns + '</div>';
+  }
+  function zs(i, n, v) { return '<div class="zstat"><span class="zi">' + i + '</span><span class="zn">' + n + '</span><b>' + v + '</b></div>'; }
+  function openRoster() {
+    var active = world.activeZombies(), stored = world.storedZombies();
+    var slotCost = 4 + (world.extraSlots || 0) * 2;
+    var html = '<div class="sheet">' + head('🧟 Staff — Active ' + active.length + '/' + world.activeSlots()) +
+      '<p class="hint">Active staff work the floor. The rest wait in the Meat Locker. ' +
+      '<button class="mini toxin" data-act="buy-slot">+1 slot (☣' + slotCost + ')</button></p>' +
+      '<div class="list">' + (active.length ? active.map(zombieCard).join('') : '<p class="hint">No active staff!</p>') + '</div>';
+    if (stored.length) html += '<div class="r-meta" style="margin:14px 2px 6px;">🪦 Meat Locker (' + stored.length + ')</div><div class="list">' + stored.map(zombieCard).join('') + '</div>';
+    openSheet(html + '</div>');
+  }
+
+  // ---- Customer info + infection panel (Phase 9) ---------------------
+  function openCustomer(cid) {
+    var c = world.customers.filter(function (x) { return x.id === cid; })[0]; if (!c) return;
+    var t = ctype(c.type), z = t.z, cost = world.infectCost(c);
+    var full = world.activeZombies().length >= world.activeSlots();
+    var canAfford = world.toxin >= (cost.toxin || 0) && world.coins >= (cost.cash || 0);
+    var costStr = (cost.toxin ? '☣ ' + cost.toxin : '') + (cost.cash ? (cost.toxin ? ' + ' : '') + '🪙 ' + cost.cash : '');
+    var mood = c.mood || (c.annoyed ? 'impatient' : 'content');
+    openSheet('<div class="sheet">' + head('🧟‍♀️ Recruit a ' + t.name) +
+      '<div class="cust-panel">' +
+        '<div class="cust-col"><div class="r-meta">Customer</div>' +
+          kv('Type', t.name + ' ' + rarTag(t.rarity)) + kv('Mood', mood) +
+          kv('Spends', '🪙 ' + Math.round((recipeById(world.lastRecipe) || { price: 5 }).price * t.pay) + ' · tip ' + Math.round(t.tip * 100) + '%') +
+          kv('Patience', (t.patience).toFixed(1) + '×') +
+        '</div>' +
+        '<div class="cust-col zprev"><div class="r-meta">Becomes</div>' +
+          '<div class="zname">🧟 ' + z.role + ' ' + rarTag(z.rarity) + '</div>' +
+          kv('Speed', '×' + z.speed.toFixed(2)) + kv('Serve', '×' + z.serve.toFixed(2)) +
+          kv('Clean', '×' + z.clean.toFixed(2)) + kv('Attack', '' + z.attack) +
+          kv('Energy', '' + z.maxEnergy) + kv('Trait', z.trait || '—') +
+        '</div>' +
+      '</div>' +
+      (full ? '<p class="hint">⚠ Active staff full — this zombie goes to the Meat Locker.</p>' : '') +
+      '<button class="buy ' + (canAfford ? 'toxin' : '') + '" data-act="infect-do" data-id="' + cid + '"' + (canAfford ? '' : ' disabled') + ' style="width:100%;justify-content:center;margin-top:10px;">' +
+        (canAfford ? '🧟 Infect (' + costStr + ')' : 'Need ' + costStr) + '</button>' +
+      '<button class="buy" data-act="close" style="width:100%;justify-content:center;margin-top:8px;background:#2a3a2e;color:#cfe;">Close</button>' +
+      '</div>');
+  }
+  function kv(k, v) { return '<div class="kv"><span>' + k + '</span><b>' + v + '</b></div>'; }
+
   function openFridge() {
     var rows = world.fridge.map(function (b, i) {
-      var r = recipeById(b.recipeId) || { emoji: '🍽️', name: b.recipeId };
+      var r = recipeById(b.recipeId) || { emoji: '🍽️', name: b.recipeId, level: 1 };
       var known = r.level <= world.level || (world.extraRecipes || []).indexOf(b.recipeId) >= 0;
-      var btns = '<button class="buy coin" data-act="fridge-serve" data-id="' + i + '">Serve ' + b.servings + '</button>';
-      if (b.canUnlock && !known) btns = '<button class="buy toxin" data-act="fridge-unlock" data-id="' + i + '">📖 Unlock</button>' + btns;
+      var lowLvl = !known && r.level > world.level;
+      var btns = '<button class="mini coin" data-act="fridge-serve" data-id="' + i + '">Serve ' + b.servings + '</button>';
+      if (b.canUnlock && !known) btns += '<button class="mini toxin" data-act="fridge-unlock" data-id="' + i + '"' + (lowLvl ? ' disabled' : '') + '>📖 Unlock</button>';
+      btns += '<button class="mini" data-act="fridge-discard" data-id="' + i + '">🗑</button>';
       return '<div class="row"><div class="r-ico">' + r.emoji + '</div><div class="r-body"><div class="r-name">' + r.name +
-        (known ? '' : ' <span style="color:var(--toxic)">NEW</span>') + '</div><div class="r-meta">' + b.servings + ' servings · stolen from ' + (b.source || 'a raid') + '</div></div>' + btns + '</div>';
+        (known ? '' : ' <span style="color:var(--toxic)">NEW</span>') + '</div><div class="r-meta">' + b.servings + ' servings · from ' + (b.source || 'a raid') +
+        (lowLvl ? ' · 🔒 needs Lv ' + r.level : '') + '</div></div><div class="zbtns">' + btns + '</div></div>';
     }).join('');
     if (!world.fridge.length) rows = '<p class="hint">The fridge is empty. Win raids to stock it with stolen food and new recipes.</p>';
-    openSheet('<div class="sheet">' + head('🧊 Fridge') + '<p class="hint">Raid loot. Serve it on the pass, or unlock a brand-new recipe (uses up that batch).</p><div class="list">' + rows + '</div></div>');
+    openSheet('<div class="sheet">' + head('🧊 Fridge') + '<p class="hint">Raid loot. Serve it on the pass, or unlock a brand-new recipe (uses the batch).</p><div class="list">' + rows + '</div></div>');
   }
 
   function openHelp() {
@@ -322,14 +445,29 @@
     else if (act === 'raid') { world.startRaid(a.dataset.id); closeSheet(); }
     else if (act === 'yes') { var cb = confirmCb; confirmCb = null; closeSheet(); if (cb) cb(); }
     else if (act === 'open-shop') openShop();
+    else if (act === 'shop-tab') openShop(a.dataset.id);
+    else if (act === 'place-storage') { world.placeFromStorage(+a.dataset.id); openShop('Storage'); }
     else if (act === 'open-recipes') openRecipes();
     else if (act === 'open-map') openMap();
     else if (act === 'open-fridge') openFridge();
     else if (act === 'fridge-serve') { world.serveFromFridge(+a.dataset.id); openFridge(); }
     else if (act === 'fridge-unlock') { world.unlockFromFridge(+a.dataset.id); openFridge(); }
+    else if (act === 'fridge-discard') { world.discardFridge(+a.dataset.id); openFridge(); }
+    else if (act === 'open-roster') openRoster();
+    else if (act === 'z-activate') { world.activateZombie(a.dataset.id); openRoster(); }
+    else if (act === 'z-store') { world.storeZombie(a.dataset.id); openRoster(); }
+    else if (act === 'z-rest') { world.restZombie(a.dataset.id); openRoster(); }
+    else if (act === 'z-feed') { world.feedZombie(a.dataset.id); openRoster(); }
+    else if (act === 'z-rename') { var nm = prompt('Rename zombie:'); if (nm) { world.renameZombie(a.dataset.id, nm); } openRoster(); }
+    else if (act === 'buy-slot') { world.buySlot(); openRoster(); }
+    else if (act === 'infect-do') { var id = a.dataset.id; closeSheet(); world.infect(id); }
     else if (act === 'open-help') openHelp();
     else if (act === 'open-build') setEdit(true);
     else if (act === 'build-done') setEdit(false);
+    else if (act === 'build-store') { if (selected) { world.storeFurniture(selected.kind, selected.id); selected = null; buildBar(); toast('📦 Stored — find it in Store ▸ Storage'); } }
+    else if (act === 'build-sell') { if (selected) { world.sellFurniture(selected.kind, selected.id); selected = null; buildBar(); } }
+    else if (act === 'soon-tasks') toast('📋 Review Tasks arrive in a later update');
+    else if (act === 'soon-pedia') toast('📚 The Zombiepedia is coming soon');
     else if (act === 'role') { world.setZombieRole(a.dataset.id, a.dataset.role); openZombie(a.dataset.id); }
     else if (act === 'feed') { world.feedZombie(a.dataset.id); openZombie(a.dataset.id); }
     else if (act === 'sel-info') { if (selZ) openZombie(selZ); }

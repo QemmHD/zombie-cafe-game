@@ -46,6 +46,8 @@
     (window.RIVALS || []).forEach(function (r) { RIVAL[r.id] = r; });
   })();
   function shopById(id) { var s = window.SHOP || []; for (var i = 0; i < s.length; i++) if (s[i].id === id) return s[i]; return null; }
+  var CTYPES = window.CUSTOMER_TYPES || [];
+  function typeOf(c) { var id = c && c.type; for (var i = 0; i < CTYPES.length; i++) if (CTYPES[i].id === id) return CTYPES[i]; return CTYPES[0] || { name: 'Civilian', pay: 1, tip: 0.1, patience: 1, infect: { toxin: 2 }, z: { role: 'Server', speed: 1, serve: 1, clean: 1, cook: 1, attack: 10, maxEnergy: 100, patience: 1, rarity: 'common', trait: '' } }; }
 
   function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
   function uid() { return Math.random().toString(36).slice(2, 9); }
@@ -75,7 +77,8 @@
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
     this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true;
-    this.rep = REP_START; this.fridge = []; this.queue = [];   // reputation + raid-loot fridge + waiting-outside line
+    this.rep = REP_START; this.fridge = []; this.storage = []; this.extraSlots = 0;   // rep, raid-loot fridge, stored furniture, bonus staff slots
+    this.cafeName = 'The Rotten Spoon';
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
     this.decors = [];
     this.tables = [ this._mkTable(0), this._mkTable(5), this._mkTable(2) ];
@@ -83,7 +86,7 @@
     this.zombies = [ this._mkZombie(0) ];
   };
   World.prototype._mkStove  = function (slot) { var s = STOVE_SLOTS[slot]; return { id: uid(), slot: slot, x: s.x, y: s.y, recipe: null, start: 0, ready: false }; };
-  World.prototype._mkTable  = function (cell) { var s = CELLS[cell]; return { id: uid(), cell: cell, x: s.x, y: s.y, by: null, dirty: false, cleaning: null }; };
+  World.prototype._mkTable  = function (cell) { var s = CELLS[cell]; return { id: uid(), cell: cell, x: s.x, y: s.y, by: null, reserved: null, dirty: false, cleaning: null }; };
   World.prototype._mkDecor  = function (deco, cell) { var s = CELLS[cell]; return { id: uid(), deco: deco, cell: cell, x: s.x, y: s.y }; };
 
   // ---- grid helpers (build / placement) ------------------------------
@@ -98,7 +101,15 @@
   };
   World.prototype._mkZombie = function (i, rar) { var h = home(i); rar = rar || rollRarity(); var s = statsFor(rar);
     return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, fx: h.x, fy: h.y, path: [], carry: null, carryBatch: null, job: null, cleanId: null, stoveId: null, face: 'L', step: Math.random() * 6,
-      name: pick(ZNAMES), rarity: rar, role: 'auto', energy: 100, speed: s.speed, serve: s.serve, clean: s.clean, patience: s.patience, dazeUntil: 0 }; };
+      name: pick(ZNAMES), kind: 'Server', rarity: rar, role: 'auto', energy: 100, maxEnergy: 100, speed: s.speed, serve: s.serve, clean: s.clean, cook: 1, attack: 10, patience: s.patience, dazeUntil: 0, stored: false, reanimateUntil: 0 }; };
+  // Build a zombie from an infected customer's inherited profile (Phase 9).
+  World.prototype._mkZombieFrom = function (ct) {
+    var z = this._mkZombie(this.zombies.length, ct.z.rarity);
+    z.kind = ct.z.role; z.speed = ct.z.speed; z.serve = ct.z.serve; z.clean = ct.z.clean;
+    z.cook = ct.z.cook; z.attack = ct.z.attack; z.maxEnergy = ct.z.maxEnergy; z.energy = ct.z.maxEnergy;
+    z.patience = ct.z.patience; z.trait = ct.z.trait; z.fromType = ct.name;
+    return z;
+  };
 
   // ---- save / load ----------------------------------------------------
   World.prototype.snapshot = function () {
@@ -106,20 +117,23 @@
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
       spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
-      rep: this.rep, fridge: this.fridge,
+      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, cafeName: this.cafeName,
       stoves: this.stoves, tables: this.tables, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
   World.prototype._restore = function (s) {
     for (var k in s) this[k] = s[k];
     this.events = []; this.customers = this.customers || []; this.ready = this.ready || [];
-    this.decor = this.decor || {}; this.decors = this.decors || []; this.fridge = this.fridge || []; this.queue = [];
+    this.decor = this.decor || {}; this.decors = this.decors || []; this.fridge = this.fridge || []; this.storage = this.storage || [];
     if (this.auto == null) this.auto = true;
     if (this.rep == null) this.rep = REP_START;
-    // forward-compat: ensure zombies have home + render fields
+    if (this.extraSlots == null) this.extraSlots = 0;
+    if (!this.cafeName) this.cafeName = 'The Rotten Spoon';
+    // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
-    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; });
-    (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } });
+    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; });
+    (this.tables || []).forEach(function (tb) { if (tb.reserved === undefined) tb.reserved = null; });
+    (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } if (!c.type) c.type = 'civilian'; });
   };
 
   // ---- rating / reputation (Phase 11) --------------------------------
@@ -215,17 +229,20 @@
     this.events.push({ type: 'CustomerPaid', x: c.x, y: c.y, mood: mood });
     this._leave(c, true);
   };
+  World.prototype.infectCost = function (c) { var t = typeOf(c); return (t && t.infect) || { toxin: INFECT_COST }; };
   World.prototype.infect = function (cid) {
     var c = byId(this.customers, cid);
-    if (!c || !c.infectable || (c.state !== 'waiting' && c.state !== 'paying')) return false;
-    if (this.toxin < INFECT_COST) { this.events.push({ type: 'warn', msg: 'Need ' + INFECT_COST + ' toxin to infect' }); return false; }
-    this.toxin -= INFECT_COST;
-    // a rare/infectable customer has a better shot at a rare zombie
-    var z = this._mkZombie(this.zombies.length, rollRarity(0.15)); z.x = c.x; z.y = c.y; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy;
-    this.zombies.push(z);
-    this._gainXp((c.xp || 1) * 2);
-    this.events.push({ type: 'infect', x: c.x, y: c.y });
-    this._freeTable(c); this.customers.splice(this.customers.indexOf(c), 1);
+    if (!c || !c.infectable || (c.state !== 'waiting' && c.state !== 'paying' && c.state !== 'queued')) return false;
+    var ct = typeOf(c), cost = this.infectCost(c);
+    if (this.toxin < (cost.toxin || 0)) { this.events.push({ type: 'warn', msg: 'Need ' + (cost.toxin || 0) + ' toxin to infect' }); return false; }
+    if (this.coins < (cost.cash || 0)) { this.events.push({ type: 'warn', msg: 'Need ' + (cost.cash || 0) + ' coins to infect' }); return false; }
+    this.toxin -= (cost.toxin || 0); this.coins -= (cost.cash || 0);
+    var z = this._mkZombieFrom(ct); z.x = c.x; z.y = c.y; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy;
+    var wentActive = this._addZombie(z);
+    this._gainXp((c.xp || 2) * 2);
+    this.events.push({ type: 'CustomerInfected', x: c.x, y: c.y, zombie: z, stored: !wentActive });
+    this._freeTable(c); var qi = this.queue ? this.queue.indexOf(c.id) : -1; if (qi >= 0) this.queue.splice(qi, 1);
+    this.customers.splice(this.customers.indexOf(c), 1);
     return true;
   };
   // ---- fridge: raid-loot food (Phase 4) ------------------------------
@@ -240,6 +257,7 @@
     this.events.push({ type: 'fridge', x: PASS.x, y: PASS.y, emoji: (RECIPES[b.recipeId] || {}).emoji || '🍽️', n: added });
     return true;
   };
+  World.prototype.discardFridge = function (idx) { if (!this.fridge[idx]) return false; this.fridge.splice(idx, 1); return true; };
   World.prototype.unlockFromFridge = function (idx) {
     var b = this.fridge[idx]; if (!b) return false;
     var r = RECIPES[b.recipeId]; if (!r) return false;
@@ -260,7 +278,7 @@
     if (bag === 'coin') this.coins -= cost; else this.toxin -= cost;
     if (it.kind === 'stove') this.stoves.push(this._mkStove(this.freeStoveSlot()));
     else if (it.kind === 'table') this.tables.push(this._mkTable(this.firstFreeCell()));
-    else if (it.kind === 'zombie') this.zombies.push(this._mkZombie(this.zombies.length));
+    else if (it.kind === 'zombie') this._addZombie(this._mkZombie(this.zombies.length));
     else if (it.kind === 'decor') this.decors.push(this._mkDecor(it.id, this.firstFreeCell()));
     this.events.push({ type: 'bought', item: it });
     return true;
@@ -270,6 +288,33 @@
   World.prototype.moveTable = function (id, cell) { var t = byId(this.tables, id); if (!t || !this.cellFree(cell, id)) return false; t.cell = cell; t.x = CELLS[cell].x; t.y = CELLS[cell].y; return true; };
   World.prototype.moveDecor = function (id, cell) { var d = byId(this.decors, id); if (!d || !this.cellFree(cell, id)) return false; d.cell = cell; d.x = CELLS[cell].x; d.y = CELLS[cell].y; return true; };
   World.prototype.moveStove = function (id, slot) { var s = byId(this.stoves, id); for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === slot && this.stoves[i].id !== id) return false; if (!s) return false; s.slot = slot; s.x = STOVE_SLOTS[slot].x; s.y = STOVE_SLOTS[slot].y; return true; };
+  // ---- build mode: store (stash) or sell furniture (Phase 9/12) -------
+  World.prototype._removeFurniture = function (kind, id) {
+    if (kind === 'table') { var ti = this.tables.findIndex(function (t) { return t.id === id; }); if (ti < 0) return null; var tb = this.tables[ti]; if (tb.by || tb.reserved) { this.events.push({ type: 'warn', msg: 'Someone is using that table' }); return null; } this.tables.splice(ti, 1); return { kind: 'table' }; }
+    if (kind === 'stove') { var si = this.stoves.findIndex(function (s) { return s.id === id; }); if (si < 0) return null; var st = this.stoves[si]; if (st.recipe) { this.events.push({ type: 'warn', msg: 'Finish or clear the stove first' }); return null; } this.stoves.splice(si, 1); return { kind: 'stove' }; }
+    if (kind === 'decor') { var di = this.decors.findIndex(function (d) { return d.id === id; }); if (di < 0) return null; var deco = this.decors[di].deco; this.decors.splice(di, 1); return { kind: 'decor', deco: deco }; }
+    return null;
+  };
+  World.prototype.storeFurniture = function (kind, id) {
+    var rem = this._removeFurniture(kind, id); if (!rem) return false;
+    this.storage.push(rem); this.events.push({ type: 'rosterChanged' }); return true;
+  };
+  World.prototype.sellFurniture = function (kind, id) {
+    var ref = kind === 'decor' ? null : null;
+    var item = kind === 'decor' ? null : null;
+    // resolve sell value from the shop entry
+    var shopId = kind === 'decor' ? (byId(this.decors, id) || {}).deco : kind;
+    var entry = shopById(shopId), sell = (entry && entry.sell) || 0;
+    var rem = this._removeFurniture(kind, id); if (!rem) return false;
+    this.coins += sell; this.events.push({ type: 'sold', coins: sell }); return true;
+  };
+  World.prototype.placeFromStorage = function (idx) {
+    var it = this.storage[idx]; if (!it) return false;
+    if (it.kind === 'stove') { var slot = this.freeStoveSlot(); if (slot < 0) { this.events.push({ type: 'warn', msg: 'Kitchen is full' }); return false; } this.stoves.push(this._mkStove(slot)); }
+    else { var cell = this.firstFreeCell(); if (cell < 0) { this.events.push({ type: 'warn', msg: 'No floor space' }); return false; }
+      if (it.kind === 'table') this.tables.push(this._mkTable(cell)); else this.decors.push(this._mkDecor(it.deco, cell)); }
+    this.storage.splice(idx, 1); this.events.push({ type: 'rosterChanged' }); return true;
+  };
   World.prototype.cellAt = function (x, y) {
     var best = -1, bd = 80;
     for (var i = 0; i < CELLS.length; i++) { var d = Math.hypot(x - CELLS[i].x, y - CELLS[i].y); if (d < bd) { bd = d; best = i; } }
@@ -287,13 +332,44 @@
     var z = byId(this.zombies, zid); if (!z) return false;
     if (z.energy >= 99) { this.events.push({ type: 'warn', msg: z.name + ' is already full of energy' }); return false; }
     if (this.toxin < 1) { this.events.push({ type: 'warn', msg: 'Need 1 toxin to feed a zombie' }); return false; }
-    this.toxin -= 1; z.energy = 100; if (z.state === 'resting') z.state = 'idle';
+    this.toxin -= 1; z.energy = z.maxEnergy || 100; if (z.state === 'resting' && z.role !== 'rest') z.state = 'idle';
     this.events.push({ type: 'fed', x: z.x, y: z.y }); return true;
   };
   World.prototype.pickZombieAt = function (x, y) {
     var best = null, bd = 60;
-    for (var i = 0; i < this.zombies.length; i++) { var z = this.zombies[i], d = dist(x, y, z.x, z.y - 30); if (d < bd) { bd = d; best = z; } }
+    for (var i = 0; i < this.zombies.length; i++) { var z = this.zombies[i]; if (z.stored) continue; var d = dist(x, y, z.x, z.y - 30); if (d < bd) { bd = d; best = z; } }
     return best;
+  };
+
+  // ---- roster / Meat Locker (Phase 10) -------------------------------
+  // Active staff work the floor; the rest wait in the Meat Locker. Slots grow
+  // with level (and bought upgrades). New zombies overflow into storage.
+  World.prototype.activeSlots = function () { return 3 + Math.floor((this.level - 1) / 2) + (this.extraSlots || 0); };
+  World.prototype.activeZombies = function () { return this.zombies.filter(function (z) { return !z.stored; }); };
+  World.prototype.storedZombies = function () { return this.zombies.filter(function (z) { return z.stored; }); };
+  World.prototype._addZombie = function (z) {
+    z.stored = this.activeZombies().length >= this.activeSlots();
+    this.zombies.push(z);
+    return !z.stored;                                  // true if it went active
+  };
+  World.prototype.storeZombie = function (id) {
+    var z = byId(this.zombies, id); if (!z || z.stored) return false;
+    this._releaseJob(z); z.stored = true; z.state = 'idle'; z.x = z.hx; z.y = z.hy; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy;
+    this.events.push({ type: 'rosterChanged' }); return true;
+  };
+  World.prototype.activateZombie = function (id) {
+    var z = byId(this.zombies, id); if (!z || !z.stored) return false;
+    if (z.reanimateUntil > this.t) { this.events.push({ type: 'warn', msg: z.name + ' is still reanimating' }); return false; }
+    if (this.activeZombies().length >= this.activeSlots()) { this.events.push({ type: 'warn', msg: 'Active staff is full — store one first or expand slots' }); return false; }
+    z.stored = false; z.state = 'idle'; z.x = z.hx; z.y = z.hy; z.energy = Math.max(z.energy, 20);
+    this.events.push({ type: 'rosterChanged' }); return true;
+  };
+  World.prototype.restZombie = function (id) { var z = byId(this.zombies, id); if (!z) return false; this._releaseJob(z); z.role = 'rest'; z.state = 'resting'; routeTo(this, z, z.hx, z.hy); return true; };
+  World.prototype.renameZombie = function (id, name) { var z = byId(this.zombies, id); if (!z || !name) return false; z.name = ('' + name).slice(0, 14); return true; };
+  World.prototype.buySlot = function () {
+    var cost = 4 + this.extraSlots * 2;
+    if (this.toxin < cost) { this.events.push({ type: 'warn', msg: 'Need ' + cost + ' toxin for another staff slot' }); return false; }
+    this.toxin -= cost; this.extraSlots = (this.extraSlots || 0) + 1; this.events.push({ type: 'rosterChanged' }); return true;
   };
 
   // ---- raids (take over other cafes) ---------------------------------
@@ -326,7 +402,7 @@
         if (!known) gotRecipe = RECIPES[rv.recipe];
       }
     }
-    for (var i = 0; i < squad; i++) this.zombies.push(this._mkZombie(this.zombies.length));
+    for (var i = 0; i < squad; i++) this._addZombie(this._mkZombie(this.zombies.length));
     this.events.push({ type: 'raidEnd', rival: rv, win: win, loot: loot, toxin: win ? (rv.toxin || 0) : 0, recipe: gotRecipe, food: fridgeFood });
     this.raid = null;
   };
@@ -352,25 +428,75 @@
         }
       }
     }
+    this._seatQueued();
     this._stepZombies(dt);
     this._stepCustomers(dt);
     if (this.raid && this.t >= this.raid.returnsAt) this._resolveRaid();
   };
 
+  World.prototype.maxCustomers = function () { return this.tables.length + 5; };   // seats + a short queue
+  // weighted pick of a customer archetype, gated by level & rating (Phase 5)
+  World.prototype._rollType = function () {
+    var stars = this.ratingStars(), L = this.level, pool = [], total = 0, i;
+    for (i = 0; i < CTYPES.length; i++) { var t = CTYPES[i]; if (L >= (t.levelReq || 1) && stars >= (t.ratingReq || 0)) { pool.push(t); total += t.weight; } }
+    if (!pool.length) return CTYPES[0];
+    var r = Math.random() * total;
+    for (i = 0; i < pool.length; i++) { r -= pool[i].weight; if (r <= 0) return pool[i]; }
+    return pool[pool.length - 1];
+  };
+  // is there a walking route from the door to this table's seat?
+  World.prototype.reachableTable = function (tb) {
+    var blocked = this._blockedTiles();
+    var sc = Math.floor(DOOR.x / TILE), sr = Math.floor(DOOR.y / TILE);
+    var tc = Math.floor(tb.x / TILE), tr = Math.floor(tb.y / TILE);
+    var q = [[sc, sr]], seen = {}; seen[sc + ',' + sr] = 1; var DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    while (q.length) {
+      var cur = q.shift();
+      for (var d = 0; d < 4; d++) {
+        var nc = cur[0] + DIRS[d][0], nr = cur[1] + DIRS[d][1], k = nc + ',' + nr;
+        if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || seen[k]) continue;
+        if (Math.abs(nc - tc) <= 0 && Math.abs(nr - tr) <= 0) return true;   // reached the table tile's neighbour chain
+        if (blocked[k]) continue;
+        seen[k] = 1; q.push([nc, nr]);
+      }
+    }
+    return false;
+  };
+  // try to reserve a free, clean, reachable table for a customer
+  World.prototype._trySeat = function (c) {
+    for (var i = 0; i < this.tables.length; i++) {
+      var tb = this.tables[i];
+      if (tb.by || tb.reserved || tb.dirty || tb.cleaning) continue;
+      if (!this.reachableTable(tb)) continue;
+      tb.reserved = c.id; c.table = tb.id; c.state = 'toTable';
+      routeTo(this, c, tb.x, tb.y + 20); return true;
+    }
+    return false;
+  };
+  // FIFO: seat anyone who's been queueing as soon as a table opens up
+  World.prototype._seatQueued = function () {
+    for (var i = 0; i < this.customers.length; i++) {
+      var c = this.customers[i]; if (c.state !== 'queued') continue;
+      this._trySeat(c);
+    }
+  };
+
   World.prototype._spawn = function () {
     if (this.t < this.spawnAt) return;
     this.spawnAt = this.t + this.spawnEvery() * (0.65 + Math.random() * 0.7);
-    var free = this.tables.filter(function (tb) { return !tb.by && !tb.dirty; });
-    if (!free.length) return;
-    var tb = pick(free), c = {
-      id: uid(), x: DOOR.x, y: DOOR.y, tx: DOOR.x, ty: DOOR.y, fx: DOOR.x, fy: DOOR.y, path: [], table: tb.id,
-      state: 'toTable', wait: 0, eat: 0, pay: 0, xp: 0, dish: null,
-      assigned: null, infectable: Math.random() < INFECT_CHANCE,
-      color: pick(COLORS), skin: pick(SKINS), hair: pick(HAIRS), face: 'U', step: Math.random() * 6,
+    if (this.customers.length >= this.maxCustomers()) return;
+    var ct = this._rollType();
+    var qpos = this._queueSpot(this.customers.filter(function (c) { return c.state === 'queued'; }).length);
+    var c = {
+      id: uid(), x: DOOR.x, y: DOOR.y, tx: DOOR.x, ty: DOOR.y, fx: DOOR.x, fy: DOOR.y, path: [], table: null,
+      state: 'queued', wait: this.t, eat: 0, pay: 0, xp: 0, dish: null, assigned: null,
+      type: ct.id, rarity: ct.rarity, infectable: true,
+      color: ct.shirt || pick(COLORS), skin: pick(SKINS), hair: pick(HAIRS), hat: ct.hat || null, face: 'U', step: Math.random() * 6,
     };
-    tb.by = c.id; this.customers.push(c);
-    routeTo(this, c, tb.x, tb.y + 20);
+    this.customers.push(c);
+    if (!this._trySeat(c)) routeTo(this, c, qpos.x, qpos.y);   // no seat: wait in line by the door
   };
+  World.prototype._queueSpot = function (n) { return { x: DOOR.x - 120 + (n % 4) * 80, y: DOOR.y + 6 - Math.floor(n / 4) * 60 }; };
 
   function moveTo(e, dt, spd) {
     spd = spd || SPEED;
@@ -462,10 +588,13 @@
   World.prototype._stepZombies = function (dt) {
     for (var i = 0; i < this.zombies.length; i++) {
       var z = this.zombies[i];
+      if (z.stored) continue;                          // in the Meat Locker, off the floor
+      if (z.reanimateUntil > this.t) { z.energy = Math.min(z.maxEnergy || 100, z.energy + REGEN_REST * dt); continue; }
       var working = z.state === 'toPass' || z.state === 'toCustomer' || z.state === 'toClean' || z.state === 'cleaning' || z.state === 'toStove' || z.state === 'toDeposit';
+      var emax = z.maxEnergy || 100;
       if (working) z.energy = Math.max(0, z.energy - DRAIN * dt);
-      else if (z.state === 'resting') z.energy = Math.min(100, z.energy + REGEN_REST * dt);
-      else if (z.state !== 'daydream') z.energy = Math.min(100, z.energy + REGEN_IDLE * dt);
+      else if (z.state === 'resting') z.energy = Math.min(emax, z.energy + REGEN_REST * dt);
+      else if (z.state !== 'daydream') z.energy = Math.min(emax, z.energy + REGEN_IDLE * dt);
 
       // Low-energy hazards (Phase 7). A tired zombie may zone out; a critically
       // drained, impatient one may scare a diner off — costing you rating.
@@ -642,25 +771,39 @@
     return null;
   };
 
+  World.prototype.custPatience = function (c) { return this.patience() * (typeOf(c).patience || 1); };
   World.prototype._stepCustomers = function (dt) {
     for (var i = this.customers.length - 1; i >= 0; i--) {
       var c = this.customers[i], arr = step(this, c, dt, SPEED);
-      if (c.state === 'toTable') { if (arr) { c.state = 'waiting'; c.wait = this.t; c.face = 'U'; this.events.push({ type: 'CustomerSeated', x: c.x, y: c.y }); } }
-      else if (c.state === 'waiting') {
+      if (c.state === 'queued') {
+        // no seat yet: wait in line by the door; patience still drains
+        c.face = 'U';
+        var qw = this.t - c.wait, qpat = this.custPatience(c) * 1.2;
+        c.annoyed = qw > qpat * 0.6;
+        if (qw > qpat) { this._nudgeRep(-1.5, 'no free table'); this.events.push({ type: 'CustomerLeftAngry', x: c.x, y: c.y, reason: 'noseat' }); this._leave(c); }
+      } else if (c.state === 'toTable') {
+        if (arr) {
+          var tb0 = byId(this.tables, c.table);
+          if (tb0) { tb0.by = c.id; tb0.reserved = null; }
+          c.state = 'waiting'; c.wait = this.t; c.face = 'U';
+          this.events.push({ type: 'CustomerSeated', x: c.x, y: c.y });
+        }
+      } else if (c.state === 'waiting') {
         // patience drains while waiting for food; the longer they wait the worse
-        // their mood (and the smaller the tip) when finally served.
-        var waited = this.t - c.wait, pat = this.patience();
+        // their mood (and tip) when finally served.
+        var waited = this.t - c.wait, pat = this.custPatience(c);
         c.annoyed = waited > pat * 0.6;
         if (!c.assigned && waited > pat) { this._nudgeRep(-2, 'customer left hungry'); this.events.push({ type: 'CustomerLeftAngry', x: c.x, y: c.y }); this._leave(c); }
       } else if (c.state === 'eating') {
         if (c.serveWait == null) { c.serveWait = this.t - c.wait; }   // captured at service
         if (this.t - c.eat >= EAT_TIME) {
-          var r = (RECIPES[c.dish] || RECIPES.coffee);
-          // mood from how long they waited + table cleanliness when seated
-          var ratio = c.serveWait / this.patience();
+          var r = (RECIPES[c.dish] || RECIPES.coffee), ct = typeOf(c);
+          var ratio = c.serveWait / this.custPatience(c);
           c.mood = ratio < 0.45 ? 'happy' : ratio < 0.85 ? 'neutral' : 'angry';
-          var mult = c.mood === 'happy' ? 1.15 : c.mood === 'angry' ? 0.7 : 1;
-          c.state = 'paying'; c.pay = Math.max(1, Math.round(r.price * this.tipMult() * mult));
+          var mult = (c.mood === 'happy' ? 1.15 : c.mood === 'angry' ? 0.7 : 1) * (ct.pay || 1);
+          var tip = Math.random() < (ct.tip || 0) ? 1.25 : 1;          // some customers tip
+          c.tipped = tip > 1;
+          c.state = 'paying'; c.pay = Math.max(1, Math.round(r.price * this.tipMult() * mult * tip));
           c.xp = r.xp; c.payAt = this.t;
         }
       } else if (c.state === 'paying') {
@@ -670,23 +813,36 @@
       }
     }
   };
-  World.prototype._freeTable = function (c) { var tb = byId(this.tables, c.table); if (tb && tb.by === c.id) tb.by = null; };
+  World.prototype._freeTable = function (c) { var tb = byId(this.tables, c.table); if (tb) { if (tb.by === c.id) tb.by = null; if (tb.reserved === c.id) tb.reserved = null; } };
   // Leaving after eating leaves a dirty table a zombie must clean; an impatient
-  // walk-out leaves the table clean.
-  World.prototype._leave = function (c, ate) { var tb = byId(this.tables, c.table); if (tb && tb.by === c.id) { tb.by = null; if (ate) tb.dirty = true; } c.state = 'leaving'; c.assigned = null; routeTo(this, c, DOOR.x, DOOR.y); };
+  // walk-out frees the (still-clean) table and lets the next person sit.
+  World.prototype._leave = function (c, ate) {
+    var tb = byId(this.tables, c.table);
+    if (tb) { if (tb.by === c.id) { tb.by = null; if (ate) tb.dirty = true; } if (tb.reserved === c.id) tb.reserved = null; }
+    c.state = 'leaving'; c.assigned = null; routeTo(this, c, DOOR.x, DOOR.y);
+  };
+  // table state enum (Phase 6) for UI / tests
+  World.prototype.tableState = function (tb) {
+    if (tb.cleaning) return 'beingCleaned';
+    if (tb.dirty) return 'dirty';
+    if (!this.reachableTable(tb)) return 'unreachable';
+    if (tb.by) { var c = byId(this.customers, tb.by); if (c) { if (c.state === 'eating') return 'eating'; if (c.state === 'paying') return 'finished'; if (c.assigned || c.state === 'waiting') return 'occupiedWaiting'; } return 'occupiedServed'; }
+    if (tb.reserved) return 'reserved';
+    return 'cleanEmpty';
+  };
 
   function byId(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
 
   // hit-testing helper for the renderer: nearest tappable entity to a point
   World.prototype.pickAt = function (x, y) {
-    var best = null, bd = 46;
+    var best = null, bd = 46, SEATED = { queued: 1, waiting: 1, eating: 1, paying: 1 };
     for (var i = 0; i < this.customers.length; i++) {
-      var c = this.customers[i]; if (c.state !== 'paying' && !(c.infectable && c.state === 'waiting')) continue;
+      var c = this.customers[i]; if (!SEATED[c.state]) continue;
       var d = dist(x, y, c.x, c.y - 16); if (d < bd) { bd = d; best = { kind: 'customer', id: c.id, paying: c.state === 'paying', infectable: c.infectable }; }
     }
     if (best && best.paying) return best;                 // prefer paying
     for (var j = 0; j < this.stoves.length; j++) {
-      var s = this.stoves[j], dd = dist(x, y, s.x, s.y); if (dd < 52) { var sd = best ? bd : 999; if (dd < sd) return { kind: 'stove', id: s.id }; }
+      var s = this.stoves[j], dd = dist(x, y, s.x, s.y); if (dd < 52) { var sd = best ? bd : 999; if (dd < sd) return { kind: 'stove', id: s.id, ready: s.ready, burned: s.burned, recipe: s.recipe }; }
     }
     return best;
   };

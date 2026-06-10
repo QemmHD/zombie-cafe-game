@@ -19,15 +19,21 @@
     <header id="hud"></header>
     <main id="stage">
       <canvas id="game"></canvas>
+      <nav id="rail">
+        <button class="railbtn" data-act="open-shop">🛒<span>Store</span></button>
+        <button class="railbtn" data-act="open-recipes">📖<span>Menu</span></button>
+        <button class="railbtn" data-act="open-roster">🧟<span>Staff</span></button>
+        <button class="railbtn" data-act="open-fridge">🧊<span>Fridge</span></button>
+        <button class="railbtn" data-act="open-map">⚔️<span>Raid</span></button>
+        <button class="railbtn dim" data-act="soon-tasks">📋<span>Tasks</span></button>
+        <button class="railbtn dim" data-act="soon-pedia">📚<span>Pedia</span></button>
+      </nav>
     </main>
     <nav id="toolbar">
-      <button class="tool" data-act="toggle-auto" id="autobtn">🤖<span>Auto ON</span></button>
-      <button class="tool" data-act="open-shop">🛒<span>Shop</span></button>
       <button class="tool" data-act="open-build">🔨<span>Build</span></button>
+      <button class="tool" data-act="toggle-auto" id="autobtn">🤖<span>Auto ON</span></button>
       <button class="tool" data-act="open-map">⚔️<span>Raid</span></button>
-      <button class="tool" data-act="open-fridge">🧊<span>Fridge</span></button>
-      <button class="tool" data-act="open-recipes">📖<span>Recipes</span></button>
-      <button class="tool" data-act="open-help">❓<span>How</span></button>
+      <button class="tool" data-act="open-help">❓<span>Help</span></button>
     </nav>
   </div>
   <div id="fx"></div>

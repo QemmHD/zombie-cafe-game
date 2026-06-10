@@ -36,14 +36,20 @@
     this.cv.width = Math.round(cw * dpr); this.cv.height = Math.round(ch * dpr);
     var cvW = this.cv.width, cvH = this.cv.height, W = Wld.W, H = Wld.H;
     var spanX = W + H;                                  // isoX ranges over [-H, W]
-    var KX = (cvW * 0.97) / spanX;
-    var KY = KX * 0.56;
-    var wall = KX * 230;
-    var contentH = (W + H) * KY + wall;                // floor diamond height + wall
-    if (contentH > cvH * 0.99) { var f = cvH * 0.99 / contentH; KX *= f; KY *= f; wall *= f; contentH = cvH * 0.99; }
+    var wallU = 210;                                    // wall height in KX units
+    var KXw = (cvW * 0.99) / spanX;                     // scale that fits the width
+    var KXh = (cvH * 0.95) / (spanX * 0.56 + wallU);    // scale that fills the height
+    // COVER the screen: fill the height (so the cafe is the whole screen, not a
+    // small diamond floating in black), but cap how much we zoom past the
+    // width-fit so we never crop the side walls too aggressively.
+    var KX = Math.min(Math.max(KXw, KXh), KXw * 1.5);
+    var KY = KX * 0.56, wall = KX * wallU;
+    var contentH = spanX * KY + wall;
     this.KX = KX; this.KY = KY; this.wall = wall;
     this.OX = cvW / 2 + ((H - W) / 2) * KX;             // centre the diamond horizontally
-    this.OY = (cvH - contentH) / 2 + wall;
+    this.OY = (cvH - contentH) / 2 + wall + cvH * 0.02; // centre vertically, nudged down a touch
+    this.S = this.TW = Wld.TILE * KX * 2;
+    this.TH = Wld.TILE * KY * 2;
     this.TW = Wld.TILE * KX * 2;                        // on-screen tile diamond size
     this.TH = Wld.TILE * KY * 2;
     this.S = this.TW;                                   // sprite scale reference
@@ -58,6 +64,7 @@
     ui = ui || {};
     this._selZ = ui.selZ || null;                       // tap-command selection
     this._foodReady = world.ready.length > 0;
+    this._t = t;
     var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.fillStyle = C.outside; c.fillRect(0, 0, cvW, cvH);
@@ -250,6 +257,25 @@
         c.fillStyle = '#555'; c.beginPath(); c.ellipse(p.x, y + S * 0.1, S * 0.38, S * 0.2, 0, 0, 7); c.fill(); c.stroke();
         c.fillStyle = '#7a1f24'; c.beginPath(); c.ellipse(p.x, y + S * 0.04, S * 0.3, S * 0.15, 0, 0, 7); c.fill();
         c.fillStyle = C.blood; rr(c, p.x - S * 0.05, y - S * 0.34, S * 0.1, S * 0.4, 3); c.fill(); circle(c, p.x, y - S * 0.34, S * 0.09); break;
+      case 'counter':
+        c.fillStyle = C.steelD; rr(c, p.x - S * 0.34, y - S * 0.18, S * 0.68, S * 0.34, 5); c.fill(); c.stroke();
+        c.fillStyle = C.steel; rr(c, p.x - S * 0.34, y - S * 0.18, S * 0.68, S * 0.1, 5); c.fill();
+        c.fillStyle = '#7a5a2a'; circle(c, p.x - S * 0.12, y - S * 0.08, S * 0.04); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.1, y - S * 0.05, S * 0.03); break;
+      case 'sink':
+        c.fillStyle = C.steelD; rr(c, p.x - S * 0.3, y - S * 0.2, S * 0.6, S * 0.36, 5); c.fill(); c.stroke();
+        c.fillStyle = '#2c3a3f'; rr(c, p.x - S * 0.2, y - S * 0.12, S * 0.4, S * 0.18, 4); c.fill();
+        c.strokeStyle = C.steel; c.lineWidth = S * 0.04; c.beginPath(); c.moveTo(p.x, y - S * 0.12); c.lineTo(p.x, y - S * 0.3); c.lineTo(p.x + S * 0.1, y - S * 0.3); c.stroke();
+        c.fillStyle = 'rgba(120,200,255,.5)'; circle(c, p.x, y - S * 0.02, S * 0.05); break;
+      case 'trash':
+        c.fillStyle = '#3a4a32'; rr(c, p.x - S * 0.16, y - S * 0.2, S * 0.32, S * 0.36, 4); c.fill(); c.stroke();
+        c.fillStyle = '#5a6a42'; rr(c, p.x - S * 0.19, y - S * 0.24, S * 0.38, S * 0.07, 3); c.fill();
+        c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.04, y - S * 0.28, S * 0.05); c.fillStyle = '#b04a2a'; circle(c, p.x - S * 0.06, y - S * 0.27, S * 0.04);
+        c.fillStyle = C.out; for (var ti = 0; ti < 2; ti++) { var ta = (this._t || 0) * 3 + ti * 3; circle(c, p.x + Math.cos(ta) * S * 0.16, y - S * 0.3 + Math.sin(ta * 1.4) * S * 0.06, S * 0.012); } break;
+      case 'rest':
+        c.fillStyle = C.woodD; iso(c, p.x, y + S * 0.02, S * 0.9, S * 0.42); c.fill(); c.stroke();
+        c.fillStyle = '#3a2a44'; rr(c, p.x - S * 0.28, y - S * 0.14, S * 0.56, S * 0.18, 5); c.fill();
+        c.fillStyle = '#cfc0e0'; rr(c, p.x + S * 0.12, y - S * 0.18, S * 0.16, S * 0.1, 3); c.fill();    // pillow
+        c.fillStyle = C.gold; c.font = (S * 0.16) + 'px system-ui'; c.textAlign = 'center'; c.fillText('✝', p.x - S * 0.18, y - S * 0.16); break;
       default: c.fillStyle = '#556'; rr(c, p.x - S * 0.2, y - S * 0.2, S * 0.4, S * 0.4, 6); c.fill(); c.stroke();
     }
     if (sel) selRing(c, p.x, y, S * 0.4);
@@ -364,6 +390,7 @@
     c.fillStyle = cu.skin; circle(c, x, hy, S * 0.2); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.arc(x, hy, S * 0.2, 0, 7); c.stroke();
     // hair
     c.fillStyle = cu.hair || '#2b2b2b'; c.beginPath(); c.arc(x, hy - S * 0.04, S * 0.2, Math.PI + 0.3, 2 * Math.PI - 0.3); c.fill();
+    this._hat(c, cu.hat, x, hy, S);
     // eyes + expression
     c.fillStyle = '#fff'; circle(c, x - S * 0.07 + lx * S * 0.02, hy, S * 0.05); circle(c, x + S * 0.07 + lx * S * 0.02, hy, S * 0.05);
     c.fillStyle = C.out; circle(c, x - S * 0.07 + lx * S * 0.03, hy + S * 0.005, S * 0.022); circle(c, x + S * 0.07 + lx * S * 0.03, hy + S * 0.005, S * 0.022);
@@ -375,11 +402,26 @@
     c.stroke();
     // thought bubble
     if (cu.state === 'waiting') {
+      var pat0 = world.custPatience ? world.custPatience(cu) : world.patience();
       bubble(c, x + S * 0.28, y - S * 0.78, cu.infectable ? '🧟' : (angry ? '😠' : '🍴'), cu.infectable ? C.toxic : '#fff', S);
-      var pat = 1 - Math.min(1, (world.t - cu.wait) / world.patience());
+      var pat = 1 - Math.min(1, (world.t - cu.wait) / pat0);
       ring(c, x + S * 0.28, y - S * 0.55, S * 0.1, pat, pat > 0.4 ? C.toxic : pat > 0.18 ? C.gold : C.blood, S);
-    } else if (cu.state === 'eating') bubble(c, x + S * 0.28, y - S * 0.78, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S);
-    else if (cu.state === 'paying') bubble(c, x + S * 0.28, y - S * 0.78, '🪙', C.gold, S);
+    } else if (cu.state === 'queued') bubble(c, x + S * 0.28, y - S * 0.78, cu.annoyed ? '😠' : '🪑', cu.annoyed ? C.blood : '#fff', S);
+    else if (cu.state === 'eating') bubble(c, x + S * 0.28, y - S * 0.78, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S);
+    else if (cu.state === 'paying') bubble(c, x + S * 0.28, y - S * 0.78, cu.tipped ? '💰' : '🪙', C.gold, S);
+  };
+
+  // little type-defining hats, drawn over the head at (x, hy)
+  Renderer.prototype._hat = function (c, hat, x, hy, S) {
+    if (!hat) return;
+    c.strokeStyle = C.out; c.lineWidth = S * 0.025;
+    if (hat === 'hardhat') { c.fillStyle = '#ffcf3a'; c.beginPath(); c.arc(x, hy - S * 0.06, S * 0.19, Math.PI, 2 * Math.PI); c.fill(); c.fillRect(x - S * 0.22, hy - S * 0.08, S * 0.44, S * 0.04); }
+    else if (hat === 'chef') { c.fillStyle = '#fff'; rr(c, x - S * 0.16, hy - S * 0.26, S * 0.32, S * 0.16, 4); c.fill(); circle(c, x - S * 0.1, hy - S * 0.28, S * 0.08); circle(c, x + S * 0.1, hy - S * 0.28, S * 0.08); circle(c, x, hy - S * 0.32, S * 0.09); }
+    else if (hat === 'visor') { c.fillStyle = '#2fa84f'; c.beginPath(); c.arc(x, hy - S * 0.02, S * 0.2, Math.PI, 2 * Math.PI); c.fill(); c.fillStyle = '#1b6e33'; rr(c, x - S * 0.04, hy - S * 0.2, S * 0.28, S * 0.06, 3); c.fill(); }
+    else if (hat === 'sun') { c.fillStyle = '#f2d06b'; c.beginPath(); c.ellipse(x, hy - S * 0.06, S * 0.3, S * 0.09, 0, 0, 7); c.fill(); c.stroke(); circle(c, x, hy - S * 0.14, S * 0.13); }
+    else if (hat === 'mohawk') { c.fillStyle = '#d8413a'; for (var i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(x + i * S * 0.05, hy - S * 0.16); c.lineTo(x + i * S * 0.05 - S * 0.02, hy - S * 0.34); c.lineTo(x + i * S * 0.05 + S * 0.03, hy - S * 0.16); c.fill(); } }
+    else if (hat === 'tophat') { c.fillStyle = '#1c1c22'; c.fillRect(x - S * 0.22, hy - S * 0.12, S * 0.44, S * 0.04); rr(c, x - S * 0.14, hy - S * 0.4, S * 0.28, S * 0.3, 3); c.fill(); }
+    else if (hat === 'wizard') { c.fillStyle = '#6a3fb0'; c.beginPath(); c.moveTo(x - S * 0.18, hy - S * 0.08); c.lineTo(x + S * 0.18, hy - S * 0.08); c.lineTo(x + S * 0.02, hy - S * 0.5); c.closePath(); c.fill(); c.fillStyle = C.gold; circle(c, x + S * 0.06, hy - S * 0.26, S * 0.025); }
   };
 
   // ---- primitives -----------------------------------------------------
