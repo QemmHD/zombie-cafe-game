@@ -501,6 +501,36 @@ test('interaction tiles: a reserved tile is not handed to a second worker', () =
   assert.ok(a[0] !== b[0] || a[1] !== b[1], 'second worker gets a different interaction tile');
 });
 
+test('visual/logic split: chair seat point is offset from the tile centre (4.6D)', () => {
+  const w = boot();
+  const ch = w.chairs[0], ctr = w.tileCenter(ch.c, ch.r);
+  assert.ok(ch.x !== ctr.x || ch.y !== ctr.y, 'chair sits at a seat slot, not the tile centre');
+  assert.strictEqual(ch.facing, 'U', 'chair faces its table');
+  // the visual sit offset must NOT change the logic footprint
+  const tb = w.tables.find((t) => t.id === ch.table), ft = w.footprintTiles(tb), blocked = w._blockedTiles();
+  assert.ok(blocked[ft[0][0] + ',' + ft[0][1]], 'table blocks exactly its footprint tile, regardless of seat offset');
+  const sp = w.tableServePoint(tb), spt = w.tileOf(sp.x, sp.y), tbt = w.tileOf(tb.x, tb.y);
+  assert.ok(spt[0] !== tbt[0] || spt[1] !== tbt[1], 'serve point is a tile BESIDE the table');
+});
+
+test('seating: customer paths to the chair sit point, not the tile centre', () => {
+  const w = boot();
+  const c = { id: 'sc', x: 60, y: 600, tx: 60, ty: 600, fx: 60, fy: 600, path: [], state: 'queued', wait: 0, type: 'civilian', color: '#0f0', skin: '#eee', hair: '#000', face: 'U', step: 0 };
+  w.customers.push(c);
+  assert.ok(w._trySeat(c));
+  const ch = w.chairs.find((x) => x.reserved === 'sc');
+  assert.ok(ch, 'reserved a specific chair');
+  assert.strictEqual(c.fx, ch.x); assert.strictEqual(c.fy, ch.y);
+});
+
+test('queue forms a readable line — distinct, descending slots', () => {
+  const w = boot();
+  const a = w._queueSpot(0), b = w._queueSpot(1), d = w._queueSpot(2);
+  assert.ok(b.y > a.y && d.y > b.y, 'each queue slot is further down the aisle');
+  const ta = w.tileOf(a.x, a.y), td = w.tileOf(d.x, d.y);
+  assert.ok(ta[0] !== td[0] || ta[1] !== td[1], 'queue slots span distinct tiles');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

@@ -93,7 +93,20 @@
   // Each table is linked to one chair (the seat at its front edge). Chairs are
   // authoritative: a customer reserves then occupies a specific chair, never
   // just a table. Dirty/unreachable tables block their chairs.
-  World.prototype._mkChair = function (tb) { return { id: uid(), table: tb.id, c: Math.floor(tb.x / TILE), r: Math.floor(tb.y / TILE), x: tb.x, y: tb.y + 20, facing: 'U', by: null, reserved: null }; };
+  // A chair snaps to a SEAT SLOT on the south edge of its table: the customer
+  // sits at (sitX,sitY) facing the table, the plate appears on the tabletop, and
+  // workers serve/clean from the interaction tile beside it. sitPoint is offset
+  // from the tile centre so the chair reads as tucked at the table, not centred.
+  World.prototype._mkChair = function (tb) {
+    return { id: uid(), table: tb.id, side: 'S', facing: 'U',
+      c: Math.floor(tb.x / TILE), r: Math.floor(tb.y / TILE),
+      x: tb.x, y: tb.y + 22,                    // sit point (south seat)
+      plateX: tb.x, plateY: tb.y - 4,           // plate on the tabletop
+      by: null, reserved: null };
+  };
+  World.prototype.chairSitPoint = function (ch) { return { x: ch.x, y: ch.y }; };
+  World.prototype.tableServePoint = function (tb) { return this._freeTileNear(tb.x, tb.y, '_', tb.x, tb.y + 40); };
+  World.prototype.tableCleanPoint = function (tb) { return this._freeTileNear(tb.x, tb.y, '_', tb.x, tb.y + 40); };
   World.prototype._syncChairs = function () {
     this.chairs = this.chairs || []; var self = this, tids = {};
     this.tables.forEach(function (tb) { tids[tb.id] = tb; });
@@ -535,7 +548,9 @@
     this.customers.push(c);
     if (!this._trySeat(c)) routeTo(this, c, qpos.x, qpos.y);   // no seat: wait in line by the door
   };
-  World.prototype._queueSpot = function (n) { return { x: 80 + (n % 3) * 66, y: DOOR.y + 70 + Math.floor(n / 3) * 60 }; };
+  // Queue forms a readable single-file line down the aisle from the door, with a
+  // gentle stagger so bodies + thought bubbles don't overlap (visual offsets).
+  World.prototype._queueSpot = function (n) { return { x: 120 + (n % 2) * 34, y: DOOR.y + 64 + n * 60 }; };
 
   function moveTo(e, dt, spd) {
     spd = spd || SPEED;

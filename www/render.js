@@ -33,6 +33,12 @@
   };
   // deterministic value-noise rng (stable demo screenshots)
   function rnd(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  // ---- visual placement layer (separate from the LOGIC grid) ----------
+  // Furniture LOGIC sits on exact tiles; its VISUAL is nudged a few px (stable
+  // per object id) so the room reads as hand-arranged, not pasted on squares.
+  // This never affects pathfinding/footprints — only where the sprite is drawn.
+  function hashId(id) { var h = 0; id = '' + id; for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return h; }
+  function vof(id) { var h = hashId(id); return { x: (rnd(h) - 0.5) * 20, y: (rnd(h * 1.7 + 3) - 0.5) * 12 }; }
 
   function Renderer(canvas) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this.resize(); }
 
@@ -370,7 +376,7 @@
   // (_tableTop) drawn at greater depth so a seated diner is sandwiched behind it.
   function tableDims(S) { return { fw: S * 0.42, fh: S * 0.21, lh: S * 0.34 }; }
   Renderer.prototype._table = function (c, tb, sel, t) {
-    var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.14 : 0, y = p.y - lift, D = tableDims(S);
+    var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, y = p.y - lift, D = tableDims(S);
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
     c.fillStyle = 'rgba(0,0,0,.34)'; c.beginPath(); c.ellipse(p.x, y + D.fh * 0.55, D.fw * 1.05, D.fh * 0.8, 0, 0, 7); c.fill();
     isoChair(c, p.x - D.fw - S * 0.06, y - S * 0.04, S, 1);     // left chair
@@ -384,7 +390,7 @@
   };
   // the table top (overlay drawn after seated diners so it occludes their lap)
   Renderer.prototype._tableTop = function (c, tb, sel, t) {
-    var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.14 : 0, D = tableDims(S), ty = p.y - lift - D.lh, th = S * 0.07;
+    var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, D = tableDims(S), ty = p.y - lift - D.lh, th = S * 0.07;
     var dia = function (yy) { c.beginPath(); c.moveTo(p.x, yy - D.fh); c.lineTo(p.x + D.fw, yy); c.lineTo(p.x, yy + D.fh); c.lineTo(p.x - D.fw, yy); c.closePath(); };
     // thickness: two front side bands (left-front lighter, right-front darker)
     c.fillStyle = shade(C.woodD, 0.62); c.beginPath(); c.moveTo(p.x - D.fw, ty); c.lineTo(p.x, ty + D.fh); c.lineTo(p.x, ty + D.fh + th); c.lineTo(p.x - D.fw, ty + th); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
@@ -417,7 +423,7 @@
   };
 
   Renderer.prototype._decor = function (c, d, sel) {
-    var p = this.project(d.x, d.y), S = this.S, it = shop(d.deco) || {}, lift = sel ? S * 0.18 : 0, y = p.y - lift;
+    var vo = vof(d.id), p = this.project(d.x + vo.x, d.y + vo.y), S = this.S, it = shop(d.deco) || {}, lift = sel ? S * 0.18 : 0, y = p.y - lift;
     if (['counter', 'sink', 'fridge', 'trash', 'plant', 'jukebox', 'rest'].indexOf(it.art) < 0) this._shadow(c, p.x, p.y + S * 0.12, S * 0.34);   // box arts ground themselves
     c.lineWidth = S * 0.03; c.strokeStyle = C.out;
     switch (it.art) {
@@ -480,7 +486,7 @@
   };
 
   Renderer.prototype._stove = function (c, st, world, t, sel) {
-    var p = this.project(st.x, st.y), S = this.S, x = p.x, y = p.y;
+    var vo = vof(st.id), p = this.project(st.x + vo.x, st.y + vo.y), S = this.S, x = p.x, y = p.y;
     if (this._selZ && (st.ready || st.burned)) this._hl(c, x, y + S * 0.2, S * 1.05, t);
     if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
@@ -682,8 +688,10 @@
   };
 
   Renderer.prototype._customer = function (c, cu, world, t) {
-    var S = this.S, p = this.project(cu.x, cu.y);
+    var S = this.S;
     var seated = (cu.state === 'eating' || cu.state === 'paying' || cu.state === 'waiting');
+    var co = (seated && cu.table) ? vof(cu.table) : { x: 0, y: 0 };   // sit on the (visually offset) table
+    var p = this.project(cu.x + co.x, cu.y + co.y);
     var walk = (cu.state === 'toTable' || cu.state === 'leaving');
     var angry = (cu.state === 'waiting' && (world.t - cu.wait) > (world.custPatience ? world.custPatience(cu) : world.patience()) * 0.6) || (cu.state === 'queued' && cu.annoyed);
     if (this._selZ && cu.state === 'waiting' && !cu.assigned && this._foodReady) this._hl(c, p.x, p.y + S * 0.06, S * 0.8, t);

@@ -91,6 +91,24 @@ adjacent seat tile, not separately buyable in the shop yet); multi-tile footprin
 is supported + tested but no 2x2 object ships by default; interaction-tile
 reservation rides the unified claim system rather than a dedicated call.
 
+## Stage 4.6D — grid/art separation (hide the grid in normal view)
+- **Visual placement layer** separate from logic: furniture is drawn at a stable
+  per-id offset (`vof`) so the room looks hand-arranged, NOT pasted on squares —
+  pathfinding/footprints are untouched (logic stays grid-perfect).
+- **Seat slots**: chairs snap to a south seat slot with a sit point OFFSET from
+  the tile centre, facing the table, with plate/serve/clean points; seated
+  customers are drawn on the (offset) table so chair+table+diner read as one set.
+- **Queue line**: customers wait in a single-file, staggered line down the aisle
+  (distinct tiles, bubbles don't stack) instead of clumping at the door.
+- Normal view hides the grid; the debug overlay still proves it.
+- Tests: **41/41** (added: chair sit point ≠ tile centre + footprint unaffected,
+  customer paths to the sit point, queue line is distinct & descending).
+
+**Honest partials:** kitchen appliances still sit where they're built (no auto
+wall-snap yet); the full per-object anchor-type catalogue (counterFront/
+fridgeWallSide/etc.) is represented pragmatically (offset + seat slot), not as a
+named enum; multi-tile objects still don't visually span (none shipped).
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).
