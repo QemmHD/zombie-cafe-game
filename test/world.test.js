@@ -576,6 +576,19 @@ test('art-review demo states build without errors (4.7)', () => {
   });
 });
 
+test('object models carry render/occlusion metadata (4.9)', () => {
+  const w = boot();
+  ['table', 'chair', 'stove', 'counter', 'fridge'].forEach((k) => {
+    const m = w.objModel(k);
+    assert.ok(m, 'model exists for ' + k);
+    assert.ok(m.anchor && m.footprint && typeof m.height === 'number' && typeof m.occlusionHeight === 'number', 'metadata for ' + k);
+  });
+  assert.ok(w.objModel('fridge').occlusionHeight > w.objModel('table').occlusionHeight, 'tall fridge occludes more than a table');
+  const pf = w.objModel('pass').footprint;
+  assert.strictEqual(pf[0], 2); assert.strictEqual(pf[1], 1);
+  assert.strictEqual(w.objModel('fridge').canBeOccluded, false, 'fridge is too tall to be hidden by a character');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

@@ -631,6 +631,8 @@
     return 'FLOOR_BASE_CENTER';
   };
   World.prototype.isWallAnchor = function (a) { return ('' + a).indexOf('WALL_') === 0 || a === 'FRIDGE_WALL_EDGE' || a === 'SINK_WALL_EDGE' || a === 'STOVE_FRONT_EDGE' || a === 'COUNTER_FRONT_EDGE'; };
+  // toon-volume MODEL metadata (anchor/footprint/height/occlusion/renderLayer)
+  World.prototype.objModel = function (k) { return (window.OBJ_MODELS || {})[k] || null; };
 
   // ---- explicit per-tile claims (reserved vs occupied) ----------------
   // The grid is the source of truth: a tile is free only if it is in-bounds,

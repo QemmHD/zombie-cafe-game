@@ -147,6 +147,30 @@ counter is still 1x1 in build); object orientation is south-facing default
 directional) — not hand-illustrated like the reference; that's an art-asset
 ceiling for procedural canvas, not a projection bug.
 
+## Stage 4.9 — occlusion / depth-sort fix + toon-volume model layer
+DECISION: did NOT bolt on live Three.js/WebGL (highest-risk rewrite for this
+codebase). Per "pick the safest option", the chunky toon-volume objects ARE the
+3D-style model layer; the real fix was depth/occlusion + a model-metadata layer.
+
+- **Base-anchor depth sort**: render order now keys off each object's FEET/BASE
+  position computed from the VISUAL position (offset-synced) so overlap is
+  deterministic. The table is one merged unit; a SEATED diner is pushed just
+  behind their table (tabletop covers the lap, head shows) while a character
+  walking IN FRONT now correctly draws fully in front (the old bug where the
+  tabletop occluded passers-by is gone). Tall objects (fridge) occlude characters
+  behind them by base-Y. Proven in occ.png (zombie behind / diner seated / punk in front).
+- **Deferred icon layer**: thought bubbles, status icons and SERVE tags are drawn
+  AFTER the world so they're never covered by furniture.
+- **Object MODELS** (`data.js OBJ_MODELS` + `world.objModel`): anchor, grid
+  footprint, height, occlusionHeight, renderLayer, bounds, canOcclude/
+  canBeOccluded for table/chair/stove/counter/sink/pass/fridge.
+- Tests: **46/46** (model metadata incl. fridge occludes more than a table, pass
+  2x1 footprint, fridge not occludable by characters).
+
+**Honest scope note:** this is procedural toon-volume + correct occlusion, NOT a
+live 3D engine. If true WebGL models are required, that's a separate, larger
+spike (Three.js layer composited under the 2D characters/UI) — flagged, not done.
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

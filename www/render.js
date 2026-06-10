@@ -39,6 +39,7 @@
   // This never affects pathfinding/footprints — only where the sprite is drawn.
   function hashId(id) { var h = 0; id = '' + id; for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return h; }
   function vof(id) { var h = hashId(id); return { x: (rnd(h) - 0.5) * 20, y: (rnd(h * 1.7 + 3) - 0.5) * 12 }; }
+  function byTbId(world, id) { for (var i = 0; i < world.tables.length; i++) if (world.tables[i].id === id) return world.tables[i]; return null; }
 
   function Renderer(canvas) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this.resize(); }
 
@@ -84,25 +85,33 @@
     this._walls(c);             // grimy walls with thickness
     if (ui.edit) this._grid(c, world, ui);
 
-    // depth-sorted drawables (sorted by base/foot Y so things overlap right)
-    var self = this, items = [];
+    // ===== layered, base-anchor depth sort (Stage 4.9) =====
+    // Layer 0 = world objects + characters, painter-sorted by FEET/BASE y (using
+    // the VISUAL position so the offset never desyncs overlap). Layer 1 = icons/
+    // bubbles, deferred so they always sit above the world. Seated diners are
+    // pushed just BEHIND their table so the tabletop covers the lap, head shows.
+    var self = this, items = []; this._defer = [];
     this._custs = world.customers;
-    function add(x, y, fn) { items.push({ d: x + y, fn: fn }); }
-    function addD(d, fn) { items.push({ d: d, fn: fn }); }
-    add(Wld.PASS.x, Wld.PASS.y - 1, function () { self._pass(c, world); });
-    world.decors.forEach(function (d) { add(d.x, d.y, function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
+    var dvof = function (id) { var o = vof(id); return o.x + o.y; };
+    function add(d, fn) { items.push({ d: d, fn: fn }); }
+    add(Wld.PASS.x + Wld.PASS.y, function () { self._pass(c, world); });
+    world.decors.forEach(function (d) { add(d.x + d.y + dvof(d.id), function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
     world.tables.forEach(function (tb) {
-      var selT = ui.selected && ui.selected.id === tb.id, d0 = tb.x + tb.y;
-      addD(d0 - 6, function () { self._table(c, tb, selT, t); });             // legs + chairs
-      addD(d0 + (tb.by ? 30 : 4), function () { self._tableTop(c, tb, selT, t); }); // top (occludes diner)
+      var selT = ui.selected && ui.selected.id === tb.id;
+      add(tb.x + tb.y + dvof(tb.id), function () { self._table(c, tb, selT, t); self._tableTop(c, tb, selT, t); });
     });
-    world.stoves.forEach(function (st) { add(st.x, st.y, function () { self._stove(c, st, world, t, ui.selected && ui.selected.id === st.id); }); });
+    world.stoves.forEach(function (st) { add(st.x + st.y + dvof(st.id), function () { self._stove(c, st, world, t, ui.selected && ui.selected.id === st.id); }); });
     if (!ui.edit) {
-      world.customers.forEach(function (cu) { add(cu.x, cu.y, function () { self._customer(c, cu, world, t); }); });
-      world.zombies.forEach(function (z) { add(z.x, z.y, function () { self._zombie(c, z, t); }); });
+      world.customers.forEach(function (cu) {
+        var d = cu.x + cu.y, tb = (cu.table && (cu.state === 'waiting' || cu.state === 'eating' || cu.state === 'paying')) ? byTbId(world, cu.table) : null;
+        if (tb) d = tb.x + tb.y + dvof(tb.id) - 1;        // sit just behind our table
+        add(d, function () { self._customer(c, cu, world, t); });
+      });
+      world.zombies.forEach(function (z) { if (!z.stored) add(z.x + z.y, function () { self._zombie(c, z, t); }); });
     }
     items.sort(function (a, b) { return a.d - b.d; });
     items.forEach(function (it) { it.fn(); });
+    this._defer.forEach(function (fn) { fn(); });         // icons/bubbles always above the world
     if (ui.edit && ui.ghost && ui.ghost.cell >= 0) this._ghostCell(c, world, ui.ghost, t);
     if (ui.debugGrid) this._gridOverlay(c, world);
   };
@@ -683,9 +692,8 @@
     var hy = p.y - S * 0.79;
     if (z.rarity && z.rarity !== 'common') { c.fillStyle = z.rarity === 'elite' ? C.gold : '#7fd0ff'; c.strokeStyle = C.out; c.lineWidth = S * 0.015; circle(c, p.x + S * 0.13, p.y - S * 0.33, S * 0.035); c.beginPath(); c.arc(p.x + S * 0.13, p.y - S * 0.33, S * 0.035, 0, 7); c.stroke(); }
     if (z.energy < 65 && z.state !== 'resting') { var bw = S * 0.4; c.fillStyle = 'rgba(0,0,0,.6)'; rr(c, p.x - bw / 2, hy - S * 0.04, bw, S * 0.07, 3); c.fill(); var ef = Math.max(0, z.energy) / (z.maxEnergy || 100); c.fillStyle = z.energy > 45 ? C.toxic : z.energy > 22 ? C.gold : C.blood; rr(c, p.x - bw / 2, hy - S * 0.04, bw * ef, S * 0.07, 3); c.fill(); }
-    if (z.state === 'daydream') bubble(c, p.x, hy - S * 0.12, '💭', '#cfe', S);
-    else if (z.state === 'resting') bubble(c, p.x, hy - S * 0.12, '💤', '#cfe', S);
-    else if (z.state === 'cleaning' || z.state === 'toClean') bubble(c, p.x, hy - S * 0.12, '🧽', '#fff', S);
+    var byb = hy - S * 0.12, df = this._defer || [], em = z.state === 'daydream' ? '💭' : z.state === 'resting' ? '💤' : (z.state === 'cleaning' || z.state === 'toClean') ? '🧽' : null;
+    if (em) df.push(function () { bubble(c, p.x, byb, em, em === '🧽' ? '#fff' : '#cfe', S); });
   };
 
   Renderer.prototype._customer = function (c, cu, world, t) {
@@ -699,16 +707,15 @@
     var expr = (cu.state === 'paying' || cu.state === 'eating') ? 'happy' : angry ? 'angry' : 'neutral';
     var BUILD = { worker: 1.14, elder: 0.84, athlete: 1.0, punk: 1.04, oddball: 1.2, rich: 1.02, business: 1.04, tourist: 1.0, cook: 1.06, civilian: 0.96 };
     this._char(c, cu, t, { skin: cu.skin, skinD: shade(cu.skin, 0.74), clothes: cu.color, hunch: false, zombie: false, expr: expr, hair: cu.hair || '#2b2b2b', hat: cu.hat, walk: walk, build: BUILD[cu.type] || 1 });
-    // thought bubbles above the head
-    var by = p.y - S * 0.82;
+    // thought bubbles — deferred to the icon layer so the world never covers them
+    var by = p.y - S * 0.82, bx = p.x + S * 0.26, df = this._defer || [];
     if (cu.state === 'waiting') {
       var pat0 = world.custPatience ? world.custPatience(cu) : world.patience();
-      bubble(c, p.x + S * 0.26, by, cu.infectable ? '🧟' : (angry ? '😠' : '🍴'), cu.infectable ? C.toxic : '#fff', S);
       var pat = 1 - Math.min(1, (world.t - cu.wait) / pat0);
-      ring(c, p.x + S * 0.26, by + S * 0.22, S * 0.1, pat, pat > 0.4 ? C.toxic : pat > 0.18 ? C.gold : C.blood, S);
-    } else if (cu.state === 'queued') bubble(c, p.x + S * 0.26, by, cu.annoyed ? '😠' : '🪑', cu.annoyed ? C.blood : '#fff', S);
-    else if (cu.state === 'eating') bubble(c, p.x + S * 0.26, by, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S);
-    else if (cu.state === 'paying') bubble(c, p.x + S * 0.26, by, cu.tipped ? '💰' : '🪙', C.gold, S);
+      df.push(function () { bubble(c, bx, by, cu.infectable ? '🧟' : (angry ? '😠' : '🍴'), cu.infectable ? C.toxic : '#fff', S); ring(c, bx, by + S * 0.22, S * 0.1, pat, pat > 0.4 ? C.toxic : pat > 0.18 ? C.gold : C.blood, S); });
+    } else if (cu.state === 'queued') df.push(function () { bubble(c, bx, by, cu.annoyed ? '😠' : '🪑', cu.annoyed ? C.blood : '#fff', S); });
+    else if (cu.state === 'eating') df.push(function () { bubble(c, bx, by, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S); });
+    else if (cu.state === 'paying') df.push(function () { bubble(c, bx, by, cu.tipped ? '💰' : '🪙', C.gold, S); });
   };
 
   // little type-defining hats, drawn over the head at (x, hy)

@@ -153,3 +153,17 @@ window.OBJ_HEIGHT = {
   stove: 0.52, counter: 0.36, sink: 0.34, pass: 0.36, plant: 0.46,
   table: 0.36, chair: 0.26, trash: 0.34, rest: 0.18, plate: 0.06,
 };
+
+// Object "model" metadata (Stage 4.9). Each renderable furniture/appliance is a
+// chunky toon-volume MODEL with explicit anchor, grid footprint, visual height,
+// occlusionHeight (how much it hides characters behind it) and a render layer.
+// Logic stays tile-based; this drives correct depth/occlusion + build ghosts.
+window.OBJ_MODELS = {
+  table:   { anchor: 'TABLE_CENTER',       footprint: [1, 1], height: 0.36, occlusionHeight: 0.40, renderLayer: 1, bounds: [0.90, 0.70], canOcclude: true, canBeOccluded: true },
+  chair:   { anchor: 'CHAIR_SEAT_POINT',   footprint: [1, 1], height: 0.26, occlusionHeight: 0.30, renderLayer: 1, bounds: [0.40, 0.55], canOcclude: false, canBeOccluded: true },
+  stove:   { anchor: 'WALL_BACK_FLUSH',    footprint: [1, 1], height: 0.52, occlusionHeight: 0.62, renderLayer: 1, bounds: [0.90, 1.00], canOcclude: true, canBeOccluded: true },
+  counter: { anchor: 'COUNTER_FRONT_EDGE', footprint: [1, 1], height: 0.36, occlusionHeight: 0.45, renderLayer: 1, bounds: [0.90, 0.70], canOcclude: true, canBeOccluded: true },
+  pass:    { anchor: 'COUNTER_FRONT_EDGE', footprint: [2, 1], height: 0.36, occlusionHeight: 0.45, renderLayer: 1, bounds: [1.60, 0.80], canOcclude: true, canBeOccluded: true },
+  sink:    { anchor: 'SINK_WALL_EDGE',     footprint: [1, 1], height: 0.34, occlusionHeight: 0.45, renderLayer: 1, bounds: [0.90, 0.70], canOcclude: true, canBeOccluded: true },
+  fridge:  { anchor: 'FRIDGE_WALL_EDGE',   footprint: [1, 1], height: 0.92, occlusionHeight: 1.00, renderLayer: 2, bounds: [0.70, 1.15], canOcclude: true, canBeOccluded: false },
+};
