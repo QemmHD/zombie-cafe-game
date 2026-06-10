@@ -73,12 +73,18 @@
     this._floor(c);
     if (ui.edit) this._grid(c, world, ui);
 
-    // depth-sorted drawables
+    // depth-sorted drawables (sorted by base/foot Y so things overlap right)
     var self = this, items = [];
+    this._custs = world.customers;
     function add(x, y, fn) { items.push({ d: x + y, fn: fn }); }
+    function addD(d, fn) { items.push({ d: d, fn: fn }); }
     add(Wld.PASS.x, Wld.PASS.y - 1, function () { self._pass(c, world); });
     world.decors.forEach(function (d) { add(d.x, d.y, function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
-    world.tables.forEach(function (tb) { add(tb.x, tb.y, function () { self._table(c, tb, ui.selected && ui.selected.id === tb.id, t); }); });
+    world.tables.forEach(function (tb) {
+      var selT = ui.selected && ui.selected.id === tb.id, d0 = tb.x + tb.y;
+      addD(d0 - 6, function () { self._table(c, tb, selT, t); });             // legs + chairs
+      addD(d0 + (tb.by ? 30 : 4), function () { self._tableTop(c, tb, selT, t); }); // top (occludes diner)
+    });
     world.stoves.forEach(function (st) { add(st.x, st.y, function () { self._stove(c, st, world, t, ui.selected && ui.selected.id === st.id); }); });
     if (!ui.edit) {
       world.customers.forEach(function (cu) { add(cu.x, cu.y, function () { self._customer(c, cu, world, t); }); });
@@ -180,11 +186,14 @@
   Renderer.prototype._shadow = function (c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.26)'; c.beginPath(); c.ellipse(x, y, w, w * 0.45, 0, 0, 7); c.fill(); };
 
   Renderer.prototype._pass = function (c, world) {
-    var p = this.project(Wld.PASS.x, Wld.PASS.y), w = this.TW * 1.5, h = this.TH * 0.9, S = this.S;
-    this._shadow(c, p.x, p.y + h * 0.5, w * 0.5);
-    // steel counter (iso slab)
-    c.fillStyle = C.steelD; iso(c, p.x, p.y + 8, w, h); c.fill();
+    var p = this.project(Wld.PASS.x, Wld.PASS.y), w = this.TW * 1.5, h = this.TH * 0.9, S = this.S, ht = S * 0.34;
+    this._shadow(c, p.x, p.y + h * 0.5 + ht, w * 0.52);
+    // extruded front faces (left-front lighter, right-front darker) for height
+    c.fillStyle = shade(C.steelD, 0.82); c.beginPath(); c.moveTo(p.x - w / 2, p.y); c.lineTo(p.x, p.y + h / 2); c.lineTo(p.x, p.y + h / 2 + ht); c.lineTo(p.x - w / 2, p.y + ht); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
+    c.fillStyle = shade(C.steelD, 0.6); c.beginPath(); c.moveTo(p.x + w / 2, p.y); c.lineTo(p.x, p.y + h / 2); c.lineTo(p.x, p.y + h / 2 + ht); c.lineTo(p.x + w / 2, p.y + ht); c.closePath(); c.fill(); c.stroke();
+    // steel top slab
     c.fillStyle = C.steel; iso(c, p.x, p.y, w, h); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.12)'; iso(c, p.x - w * 0.12, p.y - h * 0.1, w * 0.5, h * 0.5); c.fill();
     // ready dishes stacked
     var n = world.ready.length, show = Math.min(n, 5);
     for (var i = 0; i < show; i++) {
@@ -197,6 +206,8 @@
     if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.textAlign = 'center'; c.fillText('PASS', p.x, p.y); }
   };
 
+  Renderer.prototype._custDish = function (cid) { for (var i = 0; i < this._custs.length; i++) if (this._custs[i].id === cid) return this._custs[i].dish; return null; };
+
   // pulsing valid-target marker shown while a zombie is selected
   Renderer.prototype._hl = function (c, x, y, w, t) {
     c.fillStyle = 'rgba(124,255,90,' + (0.16 + 0.1 * Math.sin(t * 5)) + ')';
@@ -204,33 +215,48 @@
     iso(c, x, y, w, w * 0.5); c.fill(); c.stroke();
   };
 
+  // A round bistro table built as a real volume: contact shadow, two chairs
+  // with seats/backs/legs, a pedestal column with a side face, then a thick
+  // cloth-draped top. The TOP is drawn as a separate overlay (_tableTop) at a
+  // greater depth so a seated diner is sandwiched — sitting BEHIND the edge.
   Renderer.prototype._table = function (c, tb, sel, t) {
-    var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.18 : 0; var y = p.y - lift;
+    var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.16 : 0, y = p.y - lift;
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
-    // chairs (back then front drawn around)
-    chair(c, p.x - S * 0.5, y - S * 0.12, S, 1);
-    chair(c, p.x + S * 0.5, y - S * 0.12, S, 1);
-    this._shadow(c, p.x, p.y + S * 0.18, S * 0.5);
-    chair(c, p.x, y + S * 0.34, S, 0);
-    // pedestal
-    c.fillStyle = C.woodD; rr(c, p.x - S * 0.06, y - S * 0.05, S * 0.12, S * 0.32, 3); c.fill();
-    // round top with cloth + checker
-    c.fillStyle = C.woodD; c.beginPath(); c.ellipse(p.x, y + 4, S * 0.42, S * 0.22, 0, 0, 7); c.fill();
-    c.fillStyle = C.cloth1; c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.fill();
-    c.save(); c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.clip();
-    c.fillStyle = 'rgba(255,255,255,.85)';
+    this._shadow(c, p.x, p.y + S * 0.2, S * 0.56);
+    isoChair(c, p.x - S * 0.46, y - S * 0.04, S, 1);     // back-left chair
+    isoChair(c, p.x + S * 0.46, y - S * 0.04, S, -1);    // back-right chair
+    // pedestal column (lit left / dark right) + foot
+    var topY = y - S * 0.16;
+    c.fillStyle = shade(C.wood, 0.55); rr(c, p.x - S * 0.02, topY, S * 0.1, S * 0.34, 3); c.fill();
+    c.fillStyle = C.wood; rr(c, p.x - S * 0.08, topY, S * 0.1, S * 0.34, 3); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
+    c.fillStyle = shade(C.woodD, 0.8); c.beginPath(); c.ellipse(p.x, y + S * 0.18, S * 0.16, S * 0.07, 0, 0, 7); c.fill();
+  };
+  // the table top (overlay drawn after seated diners so it occludes their lap)
+  Renderer.prototype._tableTop = function (c, tb, sel, t) {
+    var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.16 : 0, y = p.y - lift - S * 0.16;
+    // thick edge (side rim) under the cloth
+    c.fillStyle = shade(C.woodD, 0.7); c.beginPath(); c.ellipse(p.x, y + S * 0.06, S * 0.44, S * 0.23, 0, 0, 7); c.fill();
+    // cloth top with checker + a soft top highlight
+    c.fillStyle = C.cloth1; c.beginPath(); c.ellipse(p.x, y, S * 0.44, S * 0.23, 0, 0, 7); c.fill();
+    c.save(); c.beginPath(); c.ellipse(p.x, y, S * 0.44, S * 0.23, 0, 0, 7); c.clip();
+    c.fillStyle = 'rgba(255,255,255,.8)';
     for (var i = -3; i <= 3; i++) for (var j = -3; j <= 3; j++) if ((i + j) % 2 === 0) c.fillRect(p.x + i * S * 0.12, y + j * S * 0.07 - S * 0.03, S * 0.12, S * 0.07);
+    c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.ellipse(p.x - S * 0.12, y - S * 0.06, S * 0.24, S * 0.12, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(0,0,0,.16)'; c.beginPath(); c.ellipse(p.x + S * 0.16, y + S * 0.07, S * 0.24, S * 0.12, 0, 0, 7); c.fill();
     c.restore();
-    c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.stroke();
-    // a plate on top
-    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(p.x, y - 2, S * 0.12, S * 0.06, 0, 0, 7); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.ellipse(p.x, y, S * 0.44, S * 0.23, 0, 0, 7); c.stroke();
+    // a plate sitting on the top surface (with food while eating)
+    var occ = tb.by, eating = false; if (occ) { for (var k = 0; k < this._custs.length; k++) if (this._custs[k].id === occ) { eating = this._custs[k].state === 'eating'; } }
+    c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(p.x, y + S * 0.02, S * 0.13, S * 0.055, 0, 0, 7); c.fill();
+    c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(p.x, y - S * 0.01, S * 0.12, S * 0.06, 0, 0, 7); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
     if (tb.dirty) {
-      // grimy plate, scraps, green stain + buzzing flies
-      c.fillStyle = '#7a5a2a'; circle(c, p.x, y - 3, S * 0.05); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.05, y - 1, S * 0.025);
-      c.fillStyle = 'rgba(120,200,90,.22)'; c.beginPath(); c.ellipse(p.x, y, S * 0.2, S * 0.1, 0, 0, 7); c.fill();
-      c.fillStyle = C.out; for (var fi = 0; fi < 3; fi++) { var a = (t || 0) * 3 + fi * 2.1; circle(c, p.x + Math.cos(a) * S * 0.16, y - S * 0.12 + Math.sin(a * 1.4) * S * 0.07, S * 0.013); }
-      if (tb.cleaning) { c.fillStyle = '#bfe6ff'; c.font = (S * 0.18) + 'px system-ui'; c.textAlign = 'center'; c.fillText('✦', p.x - S * 0.12, y - S * 0.14); }
-    }
+      c.fillStyle = '#7a5a2a'; circle(c, p.x, y - S * 0.02, S * 0.05); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.05, y, S * 0.025);
+      c.fillStyle = 'rgba(120,200,90,.22)'; c.beginPath(); c.ellipse(p.x, y + S * 0.02, S * 0.2, S * 0.1, 0, 0, 7); c.fill();
+      c.fillStyle = C.out; for (var fi = 0; fi < 3; fi++) { var a = (t || 0) * 3 + fi * 2.1; circle(c, p.x + Math.cos(a) * S * 0.18, y - S * 0.14 + Math.sin(a * 1.4) * S * 0.08, S * 0.014); }
+      if (tb.cleaning) { c.fillStyle = '#bfe6ff'; c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('✦', p.x - S * 0.12, y - S * 0.16); }
+    } else if (eating) { c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; var rc = recipe(this._custDish(occ)); if (rc) c.fillText(rc.emoji, p.x, y - S * 0.05); }
     if (sel) selRing(c, p.x, y, S * 0.5);
   };
 
@@ -287,10 +313,12 @@
     this._shadow(c, x, y + S * 0.16, S * 0.4);
     if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
     if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
-    // body
-    c.fillStyle = sel ? '#566' : C.steelD; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.66, 8); c.fill();
-    c.fillStyle = C.steel; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.2, 8); c.fill();
-    c.strokeStyle = C.out; c.lineWidth = S * 0.035; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.66, 8); c.stroke();
+    // body: right side face (dark) for depth, then the lit front face + top
+    c.fillStyle = shade(C.steelD, 0.62); rr(c, x - S * 0.30, y - S * 0.5, S * 0.78, S * 0.66, 8); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
+    c.fillStyle = sel ? '#566' : C.steelD; rr(c, x - S * 0.42, y - S * 0.5, S * 0.78, S * 0.66, 8); c.fill();
+    c.fillStyle = C.steel; rr(c, x - S * 0.42, y - S * 0.52, S * 0.78, S * 0.18, 8); c.fill();        // top plane (lighter)
+    c.fillStyle = 'rgba(255,255,255,.1)'; rr(c, x - S * 0.4, y - S * 0.5, S * 0.3, S * 0.5, 6); c.fill();  // left highlight
+    c.strokeStyle = C.out; c.lineWidth = S * 0.035; rr(c, x - S * 0.42, y - S * 0.5, S * 0.78, S * 0.66, 8); c.stroke();
     // oven door + window
     c.fillStyle = '#23262a'; rr(c, x - S * 0.3, y - S * 0.26, S * 0.6, S * 0.36, 5); c.fill();
     c.fillStyle = '#3a3f45'; rr(c, x - S * 0.22, y - S * 0.2, S * 0.44, S * 0.24, 4); c.fill();
@@ -326,89 +354,161 @@
     if (sel) selRing(c, x, y - S * 0.15, S * 0.5);
   };
 
-  // ---- characters -----------------------------------------------------
+  // ---- characters: layered faux-3D sprites ----------------------------
+  // Light comes from the upper-LEFT, so every form is lit on the upper-left and
+  // shaded on the lower-right. Characters are built bottom-up as overlapping
+  // volume shapes (shadow → legs → back arm → torso → front arm → head → face
+  // → hat → carried plate) and angle toward their walking direction.
   function facing(e) { return e.face === 'L' ? -1 : e.face === 'R' ? 1 : 0; }
 
-  Renderer.prototype._zombie = function (c, z, t) {
-    var p = this.project(z.x, z.y), S = this.S, walk = (z.state !== 'idle');
-    var selMe = this._selZ === z.id;
-    var bob = Math.sin(z.step * 2) * (walk ? S * 0.04 : S * 0.012) + (selMe ? Math.abs(Math.sin(t * 6)) * S * 0.05 : 0);
-    var x = p.x, y = p.y - bob, lx = facing(z);
-    if (selMe) {
-      c.strokeStyle = C.toxic; c.lineWidth = S * 0.06;
-      c.beginPath(); c.ellipse(p.x, p.y + S * 0.05, S * 0.3 + Math.sin(t * 5) * S * 0.02, S * 0.15, 0, 0, 7); c.stroke();
+  // a shaded "sphere": base fill + dark lower-right + bright upper-left + outline
+  function volBall(c, x, y, r, base, dark, hi) {
+    c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip();
+    c.fillStyle = base; c.fillRect(x - r, y - r, 2 * r, 2 * r);
+    c.fillStyle = dark; circle(c, x + r * 0.5, y + r * 0.42, r * 1.02);
+    c.fillStyle = hi || 'rgba(255,255,255,.20)'; circle(c, x - r * 0.36, y - r * 0.4, r * 0.55);
+    c.restore();
+    c.strokeStyle = C.out; c.lineWidth = Math.max(1.4, r * 0.16); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+  }
+  // a shaded rounded box (torso, cushions, appliance faces)
+  function volRR(c, x, y, w, h, rad, base, dark) {
+    c.save(); rr(c, x, y, w, h, rad); c.clip();
+    c.fillStyle = base; c.fillRect(x, y, w, h);
+    c.fillStyle = dark; circle(c, x + w * 0.82, y + h * 0.78, Math.max(w, h) * 0.85);
+    c.fillStyle = 'rgba(255,255,255,.14)'; circle(c, x + w * 0.26, y + h * 0.22, w * 0.5);
+    c.restore();
+    rr(c, x, y, w, h, rad); c.strokeStyle = C.out; c.lineWidth = Math.max(1.4, w * 0.07); c.stroke();
+  }
+  // a tube limb with a shaded core (fakes a cylinder)
+  function limb(c, x1, y1, x2, y2, col, dark, w) {
+    c.lineCap = 'round'; c.strokeStyle = dark; c.lineWidth = w; line(c, x1, y1, x2, y2);
+    c.strokeStyle = col; c.lineWidth = w * 0.55; line(c, x1 - w * 0.12, y1 - w * 0.12, x2 - w * 0.12, y2 - w * 0.12);
+  }
+  function foot(c, x, y, S) { c.fillStyle = '#1d1f1a'; c.beginPath(); c.ellipse(x, y, S * 0.075, S * 0.04, 0, 0, 7); c.fill(); }
+
+  // Shared character renderer. cfg: { skin, skinD, clothes, hunch, zombie,
+  // expr, hair, hat, carry, carryEmoji, lift }
+  Renderer.prototype._char = function (c, e, t, cfg) {
+    var S = this.S, p = this.project(e.x, e.y);
+    var up = e.face === 'U', lx = facing(e), walk = cfg.walk;
+    var ph = e.step * 2;
+    var swing = walk ? Math.sin(ph) * S * 0.11 : 0;        // leg/arm swing
+    var bob = walk ? Math.abs(Math.sin(ph)) * S * 0.03 : 0;
+    var sway = walk ? Math.sin(ph) * S * 0.015 : 0;
+    var baseY = p.y, x = p.x + sway + (cfg.lift ? 0 : 0), y = baseY - bob;
+    var hunch = cfg.hunch ? S * 0.04 : 0, lean = lx * S * 0.02;
+    var hipY = y - S * 0.18, chestY = y - S * 0.40 - hunch, headY = y - S * 0.585 - hunch;
+    var skin = cfg.skin, skinD = cfg.skinD, clo = cfg.clothes, cloD = shade(clo, 0.66), cloH = shade(clo, 1.16);
+
+    // 1. contact shadow (offset toward lower-right, the unlit side)
+    c.fillStyle = 'rgba(0,0,0,.30)'; c.beginPath(); c.ellipse(x + S * 0.03, baseY + S * 0.05, S * 0.25, S * 0.11, 0, 0, 7); c.fill();
+
+    // 2. legs — back leg first (darker), front leg over the torso later
+    var lpx = x + lean;
+    foot(c, lpx + S * 0.085, baseY - swing * 0.4, S);
+    limb(c, lpx + S * 0.07, hipY, lpx + S * 0.085, baseY - swing * 0.4 - S * 0.02, shade(clo, 0.8), cloD, S * 0.12);
+
+    // 3. back arm (behind torso)
+    var armSwing = walk ? Math.sin(ph + Math.PI) * S * 0.06 : (cfg.hunch ? S * 0.03 : 0);
+    limb(c, x + lean + S * 0.12, chestY + S * 0.03, x + lean + S * 0.2, chestY + S * 0.2 + armSwing, skin, skinD, S * 0.085);
+
+    // 4. torso (with apron for zombies)
+    var tw = S * 0.34, th = S * 0.42, tx = x + lean - tw / 2, ty = chestY - th * 0.35;
+    volRR(c, tx, ty, tw, th, tw * 0.42, clo, cloD);
+    if (cfg.zombie) { c.fillStyle = 'rgba(245,242,230,.92)'; rr(c, tx + tw * 0.18, ty + th * 0.18, tw * 0.64, th * 0.7, tw * 0.18); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke(); }
+
+    // 5. front leg + front arm (or carried plate)
+    foot(c, lpx - S * 0.075, baseY + swing * 0.4, S);
+    limb(c, lpx - S * 0.06, hipY, lpx - S * 0.075, baseY + swing * 0.4 - S * 0.02, clo, cloD, S * 0.12);
+    if (cfg.carry) {
+      // both hands forward holding a plate at chest height
+      limb(c, x + lean - S * 0.12, chestY + S * 0.02, x + lean - S * 0.02, chestY + S * 0.08, skin, skinD, S * 0.085);
+      var plx = x + lean, ply = chestY + S * 0.05;
+      c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(plx, ply + S * 0.03, S * 0.17, S * 0.06, 0, 0, 7); c.fill();
+      c.fillStyle = '#f3f3ef'; c.beginPath(); c.ellipse(plx, ply, S * 0.16, S * 0.075, 0, 0, 7); c.fill();
+      c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.beginPath(); c.ellipse(plx, ply, S * 0.16, S * 0.075, 0, 0, 7); c.stroke();
+      if (cfg.carryEmoji) { c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(cfg.carryEmoji, plx, ply - S * 0.07); }
+    } else {
+      var fa = walk ? Math.sin(ph) * S * 0.06 : 0;
+      limb(c, x + lean - S * 0.12, chestY + S * 0.03, x + lean - S * 0.2, chestY + S * 0.2 + fa, skin, skinD, S * 0.085);
     }
-    this._shadow(c, p.x, p.y + S * 0.04, S * 0.26);
-    var sw = Math.sin(z.step * 2) * (walk ? S * 0.08 : 0);
-    // legs
-    stroke(c, C.zSkinD, S * 0.1); line(c, x - S * 0.07, y - S * 0.02, x - S * 0.07 + sw, y + S * 0.16); line(c, x + S * 0.07, y - S * 0.02, x + S * 0.07 - sw, y + S * 0.16);
-    // body (apron)
-    body(c, x, y - S * 0.18, S * 0.34, S * 0.4, C.zSkin);
-    c.fillStyle = C.apron; rr(c, x - S * 0.13, y - S * 0.28, S * 0.26, S * 0.34, 5); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
-    // arms (carry forward if holding a plate)
-    stroke(c, C.zSkin, S * 0.085);
-    if (z.carry || z.carryBatch) { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.24, y - S * 0.42); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.24, y - S * 0.42); }
-    else { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.22, y - S * 0.12); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.22, y - S * 0.12); }
-    // big head
-    var hy = y - S * 0.56;
-    c.fillStyle = C.zSkin; circle(c, x, hy, S * 0.22); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.arc(x, hy, S * 0.22, 0, 7); c.stroke();
-    c.fillStyle = C.zSkinD; c.beginPath(); c.arc(x, hy, S * 0.22, 0.3, Math.PI - 0.3); c.fill();      // jaw shade
-    // tired eyes
-    c.fillStyle = '#fff'; circle(c, x - S * 0.08 + lx * S * 0.02, hy - S * 0.02, S * 0.055); circle(c, x + S * 0.08 + lx * S * 0.02, hy - S * 0.02, S * 0.055);
-    c.fillStyle = C.out; circle(c, x - S * 0.08 + lx * S * 0.03, hy - S * 0.01, S * 0.025); circle(c, x + S * 0.08 + lx * S * 0.03, hy - S * 0.01, S * 0.025);
-    c.strokeStyle = C.out; c.lineWidth = S * 0.018; line(c, x - S * 0.13, hy - S * 0.08, x - S * 0.03, hy - S * 0.06); line(c, x + 0.03 * S, hy - S * 0.06, x + S * 0.13, hy - S * 0.08);
-    // teeth grin + drool
-    c.fillStyle = '#2a160f'; rr(c, x - S * 0.08, hy + S * 0.06, S * 0.16, S * 0.05, 2); c.fill();
-    c.fillStyle = '#fff'; for (var i = 0; i < 3; i++) c.fillRect(x - S * 0.07 + i * S * 0.05, hy + S * 0.06, S * 0.03, S * 0.05);
-    c.fillStyle = '#bfe6c0'; circle(c, x + S * 0.06, hy + S * 0.13, S * 0.018);
-    // chef hat
-    c.fillStyle = C.hat; rr(c, x - S * 0.14, hy - S * 0.3, S * 0.28, S * 0.12, 4); c.fill(); circle(c, x - S * 0.1, hy - S * 0.32, S * 0.07); circle(c, x, hy - S * 0.35, S * 0.08); circle(c, x + S * 0.1, hy - S * 0.32, S * 0.07); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.beginPath(); c.rect(x - S * 0.14, hy - S * 0.22, S * 0.28, S * 0.05); c.stroke();
-    // rarity gem on the apron
-    if (z.rarity && z.rarity !== 'common') { c.fillStyle = z.rarity === 'elite' ? C.gold : '#7fd0ff'; circle(c, x, y - S * 0.2, S * 0.035); }
-    // energy bar when tired-ish
-    if (z.energy < 65) { var bw = S * 0.42; c.fillStyle = 'rgba(0,0,0,.55)'; rr(c, x - bw / 2, hy - S * 0.42, bw, S * 0.07, 3); c.fill(); var ef = Math.max(0, z.energy) / 100; c.fillStyle = z.energy > 45 ? C.toxic : z.energy > 22 ? C.gold : C.blood; rr(c, x - bw / 2, hy - S * 0.42, bw * ef, S * 0.07, 3); c.fill(); }
-    // status / carry bubble
-    if (z.state === 'daydream') bubble(c, x, y - S * 0.95, '💭', '#cfe', S);
-    else if (z.state === 'resting') bubble(c, x, y - S * 0.95, '💤', '#cfe', S);
-    else if (z.state === 'cleaning' || z.state === 'toClean') bubble(c, x, y - S * 0.95, '🧽', '#fff', S);
-    else if (z.carry) bubble(c, x, y - S * 0.95, (recipe(z.carry) || {}).emoji || '🍽️', '#fff', S);
-    else if (z.carryBatch) bubble(c, x, y - S * 0.95, (recipe(z.carryBatch.id) || {}).emoji || '🍽️', '#fff', S);
+
+    // 6. neck + head (a shaded ball, hunched slightly forward)
+    var hx = x + lean + (cfg.hunch ? lx * S * 0.02 : 0), hr = S * 0.205;
+    c.fillStyle = skinD; rr(c, hx - S * 0.05, headY + hr * 0.7, S * 0.1, S * 0.12, 3); c.fill();
+    volBall(c, hx, headY, hr, skin, skinD);
+    if (cfg.zombie) { c.save(); c.beginPath(); c.arc(hx, headY, hr, 0, 7); c.clip(); c.fillStyle = shade(skin, 0.8); circle(c, hx + hr * 0.2, headY + hr * 0.55, hr * 0.7); c.restore(); }
+
+    // 7. hair / hat / face
+    if (up) {                                              // back of the head
+      c.fillStyle = cfg.hair || '#2b2b2b'; c.save(); c.beginPath(); c.arc(hx, headY, hr, 0, 7); c.clip(); circle(c, hx, headY - hr * 0.15, hr * 0.95); c.restore();
+    } else {
+      if (!cfg.zombie && cfg.hair) { c.fillStyle = cfg.hair; c.beginPath(); c.arc(hx, headY - hr * 0.08, hr * 0.98, Math.PI + 0.25, 2 * Math.PI - 0.25); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke(); }
+      this._face(c, hx, headY, hr, lx, cfg);
+    }
+    this._hat(c, cfg.hat, hx, headY + hr * 0.05, S);
+    return { hx: hx, headY: headY, hr: hr, baseY: baseY };
+  };
+
+  // face features on a rounded head, angled toward lx (the 3/4 view)
+  Renderer.prototype._face = function (c, hx, hy, hr, lx, cfg) {
+    var S = this.S, ex = lx * hr * 0.16, ey = hy + hr * 0.02;
+    // sunken sockets for zombies
+    if (cfg.zombie) { c.fillStyle = shade(cfg.skin, 0.72); circle(c, hx - hr * 0.34 + ex, ey - hr * 0.05, hr * 0.26); circle(c, hx + hr * 0.34 + ex, ey - hr * 0.05, hr * 0.26); }
+    // eye whites + pupils (pupils drift toward facing)
+    c.fillStyle = '#fff'; circle(c, hx - hr * 0.34 + ex, ey, hr * 0.2); circle(c, hx + hr * 0.34 + ex, ey, hr * 0.2);
+    c.fillStyle = C.out; circle(c, hx - hr * 0.34 + ex + lx * hr * 0.07, ey + hr * 0.02, hr * 0.1); circle(c, hx + hr * 0.34 + ex + lx * hr * 0.07, ey + hr * 0.02, hr * 0.1);
+    // nose pointing sideways
+    c.fillStyle = shade(cfg.skin, 0.84); c.beginPath(); c.moveTo(hx + ex + lx * hr * 0.05, ey + hr * 0.1); c.lineTo(hx + ex + lx * hr * 0.28, ey + hr * 0.22); c.lineTo(hx + ex + lx * hr * 0.05, ey + hr * 0.26); c.closePath(); c.fill();
+    // brows / expression
+    c.strokeStyle = C.out; c.lineWidth = hr * 0.07; c.lineCap = 'round';
+    var m = cfg.expr;
+    if (cfg.zombie) {
+      // jagged grin with teeth
+      c.fillStyle = '#241109'; rr(c, hx - hr * 0.4 + ex, hy + hr * 0.42, hr * 0.8, hr * 0.22, hr * 0.06); c.fill();
+      c.fillStyle = '#eae7d6'; for (var i = 0; i < 3; i++) c.fillRect(hx - hr * 0.32 + ex + i * hr * 0.26, hy + hr * 0.42, hr * 0.16, hr * 0.22);
+      c.fillStyle = '#bfe6c0'; circle(c, hx + hr * 0.28 + ex, hy + hr * 0.62, hr * 0.08);   // drool
+    } else if (m === 'happy') { c.beginPath(); c.arc(hx + ex, hy + hr * 0.5, hr * 0.3, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke(); }
+    else if (m === 'angry') { c.beginPath(); c.moveTo(hx - hr * 0.3 + ex, hy + hr * 0.66); c.lineTo(hx + hr * 0.3 + ex, hy + hr * 0.66); c.stroke(); c.lineWidth = hr * 0.09; c.beginPath(); c.moveTo(hx - hr * 0.5 + ex, ey - hr * 0.3); c.lineTo(hx - hr * 0.18 + ex, ey - hr * 0.16); c.moveTo(hx + hr * 0.18 + ex, ey - hr * 0.16); c.lineTo(hx + hr * 0.5 + ex, ey - hr * 0.3); c.stroke(); }
+    else { c.beginPath(); c.moveTo(hx - hr * 0.18 + ex, hy + hr * 0.55); c.lineTo(hx + hr * 0.18 + ex, hy + hr * 0.55); c.stroke(); }
+  };
+
+  Renderer.prototype._zombie = function (c, z, t) {
+    var S = this.S, p = this.project(z.x, z.y), selMe = this._selZ === z.id;
+    if (selMe) { c.strokeStyle = C.toxic; c.lineWidth = S * 0.05; c.setLineDash([S * 0.12, S * 0.08]); c.beginPath(); c.ellipse(p.x + S * 0.02, p.y + S * 0.05, S * 0.27, S * 0.13, 0, 0, 7); c.stroke(); c.setLineDash([]); }
+    var expr = z.energy < 22 ? 'tired' : 'grin';
+    var carry = z.carry || z.carryBatch;
+    this._char(c, z, t, {
+      skin: C.zSkin, skinD: C.zSkinD, clothes: '#6b5640', hunch: true, zombie: true, expr: expr,
+      hat: 'chef', walk: (z.state !== 'idle' && z.state !== 'resting' && z.state !== 'daydream'),
+      carry: !!carry, carryEmoji: (recipe(z.carry || (z.carryBatch || {}).id) || {}).emoji || '🍽️',
+    });
+    var hy = p.y - S * 0.79;
+    if (z.rarity && z.rarity !== 'common') { c.fillStyle = z.rarity === 'elite' ? C.gold : '#7fd0ff'; c.strokeStyle = C.out; c.lineWidth = S * 0.015; circle(c, p.x + S * 0.13, p.y - S * 0.33, S * 0.035); c.beginPath(); c.arc(p.x + S * 0.13, p.y - S * 0.33, S * 0.035, 0, 7); c.stroke(); }
+    if (z.energy < 65 && z.state !== 'resting') { var bw = S * 0.4; c.fillStyle = 'rgba(0,0,0,.6)'; rr(c, p.x - bw / 2, hy - S * 0.04, bw, S * 0.07, 3); c.fill(); var ef = Math.max(0, z.energy) / (z.maxEnergy || 100); c.fillStyle = z.energy > 45 ? C.toxic : z.energy > 22 ? C.gold : C.blood; rr(c, p.x - bw / 2, hy - S * 0.04, bw * ef, S * 0.07, 3); c.fill(); }
+    if (z.state === 'daydream') bubble(c, p.x, hy - S * 0.12, '💭', '#cfe', S);
+    else if (z.state === 'resting') bubble(c, p.x, hy - S * 0.12, '💤', '#cfe', S);
+    else if (z.state === 'cleaning' || z.state === 'toClean') bubble(c, p.x, hy - S * 0.12, '🧽', '#fff', S);
   };
 
   Renderer.prototype._customer = function (c, cu, world, t) {
-    var p = this.project(cu.x, cu.y), S = this.S, sitting = (cu.state === 'eating' || cu.state === 'paying' || cu.state === 'waiting');
+    var S = this.S, p = this.project(cu.x, cu.y);
+    var seated = (cu.state === 'eating' || cu.state === 'paying' || cu.state === 'waiting');
     var walk = (cu.state === 'toTable' || cu.state === 'leaving');
-    var bob = Math.sin(cu.step * 2) * (walk ? S * 0.04 : 0);
-    var x = p.x, y = p.y - bob - (sitting ? S * 0.04 : 0), lx = facing(cu);
+    var angry = (cu.state === 'waiting' && (world.t - cu.wait) > (world.custPatience ? world.custPatience(cu) : world.patience()) * 0.6) || (cu.state === 'queued' && cu.annoyed);
     if (this._selZ && cu.state === 'waiting' && !cu.assigned && this._foodReady) this._hl(c, p.x, p.y + S * 0.06, S * 0.8, t);
-    this._shadow(c, p.x, p.y + S * 0.04, S * 0.24);
-    var sw = Math.sin(cu.step * 2) * (walk ? S * 0.08 : 0);
-    stroke(c, '#33363a', S * 0.09); line(c, x - S * 0.06, y - S * 0.02, x - S * 0.06 + sw, y + S * 0.15); line(c, x + S * 0.06, y - S * 0.02, x + S * 0.06 - sw, y + S * 0.15);
-    body(c, x, y - S * 0.18, S * 0.3, S * 0.36, cu.color);
-    stroke(c, cu.color, S * 0.08); line(c, x - S * 0.14, y - S * 0.28, x - S * 0.2, y - S * 0.12); line(c, x + S * 0.14, y - S * 0.28, x + S * 0.2, y - S * 0.12);
-    var hy = y - S * 0.52;
-    c.fillStyle = cu.skin; circle(c, x, hy, S * 0.2); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.arc(x, hy, S * 0.2, 0, 7); c.stroke();
-    // hair
-    c.fillStyle = cu.hair || '#2b2b2b'; c.beginPath(); c.arc(x, hy - S * 0.04, S * 0.2, Math.PI + 0.3, 2 * Math.PI - 0.3); c.fill();
-    this._hat(c, cu.hat, x, hy, S);
-    // eyes + expression
-    c.fillStyle = '#fff'; circle(c, x - S * 0.07 + lx * S * 0.02, hy, S * 0.05); circle(c, x + S * 0.07 + lx * S * 0.02, hy, S * 0.05);
-    c.fillStyle = C.out; circle(c, x - S * 0.07 + lx * S * 0.03, hy + S * 0.005, S * 0.022); circle(c, x + S * 0.07 + lx * S * 0.03, hy + S * 0.005, S * 0.022);
-    var angry = cu.state === 'waiting' && (world.t - cu.wait) > world.patience() * 0.6;
-    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.beginPath();
-    if (cu.state === 'paying' || cu.state === 'eating') { c.arc(x, hy + S * 0.06, S * 0.06, 0.15 * Math.PI, 0.85 * Math.PI); }      // smile
-    else if (angry) { c.moveTo(x - S * 0.06, hy + S * 0.1); c.lineTo(x + S * 0.06, hy + S * 0.1); c.moveTo(x - S * 0.11, hy - S * 0.06); c.lineTo(x - S * 0.03, hy - S * 0.03); c.moveTo(x + S * 0.03, hy - S * 0.03); c.lineTo(x + S * 0.11, hy - S * 0.06); }
-    else { c.moveTo(x - S * 0.04, hy + S * 0.08); c.lineTo(x + S * 0.04, hy + S * 0.08); }
-    c.stroke();
-    // thought bubble
+    var expr = (cu.state === 'paying' || cu.state === 'eating') ? 'happy' : angry ? 'angry' : 'neutral';
+    this._char(c, cu, t, { skin: cu.skin, skinD: shade(cu.skin, 0.74), clothes: cu.color, hunch: false, zombie: false, expr: expr, hair: cu.hair || '#2b2b2b', hat: cu.hat, walk: walk });
+    // thought bubbles above the head
+    var by = p.y - S * 0.82;
     if (cu.state === 'waiting') {
       var pat0 = world.custPatience ? world.custPatience(cu) : world.patience();
-      bubble(c, x + S * 0.28, y - S * 0.78, cu.infectable ? '🧟' : (angry ? '😠' : '🍴'), cu.infectable ? C.toxic : '#fff', S);
+      bubble(c, p.x + S * 0.26, by, cu.infectable ? '🧟' : (angry ? '😠' : '🍴'), cu.infectable ? C.toxic : '#fff', S);
       var pat = 1 - Math.min(1, (world.t - cu.wait) / pat0);
-      ring(c, x + S * 0.28, y - S * 0.55, S * 0.1, pat, pat > 0.4 ? C.toxic : pat > 0.18 ? C.gold : C.blood, S);
-    } else if (cu.state === 'queued') bubble(c, x + S * 0.28, y - S * 0.78, cu.annoyed ? '😠' : '🪑', cu.annoyed ? C.blood : '#fff', S);
-    else if (cu.state === 'eating') bubble(c, x + S * 0.28, y - S * 0.78, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S);
-    else if (cu.state === 'paying') bubble(c, x + S * 0.28, y - S * 0.78, cu.tipped ? '💰' : '🪙', C.gold, S);
+      ring(c, p.x + S * 0.26, by + S * 0.22, S * 0.1, pat, pat > 0.4 ? C.toxic : pat > 0.18 ? C.gold : C.blood, S);
+    } else if (cu.state === 'queued') bubble(c, p.x + S * 0.26, by, cu.annoyed ? '😠' : '🪑', cu.annoyed ? C.blood : '#fff', S);
+    else if (cu.state === 'eating') bubble(c, p.x + S * 0.26, by, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S);
+    else if (cu.state === 'paying') bubble(c, p.x + S * 0.26, by, cu.tipped ? '💰' : '🪙', C.gold, S);
   };
 
   // little type-defining hats, drawn over the head at (x, hy)
@@ -438,9 +538,30 @@
       circle(c, xx, yy, S * (0.07 + ph * 0.12));
     }
   }
+  // darken (<1) or lighten (>1) a #hex / rgb colour for side-shading
+  function shade(col, f) {
+    var r, g, b;
+    if (col[0] === '#') { var h = col.slice(1); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; r = parseInt(h.slice(0, 2), 16); g = parseInt(h.slice(2, 4), 16); b = parseInt(h.slice(4, 6), 16); }
+    else { var m = col.match(/\d+/g) || [120, 120, 120]; r = +m[0]; g = +m[1]; b = +m[2]; }
+    var cl = function (v) { return Math.max(0, Math.min(255, Math.round(v))); };
+    return 'rgb(' + cl(r * f) + ',' + cl(g * f) + ',' + cl(b * f) + ')';
+  }
   function stroke(c, col, w) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; }
   function body(c, x, y, w, h, col) { c.fillStyle = col; rr(c, x - w / 2, y - h / 2, w, h, w * 0.4); c.fill(); c.strokeStyle = C.out; c.lineWidth = w * 0.09; c.stroke(); }
   function chair(c, x, y, S, back) { c.fillStyle = C.woodD; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.fill(); if (back) { c.fillStyle = C.wood; rr(c, x - S * 0.13, y - S * 0.32, S * 0.26, S * 0.12, 4); c.fill(); } c.strokeStyle = C.out; c.lineWidth = S * 0.02; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.stroke(); }
+  // a small dimensional stool/chair: legs, a seat with a side face, a backrest
+  function isoChair(c, x, y, S, dir) {
+    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.lineCap = 'round';
+    c.strokeStyle = shade(C.woodD, 0.6); c.lineWidth = S * 0.035;
+    line(c, x - S * 0.1, y + S * 0.02, x - S * 0.11, y + S * 0.16); line(c, x + S * 0.1, y + S * 0.02, x + S * 0.11, y + S * 0.16);
+    // backrest behind the seat
+    c.fillStyle = shade(C.wood, 0.8); rr(c, x + dir * S * 0.03 - S * 0.045, y - S * 0.22, S * 0.09, S * 0.24, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
+    // seat: side rim then top
+    c.fillStyle = shade(C.wood, 0.62); c.beginPath(); c.ellipse(x, y + S * 0.04, S * 0.15, S * 0.075, 0, 0, 7); c.fill();
+    c.fillStyle = C.wood; c.beginPath(); c.ellipse(x, y, S * 0.15, S * 0.08, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.ellipse(x - S * 0.04, y - S * 0.02, S * 0.08, S * 0.04, 0, 0, 7); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.beginPath(); c.ellipse(x, y, S * 0.15, S * 0.08, 0, 0, 7); c.stroke();
+  }
   function selRing(c, x, y, r) { c.strokeStyle = C.toxic; c.lineWidth = 3; c.setLineDash([7, 5]); c.beginPath(); c.arc(x, y, r + 6, 0, 7); c.stroke(); c.setLineDash([]); }
   function ring(c, x, y, r, frac, col, S) { c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = S * 0.04; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); c.strokeStyle = col; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI); c.stroke(); }
   function bubble(c, x, y, txt, col, S) {
