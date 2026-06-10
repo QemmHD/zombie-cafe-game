@@ -144,3 +144,12 @@ window.ANCHOR_BY_ART = {
   jukebox: 'WALL_MOUNTED_BACK', plant: 'FLOOR_BASE_CENTER', lamp: 'FLOOR_BASE_CENTER',
   rug: 'FLOOR_BASE_CENTER', trash: 'FLOOR_BASE_CENTER', fountain: 'FLOOR_BASE_CENTER', rest: 'FLOOR_BASE_CENTER',
 };
+
+// Relative visual HEIGHT per object (Stage 4.7 scale hierarchy). Used to keep a
+// believable scale: fridge taller than characters, characters taller than
+// tables, counters/stoves waist/chest height, chairs lowest.
+window.OBJ_HEIGHT = {
+  fridge: 0.92, door: 0.86, lamp: 0.70, character: 0.78, jukebox: 0.74,
+  stove: 0.52, counter: 0.36, sink: 0.34, pass: 0.36, plant: 0.46,
+  table: 0.36, chair: 0.26, trash: 0.34, rest: 0.18, plate: 0.06,
+};

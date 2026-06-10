@@ -129,6 +129,24 @@ the nearest wall yet; only the pass ships as a default multi-tile object (shop
 counter is still 1x1 in build); object orientation is south-facing default
 (no per-object rotation UI).
 
+## Stage 4.7 — unified iso projection + art consistency
+- **Round bistro tables**: rebuilt the tabletop as a perspective ELLIPSE (red
+  cloth + rim thickness + pedestal + base disc + plate on the plane) — reads as a
+  real circular table, not a flat checker square. Kills the "checker sticker" look.
+- **Directional chairs**: seat toward the table, BACKREST on the outside, legs +
+  shadow — a table + its two chairs now read as one dining SET.
+- Appliances (stove/pass/sink/fridge/counter/trash/jukebox/rest) all use the
+  shared isoBox; tables use the iso ellipse; characters are billboards — one camera.
+- **Scale metadata** (`OBJ_HEIGHT`): fridge > characters > counters/tables > chairs.
+- **Art-review demo states**: emptyRoom / kitchenZone / tableSet / allObjects /
+  charactersDirections (captured by `npm run shoot`) to inspect projection,
+  scale, direction, shadows and table/chair sets in isolation.
+- Tests: **45/45** (scale hierarchy; art-review states build without errors).
+
+**Honest partial:** characters are still PROCEDURAL 2.5D sprites (shaded, eared,
+directional) — not hand-illustrated like the reference; that's an art-asset
+ceiling for procedural canvas, not a projection bug.
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

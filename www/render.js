@@ -375,51 +375,51 @@
   // A square diner table built as a real volume: contact shadow, two chairs, and
   // FOUR legs in perspective. The thick cloth TOP is a separate overlay
   // (_tableTop) drawn at greater depth so a seated diner is sandwiched behind it.
-  function tableDims(S) { return { fw: S * 0.42, fh: S * 0.21, lh: S * 0.34 }; }
+  function tableDims(S) { return { rx: S * 0.44, ry: S * 0.21, lh: S * 0.36 }; }
   Renderer.prototype._table = function (c, tb, sel, t) {
     var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, y = p.y - lift, D = tableDims(S);
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
-    c.fillStyle = 'rgba(0,0,0,.34)'; c.beginPath(); c.ellipse(p.x, y + D.fh * 0.55, D.fw * 1.05, D.fh * 0.8, 0, 0, 7); c.fill();
-    isoChair(c, p.x - D.fw - S * 0.06, y - S * 0.04, S, 1);     // left chair
-    isoChair(c, p.x + D.fw + S * 0.06, y - S * 0.04, S, -1);    // right chair
-    // four legs at the iso footprint corners (back corner leg is hidden by top)
-    var corners = [[p.x, y - D.fh], [p.x + D.fw, y], [p.x, y + D.fh], [p.x - D.fw, y]];
-    corners.forEach(function (L) {
-      c.strokeStyle = shade(C.woodD, 0.62); c.lineWidth = S * 0.06; c.lineCap = 'round'; line(c, L[0], L[1], L[0], L[1] - D.lh);
-      c.strokeStyle = C.wood; c.lineWidth = S * 0.028; line(c, L[0] - S * 0.012, L[1], L[0] - S * 0.012, L[1] - D.lh);
-    });
+    c.fillStyle = 'rgba(0,0,0,.34)'; c.beginPath(); c.ellipse(p.x, y + S * 0.05, D.rx, D.ry * 0.85, 0, 0, 7); c.fill();   // contact shadow
+    isoChair(c, p.x - D.rx * 1.02, y + S * 0.03, S, 1);     // chairs tucked at the front sides
+    isoChair(c, p.x + D.rx * 1.02, y + S * 0.03, S, -1);
+    // round pedestal base + column (lit left / dark right)
+    c.fillStyle = shade(C.woodD, 0.7); c.beginPath(); c.ellipse(p.x, y + S * 0.02, S * 0.17, S * 0.075, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
+    c.fillStyle = shade(C.wood, 0.55); rr(c, p.x - S * 0.005, y - D.lh, S * 0.1, D.lh + S * 0.04, 3); c.fill();
+    c.fillStyle = C.wood; rr(c, p.x - S * 0.075, y - D.lh, S * 0.1, D.lh + S * 0.04, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
   };
   // the table top (overlay drawn after seated diners so it occludes their lap)
   Renderer.prototype._tableTop = function (c, tb, sel, t) {
-    var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, D = tableDims(S), ty = p.y - lift - D.lh, th = S * 0.07;
-    var dia = function (yy) { c.beginPath(); c.moveTo(p.x, yy - D.fh); c.lineTo(p.x + D.fw, yy); c.lineTo(p.x, yy + D.fh); c.lineTo(p.x - D.fw, yy); c.closePath(); };
-    // thickness: two front side bands (left-front lighter, right-front darker)
-    c.fillStyle = shade(C.woodD, 0.62); c.beginPath(); c.moveTo(p.x - D.fw, ty); c.lineTo(p.x, ty + D.fh); c.lineTo(p.x, ty + D.fh + th); c.lineTo(p.x - D.fw, ty + th); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
-    c.fillStyle = shade(C.woodD, 0.48); c.beginPath(); c.moveTo(p.x + D.fw, ty); c.lineTo(p.x, ty + D.fh); c.lineTo(p.x, ty + D.fh + th); c.lineTo(p.x + D.fw, ty + th); c.closePath(); c.fill(); c.stroke();
-    // checkered cloth top (iso diamond)
-    c.fillStyle = C.cloth1; dia(ty); c.fill();
-    c.save(); dia(ty); c.clip();
-    var bx = [D.fw / 3, D.fh / 3], by = [-D.fw / 3, D.fh / 3];           // iso cell axes
-    c.fillStyle = 'rgba(255,255,255,.82)';
-    for (var u = -2; u <= 2; u++) for (var v = -2; v <= 2; v++) if (((u + v) & 1) === 0) {
-      var ccx = p.x + u * bx[0] + v * by[0], ccy = ty + u * bx[1] + v * by[1];
-      c.beginPath(); c.moveTo(ccx, ccy - D.fh / 3); c.lineTo(ccx + D.fw / 3, ccy); c.lineTo(ccx, ccy + D.fh / 3); c.lineTo(ccx - D.fw / 3, ccy); c.closePath(); c.fill();
+    var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, D = tableDims(S), ty = p.y - lift - D.lh, th = S * 0.085;
+    var ell = function (yy, rx, ry) { c.beginPath(); c.ellipse(p.x, yy, rx, ry, 0, 0, 7); };
+    // edge thickness: a darker ellipse offset down shows a rim along the front
+    c.fillStyle = shade(C.woodD, 0.55); ell(ty + th, D.rx, D.ry); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.028; c.stroke();
+    // red cloth top (a circle seen in perspective)
+    c.fillStyle = C.cloth1; ell(ty, D.rx, D.ry); c.fill();
+    c.save(); ell(ty, D.rx, D.ry); c.clip();
+    // faded checker cloth pattern (subtle, follows the iso plane)
+    var ax = D.rx / 3.2, ay = D.ry / 3.2;
+    c.fillStyle = 'rgba(255,255,255,.5)';
+    for (var u = -3; u <= 3; u++) for (var v = -3; v <= 3; v++) if (((u + v) & 1) === 0) {
+      var cx = p.x + (u - v) * ax, cy = ty + (u + v) * ay;
+      c.beginPath(); c.moveTo(cx, cy - ay); c.lineTo(cx + ax, cy); c.lineTo(cx, cy + ay); c.lineTo(cx - ax, cy); c.closePath(); c.fill();
     }
-    c.fillStyle = 'rgba(255,255,255,.16)'; c.beginPath(); c.ellipse(p.x - D.fw * 0.25, ty - D.fh * 0.25, D.fw * 0.5, D.fh * 0.5, 0, 0, 7); c.fill();
-    c.fillStyle = 'rgba(0,0,0,.16)'; c.beginPath(); c.ellipse(p.x + D.fw * 0.3, ty + D.fh * 0.3, D.fw * 0.5, D.fh * 0.5, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.18)'; ell(ty - D.ry * 0.3, D.rx * 0.7, D.ry * 0.6); c.fill();      // top-left sheen
+    c.fillStyle = 'rgba(0,0,0,.15)'; ell(ty + D.ry * 0.35, D.rx * 0.8, D.ry * 0.55); c.fill();           // lower shade
     c.restore();
-    c.strokeStyle = C.out; c.lineWidth = S * 0.03; dia(ty); c.stroke();
-    // plate on the surface (+ food while eating, grime while dirty)
+    c.strokeStyle = C.out; c.lineWidth = S * 0.032; ell(ty, D.rx, D.ry); c.stroke();
+    // plate on the surface (follows the top plane)
     var occ = tb.by, eating = false; if (occ) { for (var k = 0; k < this._custs.length; k++) if (this._custs[k].id === occ) eating = this._custs[k].state === 'eating'; }
-    c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(p.x, ty + S * 0.03, S * 0.13, S * 0.055, 0, 0, 7); c.fill();
-    c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(p.x, ty, S * 0.12, S * 0.06, 0, 0, 7); c.fill();
-    c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
+    var py = ty - S * 0.02;
+    c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(p.x, py + S * 0.04, S * 0.13, S * 0.055, 0, 0, 7); c.fill();
+    c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(p.x, py, S * 0.12, S * 0.06, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(p.x - S * 0.03, py - S * 0.015, S * 0.05, S * 0.025, 0, 0, 7); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.beginPath(); c.ellipse(p.x, py, S * 0.12, S * 0.06, 0, 0, 7); c.stroke();
     if (tb.dirty) {
-      c.fillStyle = '#7a5a2a'; circle(c, p.x, ty - S * 0.01, S * 0.05); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.05, ty + S * 0.01, S * 0.025);
-      c.fillStyle = 'rgba(120,200,90,.22)'; c.beginPath(); c.ellipse(p.x, ty + S * 0.02, S * 0.2, S * 0.1, 0, 0, 7); c.fill();
-      c.fillStyle = C.out; for (var fi = 0; fi < 3; fi++) { var a = (t || 0) * 3 + fi * 2.1; circle(c, p.x + Math.cos(a) * S * 0.18, ty - S * 0.14 + Math.sin(a * 1.4) * S * 0.08, S * 0.014); }
-      if (tb.cleaning) { c.fillStyle = '#bfe6ff'; c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('✦', p.x - S * 0.12, ty - S * 0.16); }
-    } else if (eating) { c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; var rc = recipe(this._custDish(occ)); if (rc) c.fillText(rc.emoji, p.x, ty - S * 0.05); }
+      c.fillStyle = '#7a5a2a'; circle(c, p.x, py, S * 0.05); c.fillStyle = '#9bbf4a'; circle(c, p.x + S * 0.05, py + S * 0.01, S * 0.025);
+      c.fillStyle = 'rgba(120,200,90,.22)'; c.beginPath(); c.ellipse(p.x, py + S * 0.02, S * 0.2, S * 0.1, 0, 0, 7); c.fill();
+      c.fillStyle = C.out; for (var fi = 0; fi < 3; fi++) { var a = (t || 0) * 3 + fi * 2.1; circle(c, p.x + Math.cos(a) * S * 0.18, py - S * 0.14 + Math.sin(a * 1.4) * S * 0.08, S * 0.014); }
+      if (tb.cleaning) { c.fillStyle = '#bfe6ff'; c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('✦', p.x - S * 0.12, py - S * 0.16); }
+    } else if (eating) { c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; var rc = recipe(this._custDish(occ)); if (rc) c.fillText(rc.emoji, p.x, py - S * 0.04); }
     if (sel) selRing(c, p.x, ty, S * 0.5);
   };
 
@@ -799,16 +799,21 @@
   function body(c, x, y, w, h, col) { c.fillStyle = col; rr(c, x - w / 2, y - h / 2, w, h, w * 0.4); c.fill(); c.strokeStyle = C.out; c.lineWidth = w * 0.09; c.stroke(); }
   function chair(c, x, y, S, back) { c.fillStyle = C.woodD; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.fill(); if (back) { c.fillStyle = C.wood; rr(c, x - S * 0.13, y - S * 0.32, S * 0.26, S * 0.12, 4); c.fill(); } c.strokeStyle = C.out; c.lineWidth = S * 0.02; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.stroke(); }
   // a small dimensional stool/chair: legs, a seat with a side face, a backrest
+  // a directional iso chair: seat faces the table, BACKREST on the outside
+  // (dir = +1 left of table -> back on the left; dir = -1 right -> back on right)
   function isoChair(c, x, y, S, dir) {
-    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.lineCap = 'round';
-    c.strokeStyle = shade(C.woodD, 0.6); c.lineWidth = S * 0.035;
-    line(c, x - S * 0.1, y + S * 0.02, x - S * 0.11, y + S * 0.16); line(c, x + S * 0.1, y + S * 0.02, x + S * 0.11, y + S * 0.16);
-    // backrest behind the seat
-    c.fillStyle = shade(C.wood, 0.8); rr(c, x + dir * S * 0.03 - S * 0.045, y - S * 0.22, S * 0.09, S * 0.24, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
-    // seat: side rim then top
-    c.fillStyle = shade(C.wood, 0.62); c.beginPath(); c.ellipse(x, y + S * 0.04, S * 0.15, S * 0.075, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(x, y + S * 0.16, S * 0.15, S * 0.06, 0, 0, 7); c.fill();   // shadow
+    c.strokeStyle = shade(C.woodD, 0.55); c.lineWidth = S * 0.04; c.lineCap = 'round';                                  // legs
+    line(c, x - S * 0.11, y + S * 0.04, x - S * 0.12, y + S * 0.18); line(c, x + S * 0.11, y + S * 0.04, x + S * 0.12, y + S * 0.18);
+    line(c, x, y + S * 0.06, x, y + S * 0.2);
+    // backrest on the OUTSIDE edge (away from the table), with vertical slats
+    var bx = x - dir * S * 0.12;
+    c.fillStyle = shade(C.wood, 0.7); rr(c, bx - S * 0.05, y - S * 0.26, S * 0.1, S * 0.3, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
+    c.strokeStyle = shade(C.woodD, 0.7); c.lineWidth = S * 0.016; line(c, bx, y - S * 0.24, bx, y + S * 0.02);
+    // seat: rim then top (slightly toward the table)
+    c.fillStyle = shade(C.wood, 0.6); c.beginPath(); c.ellipse(x, y + S * 0.05, S * 0.15, S * 0.075, 0, 0, 7); c.fill();
     c.fillStyle = C.wood; c.beginPath(); c.ellipse(x, y, S * 0.15, S * 0.08, 0, 0, 7); c.fill();
-    c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.ellipse(x - S * 0.04, y - S * 0.02, S * 0.08, S * 0.04, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.ellipse(x - S * 0.04, y - S * 0.02, S * 0.08, S * 0.04, 0, 0, 7); c.fill();
     c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.beginPath(); c.ellipse(x, y, S * 0.15, S * 0.08, 0, 0, 7); c.stroke();
   }
   function selRing(c, x, y, r) { c.strokeStyle = C.toxic; c.lineWidth = 3; c.setLineDash([7, 5]); c.beginPath(); c.arc(x, y, r + 6, 0, 7); c.stroke(); c.setLineDash([]); }

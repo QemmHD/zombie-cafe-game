@@ -554,6 +554,28 @@ test('the pass is a real 2x1 counter and blocks both its tiles (4.6E)', () => {
   assert.ok(!blocked[t[0] + ',' + t[1]], 'pass interaction tile is walkable (in front)');
 });
 
+test('scale hierarchy: fridge > character > counter/table > chair (4.7)', () => {
+  const sandbox = { window: {} };
+  require('node:vm').runInNewContext(read('data.js'), sandbox);
+  const H = sandbox.window.OBJ_HEIGHT;
+  assert.ok(H.fridge > H.character, 'fridge taller than characters');
+  assert.ok(H.character > H.table, 'characters taller than tables');
+  assert.ok(H.table >= H.chair, 'tables not shorter than chairs');
+  assert.ok(H.counter < H.character, 'counters are waist/chest height');
+  assert.ok(H.door > H.character, 'door taller than characters');
+});
+
+test('art-review demo states build without errors (4.7)', () => {
+  const vm = require('node:vm');
+  const sandbox = { window: {}, Math, Date, console };
+  vm.createContext(sandbox);
+  ['data.js', 'world.js', 'demostates.js'].forEach((f) => vm.runInContext(read(f), sandbox));
+  ['artReview_emptyRoom', 'artReview_kitchenZone', 'artReview_tableSet', 'artReview_allObjects', 'artReview_charactersDirections'].forEach((s) => {
+    const w = sandbox.window.createWorld();
+    assert.doesNotThrow(() => sandbox.window.applyDemo(w, s), s + ' builds');
+  });
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

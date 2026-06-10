@@ -110,6 +110,38 @@
       var z = w.zombies[0]; z.state = 'idle'; z.face = 'R';
       return { selZ: z.id };
     },
+
+    // ---- art-review states (inspect projection/scale/direction) --------
+    artReview_emptyRoom: function (w) { w.zombies[0].stored = true; return {}; },
+    artReview_kitchenZone: function (w) {
+      w.coins = 9999; w.buy('counter'); w.buy('sink'); w.buy('fridge');
+      var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._p; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._p = 1; } };
+      put('counter', 330, 80); put('sink', 540, 80); put('fridge', 680, 80);
+      w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 20;
+      w.zombies[0].stored = true; return {};
+    },
+    artReview_tableSet: function (w) {
+      w.tables.slice(1).forEach(function (tb) { tb.x = -999; });            // hide extras
+      var tb = w.tables[0]; tb.x = 420; tb.y = 560; w._syncChairs();
+      seat(w, tb, 'eating', 3, 'U'); w.zombies[0].stored = true; return {};
+    },
+    artReview_allObjects: function (w) {
+      w.coins = 99999; ['counter', 'sink', 'fridge', 'plant', 'lamp', 'trash', 'jukebox', 'rest'].forEach(function (id) { w.buy(id); });
+      var xs = [130, 320, 510, 700], i = 0;
+      w.decors.forEach(function (d) { var x = xs[i % 4], y = [330, 600][Math.floor(i / 4)] || 330; d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); i++; });
+      w.zombies[0].stored = true; return {};
+    },
+    artReview_charactersDirections: function (w) {
+      w.tables.forEach(function (tb) { tb.x = -999; }); w.zombies[0].stored = true;
+      var faces = ['U', 'D', 'L', 'R'], TY = window.CUSTOMER_TYPES || [];
+      faces.forEach(function (f, i) {
+        var zx = 220 + i * 130, zy = 360;
+        var z = w._mkZombie(i + 5); z.x = zx; z.y = zy; z.fx = zx; z.fy = zy; z.face = f; z.state = 'toPass'; z.step = i; z.stored = false; w.zombies.push(z);
+        var cx = 220 + i * 130, cy = 640, ty = TY[i + 1] || TY[0] || {};
+        w.customers.push({ id: 'd' + i, x: cx, y: cy, tx: cx, ty: cy, fx: cx, fy: cy, path: [], state: 'queued', wait: w.t, type: ty.id, color: ty.shirt || '#6fa8dc', skin: '#e0ac69', hair: '#3a2a1a', hat: ty.hat, face: f, step: i });
+      });
+      return {};
+    },
   };
 
   window.DEMO_LIST = Object.keys(DEMOS);
