@@ -67,7 +67,9 @@
   })();
   var TABLE_SLOTS = CELLS;
   var PASS = { x: 420, y: 168 };
-  var DOOR = { x: 420, y: 930 };
+  // Entrance: a doorway in the LEFT wall (plane x≈0), down toward the dining
+  // area (kitchen runs along the top). Customers spawn/leave just inside it.
+  var DOOR = { x: 60, y: 600 };
   function home(i) { return { x: 110 + (i % 5) * 150, y: 210 + Math.floor(i / 5) * 64 }; }
 
   // =====================================================================
@@ -496,7 +498,7 @@
     this.customers.push(c);
     if (!this._trySeat(c)) routeTo(this, c, qpos.x, qpos.y);   // no seat: wait in line by the door
   };
-  World.prototype._queueSpot = function (n) { return { x: DOOR.x - 120 + (n % 4) * 80, y: DOOR.y + 6 - Math.floor(n / 4) * 60 }; };
+  World.prototype._queueSpot = function (n) { return { x: 80 + (n % 3) * 66, y: DOOR.y + 70 + Math.floor(n / 3) * 60 }; };
 
   function moveTo(e, dt, spd) {
     spd = spd || SPEED;

@@ -97,7 +97,6 @@
     }
     items.sort(function (a, b) { return a.d - b.d; });
     items.forEach(function (it) { it.fn(); });
-    this._door(c);
   };
 
   // ---- environment ----------------------------------------------------
@@ -164,7 +163,8 @@
     c.fillStyle = C.wallL;
     c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(D.x, D.y); c.lineTo(D.x, D.y - wall); c.lineTo(A.x, A.y - wall); c.closePath(); c.fill();
     this._wallGrime(c, A, D, wall, 97);
-    this._wallBoards(c, A, D, wall, 0.62);
+    this._wallBoards(c, A, D, wall, 0.28);
+    this._doorway(c);                                   // entrance cut into the left wall
     // ambient occlusion in the inner corner
     var g = c.createLinearGradient(A.x, A.y - wall, A.x, A.y); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.28)');
     c.fillStyle = g; c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.lineTo(B.x, B.y - wall); c.lineTo(A.x, A.y - wall); c.lineTo(D.x, D.y - wall); c.lineTo(D.x, D.y); c.closePath(); c.fill();
@@ -216,7 +216,7 @@
   Renderer.prototype._floor = function (c) {
     var self = this, W = Wld.W, H = Wld.H, T = Wld.TILE, S = this.S;
     // cutaway edge: a dark slab dropping below the two open front edges
-    var drop = S * 0.34, fl = this.project(0, H), fr = this.project(W, H), fb = this.project(W, H);
+    var drop = S * 0.22, fl = this.project(0, H), fr = this.project(W, H), fb = this.project(W, H);
     var lEdge = this.project(0, H), bot = this.project(W, H), rEdge = this.project(W, H);
     var pL = this.project(0, H), pB = this.project(W, H);
     // front-left face (edge from (0,H) to (W,H)) and front-right (W,0)->(W,H)
@@ -258,16 +258,39 @@
       c.beginPath(); c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill(); c.stroke();
     }
   };
-  Renderer.prototype._door = function (c) {
-    var p = this.project(Wld.DOOR.x, Wld.DOOR.y), w = this.TW * 0.6, h = this.TW * 0.7;
-    c.fillStyle = C.woodD; rr(c, p.x - w / 2, p.y - h, w, h, 6); c.fill();
-    c.fillStyle = C.wood; rr(c, p.x - w / 2 + 5, p.y - h + 5, w - 10, h - 5, 4); c.fill();
-    c.fillStyle = C.gold; circle(c, p.x + w / 2 - 12, p.y - h / 2, 3);
-    c.fillStyle = '#caa46a'; c.font = 'bold ' + (this.TW * 0.14) + 'px system-ui'; c.textAlign = 'center'; c.fillText('OPEN', p.x, p.y - h - 6);
+  // The entrance is an OPENING cut into the LEFT wall (with daylight + a mat),
+  // not a slab on the floor. Drawn as part of _walls so sprites pass in front.
+  Renderer.prototype._doorway = function (c) {
+    var S = this.S, wall = this.wall;
+    var A = this.project(0, 0), D = this.project(0, Wld.H), f = Wld.DOOR.y / Wld.H;
+    var Pb = { x: A.x + (D.x - A.x) * f, y: A.y + (D.y - A.y) * f };
+    var ux = D.x - A.x, uy = D.y - A.y, ul = Math.hypot(ux, uy); ux /= ul; uy /= ul;
+    // floor mat just inside the door
+    var dp = this.project(Wld.DOOR.x + 30, Wld.DOOR.y);
+    c.fillStyle = '#5a3a2a'; iso(c, dp.x, dp.y, S * 0.7, S * 0.36); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,.08)'; iso(c, dp.x, dp.y, S * 0.5, S * 0.26); c.fill();
+    // doorway opening
+    var hw = S * 0.34, dh = wall * 0.84;
+    var b1 = { x: Pb.x - ux * hw, y: Pb.y - uy * hw }, b2 = { x: Pb.x + ux * hw, y: Pb.y + uy * hw };
+    var t1 = { x: b1.x, y: b1.y - dh }, t2 = { x: b2.x, y: b2.y - dh };
+    var g = c.createLinearGradient(0, t1.y, 0, Math.max(b1.y, b2.y)); g.addColorStop(0, '#88937d'); g.addColorStop(0.55, '#9aa39a'); g.addColorStop(1, '#6a6048');
+    c.fillStyle = g; c.beginPath(); c.moveTo(b1.x, b1.y); c.lineTo(b2.x, b2.y); c.lineTo(t2.x, t2.y); c.lineTo(t1.x, t1.y); c.closePath(); c.fill();
+    // open door leaf swung against the inner wall
+    c.fillStyle = C.woodD; c.beginPath(); c.moveTo(b2.x, b2.y); c.lineTo(b2.x + ux * S * 0.28, b2.y + uy * S * 0.28); c.lineTo(t2.x + ux * S * 0.28, t2.y + uy * S * 0.28); c.lineTo(t2.x, t2.y); c.closePath(); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
+    // frame
+    c.strokeStyle = C.woodD; c.lineWidth = S * 0.08; c.beginPath(); c.moveTo(b1.x, b1.y); c.lineTo(t1.x, t1.y); c.lineTo(t2.x, t2.y); c.lineTo(b2.x, b2.y); c.stroke();
+    c.strokeStyle = C.wood; c.lineWidth = S * 0.03; c.stroke();
+    // OPEN sign across the top of the frame
+    var cx = (t1.x + t2.x) / 2, cy = (t1.y + t2.y) / 2 - S * 0.04;
+    c.fillStyle = C.blood; rr(c, cx - S * 0.16, cy - S * 0.02, S * 0.32, S * 0.15, 3); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
+    c.fillStyle = '#fff'; c.font = 'bold ' + (S * 0.1) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('OPEN', cx, cy + S * 0.06);
   };
 
   // ---- furniture ------------------------------------------------------
-  Renderer.prototype._shadow = function (c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.26)'; c.beginPath(); c.ellipse(x, y, w, w * 0.45, 0, 0, 7); c.fill(); };
+  Renderer.prototype._shadow = function (c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.36)'; c.beginPath(); c.ellipse(x, y, w, w * 0.42, 0, 0, 7); c.fill(); };
 
   Renderer.prototype._pass = function (c, world) {
     var p = this.project(Wld.PASS.x, Wld.PASS.y), w = this.TW * 1.5, h = this.TH * 0.9, S = this.S, ht = S * 0.34;
@@ -306,15 +329,17 @@
   Renderer.prototype._table = function (c, tb, sel, t) {
     var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.16 : 0, y = p.y - lift;
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
-    this._shadow(c, p.x, p.y + S * 0.2, S * 0.56);
+    this._shadow(c, p.x, p.y + S * 0.16, S * 0.6);
     isoChair(c, p.x - S * 0.46, y - S * 0.04, S, 1);     // back-left chair
     isoChair(c, p.x + S * 0.46, y - S * 0.04, S, -1);    // back-right chair
-    // pedestal column (lit left / dark right) + foot
-    var topY = y - S * 0.16;
-    c.fillStyle = shade(C.wood, 0.55); rr(c, p.x - S * 0.02, topY, S * 0.1, S * 0.34, 3); c.fill();
-    c.fillStyle = C.wood; rr(c, p.x - S * 0.08, topY, S * 0.1, S * 0.34, 3); c.fill();
+    // splayed wooden base feet so the table is clearly planted
+    c.strokeStyle = shade(C.woodD, 0.7); c.lineWidth = S * 0.05; c.lineCap = 'round';
+    line(c, p.x, y - S * 0.02, p.x - S * 0.16, y + S * 0.16); line(c, p.x, y - S * 0.02, p.x + S * 0.16, y + S * 0.16); line(c, p.x, y - S * 0.02, p.x, y + S * 0.2);
+    // pedestal column (lit left / dark right)
+    var topY = y - S * 0.18;
+    c.fillStyle = shade(C.wood, 0.55); rr(c, p.x - S * 0.02, topY, S * 0.12, S * 0.4, 3); c.fill();
+    c.fillStyle = C.wood; rr(c, p.x - S * 0.1, topY, S * 0.12, S * 0.4, 3); c.fill();
     c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
-    c.fillStyle = shade(C.woodD, 0.8); c.beginPath(); c.ellipse(p.x, y + S * 0.18, S * 0.16, S * 0.07, 0, 0, 7); c.fill();
   };
   // the table top (overlay drawn after seated diners so it occludes their lap)
   Renderer.prototype._tableTop = function (c, tb, sel, t) {
@@ -492,8 +517,8 @@
     var hipY = y - S * 0.18, chestY = y - S * 0.40 - hunch, headY = y - S * 0.585 - hunch;
     var skin = cfg.skin, skinD = cfg.skinD, clo = cfg.clothes, cloD = shade(clo, 0.66), cloH = shade(clo, 1.16);
 
-    // 1. contact shadow (offset toward lower-right, the unlit side)
-    c.fillStyle = 'rgba(0,0,0,.30)'; c.beginPath(); c.ellipse(x + S * 0.03, baseY + S * 0.05, S * 0.25, S * 0.11, 0, 0, 7); c.fill();
+    // 1. contact shadow — anchored at the FEET so they read as planted
+    c.fillStyle = 'rgba(0,0,0,.40)'; c.beginPath(); c.ellipse(p.x + S * 0.02, baseY + S * 0.07, S * 0.28, S * 0.1, 0, 0, 7); c.fill();
 
     // 2. legs — back leg first (darker), front leg over the torso later
     var lpx = x + lean;
