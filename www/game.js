@@ -205,7 +205,7 @@
   function onTapEdit(w) {
     if (selected) {
       if (selected.kind === 'stove') { var slot = world.stoveSlotAt(w.x, w.y); if (slot >= 0 && world.moveStove(selected.id, slot)) { selected = null; buildBar(); return; } }
-      else { var cell = world.cellAt(w.x, w.y); if (cell >= 0) { var ok = selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell); if (ok) { selected = null; buildBar(); return; } } }
+      else { var cell = world.cellAt(w.x, w.y); if (cell >= 0) { var ok = selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell); if (ok) { selected = null; buildBar(); checkLayout(); return; } } }
       var p = world.pickFurnitureAt(w.x, w.y); selected = p || null; buildBar(); return;
     }
     selected = world.pickFurnitureAt(w.x, w.y); buildBar();
@@ -228,9 +228,10 @@
     b.innerHTML = (world.auto ? '🤖' : '👆') + '<span>Auto ' + (world.auto ? 'ON' : 'OFF') + '</span>';
     b.classList.toggle('off', !world.auto);
   }
+  function checkLayout() { var p = world.layoutWarnings(); if (p.length) toast('⚠ ' + p[0]); }
   function setEdit(on) {
     editMode = on; selected = null; deselect();
-    if (!on && world.repathAll) world.repathAll();   // furniture moved: re-route walkers
+    if (!on && world.repathAll) { world.repathAll(); checkLayout(); }   // furniture moved: re-route + warn
     var b = el('buildbar');
     if (on) { if (!b) { b = document.createElement('div'); b.id = 'buildbar'; b.className = 'buildbar'; document.body.appendChild(b); } buildBar(); }
     else if (b) b.remove();

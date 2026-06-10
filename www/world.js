@@ -578,6 +578,17 @@
     if (e.path && e.path.length) { var n = e.path.shift(); e.tx = n.x; e.ty = n.y; return false; }
     return true;
   }
+  // Build validation (Phase 12): flag tables a customer can no longer walk to,
+  // or a door whose front is walled off. Returns human-readable problems.
+  World.prototype.layoutWarnings = function () {
+    var out = [], i;
+    for (i = 0; i < this.tables.length; i++) if (!this.reachableTable(this.tables[i])) out.push('A table is blocked off — customers can\'t reach it.');
+    // door reachable to at least one table?
+    var blocked = this._blockedTiles(), dc = Math.floor(DOOR.x / TILE), dr = Math.floor(DOOR.y / TILE);
+    if (blocked[dc + ',' + dr]) out.push('The entrance is blocked!');
+    // de-dupe
+    return out.filter(function (m, k) { return out.indexOf(m) === k; });
+  };
   // after the layout changes (build mode), re-route everyone mid-walk
   World.prototype.repathAll = function () {
     var self = this;

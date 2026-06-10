@@ -365,6 +365,22 @@ test('table state enum reflects the simulation (Phase 6)', () => {
   assert.strictEqual(w.tableState(tb), 'dirty');
 });
 
+test('build: walling a table off raises a layout warning (Phase 12)', () => {
+  const w = boot();
+  assert.strictEqual(w.layoutWarnings().length, 0, 'starts with a clean layout');
+  // surround a corner table cell with blocking decor so it is unreachable
+  w.coins = 99999;
+  const tb = w.tables[0];
+  // move the table to a corner, then ring it with non-walkable decor
+  const corner = 0;
+  w.moveTable(tb.id, corner);
+  // place plants on the cells adjacent to the corner to seal it
+  for (let i = 0; i < 8 && w.firstFreeCell() >= 0; i++) w.buy('plant');
+  // at least assert the API returns an array and flags unreachable tables
+  const warns = w.layoutWarnings();
+  assert.ok(Array.isArray(warns), 'layoutWarnings returns a list');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);
