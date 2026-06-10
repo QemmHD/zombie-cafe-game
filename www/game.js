@@ -488,6 +488,7 @@
       onTap(e.clientX, e.clientY);
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) save(true); });
+    window.__setWorld = function (nw) { world = nw; selZ = null; selected = null; editMode = false; deselect(); renderHUD(); };   // debug loader hook
     updateAutoBtn();
     if (!existing) setTimeout(openHelp, 450);
     requestAnimationFrame(frame);

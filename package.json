@@ -4,7 +4,8 @@
   "description": "Zombie Cafe - run a restaurant staffed by the undead",
   "scripts": {
     "build": "echo 'static'",
-    "test": "node --test test/world.test.js"
+    "test": "node --test test/world.test.js",
+    "shoot": "node tools/shoot.js"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",

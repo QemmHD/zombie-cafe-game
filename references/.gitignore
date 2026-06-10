@@ -1,0 +1,6 @@
+# Reference screenshots are copyrighted (Beeline 'Zombie Cafe') and kept local
+# only — never committed. The written analysis in /docs captures what we need.
+*.jpeg
+*.jpg
+*.png
+*.webp
