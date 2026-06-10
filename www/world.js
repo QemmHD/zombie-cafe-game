@@ -21,17 +21,24 @@
   var SPEED = 150;          // plane-units / second walking speed
   var EAT_TIME = 5;
   var AUTO_PAY = 12;        // auto-collect a paying customer after this long
-  var POOL_CAP = 40;
-  var STOVE_AUTOPLATE = 30;     // idle safety net: auto-serve a finished stove
+  var COUNTER_CAP = 40;     // servings the pass can hold (Phase 4)
   var MAX_STOVES = 6, MAX_TABLES = 16;
   var INFECT_CHANCE = 0.16, INFECT_COST = 2;
+  // food burn pipeline (Phase 4): once ready, food must be moved before it burns
+  var BURN_GRACE = 22;      // seconds ready before a burn warning
+  var BURN_HARD = 14;       // extra seconds of warning before it burns
   // zombie stamina + cleaning
   var DRAIN = 2.0, REGEN_IDLE = 3.0, REGEN_REST = 9.0;   // energy per second
   var TIRED = 14, RESTED = 55;                            // sleep below TIRED, wake at RESTED
+  var DAYDREAM_E = 22, SCARE_E = 9;                       // low-energy hazard thresholds (Phase 7)
   var CLEAN_TIME = 3.5;                                   // base seconds to clear a table
+  // rating / reputation (Phase 11): internal 0..100 score shown as 1..5 stars
+  var REP_START = 55;
   var ZNAMES = ['Mort', 'Gnash', 'Rosa', 'Brundle', 'Patch', 'Drool', 'Stitch', 'Cleaver', 'Mossy', 'Gore', 'Hazel', 'Bones', 'Pickle', 'Snot', 'Grim', 'Maggot', 'Vee', 'Crud'];
   function rollRarity(boost) { var r = Math.random() - (boost || 0); return r < 0.05 ? 'elite' : r < 0.3 ? 'rare' : 'common'; }
-  function statsFor(rar) { return rar === 'elite' ? { speed: 1.35, serve: 1.4, clean: 1.4 } : rar === 'rare' ? { speed: 1.15, serve: 1.2, clean: 1.2 } : { speed: 1, serve: 1, clean: 1 }; }
+  // patience = how low energy can get before this zombie risks acting out;
+  // higher patience tolerates more (elites are pricklier — a risk/reward).
+  function statsFor(rar) { return rar === 'elite' ? { speed: 1.35, serve: 1.4, clean: 1.4, patience: 0.5 } : rar === 'rare' ? { speed: 1.15, serve: 1.2, clean: 1.2, patience: 0.75 } : { speed: 1, serve: 1, clean: 1, patience: 1 }; }
 
   var RECIPES = {}, RIVAL = {};
   (function () {
@@ -68,6 +75,7 @@
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
     this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true;
+    this.rep = REP_START; this.fridge = []; this.queue = [];   // reputation + raid-loot fridge + waiting-outside line
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
     this.decors = [];
     this.tables = [ this._mkTable(0), this._mkTable(5), this._mkTable(2) ];
@@ -90,7 +98,7 @@
   };
   World.prototype._mkZombie = function (i, rar) { var h = home(i); rar = rar || rollRarity(); var s = statsFor(rar);
     return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, fx: h.x, fy: h.y, path: [], carry: null, carryBatch: null, job: null, cleanId: null, stoveId: null, face: 'L', step: Math.random() * 6,
-      name: pick(ZNAMES), rarity: rar, role: 'auto', energy: 100, speed: s.speed, serve: s.serve, clean: s.clean }; };
+      name: pick(ZNAMES), rarity: rar, role: 'auto', energy: 100, speed: s.speed, serve: s.serve, clean: s.clean, patience: s.patience, dazeUntil: 0 }; };
 
   // ---- save / load ----------------------------------------------------
   World.prototype.snapshot = function () {
@@ -98,18 +106,29 @@
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
       spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
+      rep: this.rep, fridge: this.fridge,
       stoves: this.stoves, tables: this.tables, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
   World.prototype._restore = function (s) {
     for (var k in s) this[k] = s[k];
     this.events = []; this.customers = this.customers || []; this.ready = this.ready || [];
-    this.decor = this.decor || {}; this.decors = this.decors || [];
+    this.decor = this.decor || {}; this.decors = this.decors || []; this.fridge = this.fridge || []; this.queue = [];
     if (this.auto == null) this.auto = true;
+    if (this.rep == null) this.rep = REP_START;
     // forward-compat: ensure zombies have home + render fields
     var self = this;
-    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } });
+    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; });
     (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } });
+  };
+
+  // ---- rating / reputation (Phase 11) --------------------------------
+  // rep is a 0..100 score; the HUD shows it as 1..5 stars. Good service nudges
+  // it up, bad service down. Rating then feeds spawn rate & customer quality.
+  World.prototype.ratingStars = function () { return Math.max(1, Math.min(5, 1 + this.rep / 25)); };  // 1.0 .. 5.0
+  World.prototype._nudgeRep = function (delta, reason) {
+    var before = this.rep; this.rep = Math.max(0, Math.min(100, this.rep + delta));
+    if (Math.abs(this.rep - before) >= 0.01) this.events.push({ type: delta >= 0 ? 'ratingUp' : 'ratingDown', rep: this.rep, stars: this.ratingStars(), reason: reason });
   };
   // Called once on load: finish cooks that completed offline; diners have left.
   World.prototype.fastForward = function (elapsed) {
@@ -124,9 +143,10 @@
 
   // ---- derived --------------------------------------------------------
   World.prototype.ambiance = function () { var a = 0; for (var i = 0; i < this.decors.length; i++) { var it = shopById(this.decors[i].deco); if (it) a += it.ambiance || 0; } return a; };
-  World.prototype.tipMult = function () { return 1 + this.ambiance() / 200; };
+  World.prototype.tipMult = function () { return 1 + this.ambiance() / 200 + this.rep / 400; };   // décor + reputation both tip
   World.prototype.patience = function () { return 20 + this.ambiance() / 8; };
-  World.prototype.spawnEvery = function () { return Math.max(2.2, 6 / (1 + this.ambiance() / 50)); };
+  // Higher rating = more (and better) customers; a poor rating thins the crowd.
+  World.prototype.spawnEvery = function () { var rf = 0.6 + (100 - this.rep) / 100; return Math.max(2.2, 6 / (1 + this.ambiance() / 50) * rf); };
   World.prototype.xpNeed = function (lvl) { return Math.floor(60 * Math.pow(lvl, 1.4)); };
   World.prototype.unlocked = function () { var L = this.level, ex = this.extraRecipes || []; return (window.RECIPES || []).filter(function (r) { return r.level <= L || ex.indexOf(r.id) >= 0; }); };
   World.prototype.priceFor = function (item) {
@@ -153,8 +173,16 @@
   World.prototype.startCook = function (stoveId, recipeId) {
     var st = byId(this.stoves, stoveId), r = RECIPES[recipeId];
     if (!st || !r || st.recipe) return false;
+    if (st.burned) { this.events.push({ type: 'warn', msg: 'Clear the burnt mess off this stove first' }); return false; }
     if (this.coins < r.cost) { this.events.push({ type: 'warn', msg: 'Not enough coins for ' + r.name }); return false; }
-    this.coins -= r.cost; st.recipe = recipeId; st.start = this.t; st.ready = false; this.lastRecipe = recipeId; return true;
+    this.coins -= r.cost; st.recipe = recipeId; st.start = this.t; st.ready = false; st.burning = false; st.readyAt = 0; this.lastRecipe = recipeId;
+    this.events.push({ type: 'CookingStarted', x: st.x, y: st.y }); return true;
+  };
+  // Wipe burnt food off a stove so it can be used again (player tap or zombie).
+  World.prototype.clearBurned = function (stoveId) {
+    var st = byId(this.stoves, stoveId); if (!st || !st.burned) return false;
+    st.recipe = null; st.burned = false; st.ready = false; st.readyAt = 0; st.burning = false;
+    this.events.push({ type: 'cleaned', x: st.x, y: st.y }); return true;
   };
   World.prototype.rushCook = function (stoveId) {
     var st = byId(this.stoves, stoveId); if (!st || !st.recipe || st.ready) return false;
@@ -169,16 +197,23 @@
     var st = typeof stoveId === 'object' ? stoveId : byId(this.stoves, stoveId);
     if (!st || !st.recipe || !st.ready) return false;
     var r = RECIPES[st.recipe], added = 0;
-    for (var i = 0; i < r.batch && this.ready.length < POOL_CAP; i++) { this.ready.push(r.id); added++; }
+    for (var i = 0; i < r.batch && this.ready.length < COUNTER_CAP; i++) { this.ready.push(r.id); added++; }
     this.events.push({ type: 'plated', x: st.x, y: st.y, emoji: r.emoji, n: added });
     st.recipe = null; st.start = 0; st.ready = false; st.readyAt = 0;
     return true;
   };
   World.prototype.collectCustomer = function (cid) {
     var c = byId(this.customers, cid); if (!c || c.state !== 'paying') return false;
+    this._payAndLeave(c); return true;
+  };
+  // payment + mood-driven rating swing + happy/neutral/angry thought bubble
+  World.prototype._payAndLeave = function (c) {
     this.coins += c.pay; this.served++; this._gainXp(c.xp);
-    this.events.push({ type: 'coin', x: c.x, y: c.y, amount: c.pay, xp: c.xp });
-    this._leave(c, true); return true;
+    var mood = c.mood || 'neutral';
+    this._nudgeRep(mood === 'happy' ? 1.4 : mood === 'angry' ? -1.2 : 0.2, 'a ' + mood + ' customer');
+    this.events.push({ type: 'coin', x: c.x, y: c.y, amount: c.pay, xp: c.xp, mood: mood });
+    this.events.push({ type: 'CustomerPaid', x: c.x, y: c.y, mood: mood });
+    this._leave(c, true);
   };
   World.prototype.infect = function (cid) {
     var c = byId(this.customers, cid);
@@ -193,6 +228,29 @@
     this._freeTable(c); this.customers.splice(this.customers.indexOf(c), 1);
     return true;
   };
+  // ---- fridge: raid-loot food (Phase 4) ------------------------------
+  // Stolen batches land here. You can plate them onto the pass to serve, or —
+  // if the recipe is new to you — unlock it (which consumes the batch).
+  World.prototype.serveFromFridge = function (idx) {
+    var b = this.fridge[idx]; if (!b) return false;
+    var added = 0;
+    while (b.servings > 0 && this.ready.length < COUNTER_CAP) { this.ready.push(b.recipeId); b.servings--; added++; }
+    if (!added) { this.events.push({ type: 'warn', msg: 'The pass is full' }); return false; }
+    if (b.servings <= 0) this.fridge.splice(idx, 1);
+    this.events.push({ type: 'fridge', x: PASS.x, y: PASS.y, emoji: (RECIPES[b.recipeId] || {}).emoji || '🍽️', n: added });
+    return true;
+  };
+  World.prototype.unlockFromFridge = function (idx) {
+    var b = this.fridge[idx]; if (!b) return false;
+    var r = RECIPES[b.recipeId]; if (!r) return false;
+    var known = r.level <= this.level || (this.extraRecipes || []).indexOf(b.recipeId) >= 0;
+    if (known) { this.events.push({ type: 'warn', msg: 'You already know ' + r.name }); return false; }
+    this.extraRecipes = this.extraRecipes || []; this.extraRecipes.push(b.recipeId);
+    this.fridge.splice(idx, 1);                       // unlocking consumes the batch
+    this.events.push({ type: 'recipeUnlocked', recipe: r });
+    return true;
+  };
+
   World.prototype.buy = function (itemId) {
     var it = shopById(itemId); if (!it) return false;
     var cost = this.priceFor(it), bag = it.cur, have = bag === 'coin' ? this.coins : this.toxin;
@@ -256,16 +314,20 @@
     var win = power >= rv.defense;
     var loot = win ? rv.reward : Math.floor(rv.reward * 0.15);
     this.coins += loot; if (win) this.toxin += rv.toxin || 0;
-    var gotRecipe = null;
+    var gotRecipe = null, fridgeFood = null;
     if (win) {
       this._gainXp(Math.round(rv.defense));
-      this.extraRecipes = this.extraRecipes || [];
-      if (rv.recipe && this.level < (RECIPES[rv.recipe] || {}).level && this.extraRecipes.indexOf(rv.recipe) < 0) {
-        this.extraRecipes.push(rv.recipe); gotRecipe = RECIPES[rv.recipe];
+      // Food loot goes into the FRIDGE (Phase 4) — serve it, or unlock the
+      // rival's signature recipe from there if it's new to you.
+      if (rv.recipe) {
+        var known = (RECIPES[rv.recipe] || {}).level <= this.level || (this.extraRecipes || []).indexOf(rv.recipe) >= 0;
+        var batch = { recipeId: rv.recipe, servings: (RECIPES[rv.recipe] || {}).batch || 4, source: rv.name, canUnlock: !known };
+        this.fridge.push(batch); fridgeFood = batch;
+        if (!known) gotRecipe = RECIPES[rv.recipe];
       }
     }
     for (var i = 0; i < squad; i++) this.zombies.push(this._mkZombie(this.zombies.length));
-    this.events.push({ type: 'raidEnd', rival: rv, win: win, loot: loot, toxin: win ? (rv.toxin || 0) : 0, recipe: gotRecipe });
+    this.events.push({ type: 'raidEnd', rival: rv, win: win, loot: loot, toxin: win ? (rv.toxin || 0) : 0, recipe: gotRecipe, food: fridgeFood });
     this.raid = null;
   };
 
@@ -274,12 +336,21 @@
     if (dt > 0.25) dt = 0.25;                          // clamp big frame gaps
     this.t += dt;
     this._spawn();
+    // Stove FSM (Phase 4): cooking -> finished -> burnWarning -> burned.
+    // Finished food MUST be carried off (by a commanded or auto zombie) before
+    // it burns. Nothing teleports — burning is the cost of ignoring the pass.
     for (var i = 0; i < this.stoves.length; i++) {
       var st = this.stoves[i];
-      if (st.recipe && !st.ready && this.t >= st.start + RECIPES[st.recipe].time) { st.ready = true; st.readyAt = this.t; }
-      // faithful to the original you tap to serve; auto-plate only as an idle
-      // safety net so an unattended stove eventually frees up.
-      if (st.ready && this.t - (st.readyAt || this.t) >= STOVE_AUTOPLATE) this.plateStove(st.id);
+      if (!st.recipe || st.burned) continue;            // burnt food waits to be cleared, doesn't re-cook
+      if (!st.ready && this.t >= st.start + (RECIPES[st.recipe].time)) { st.ready = true; st.readyAt = this.t; st.burning = false; this.events.push({ type: 'CookingFinished', x: st.x, y: st.y, emoji: RECIPES[st.recipe].emoji }); }
+      if (st.ready && !st.burned) {
+        var since = this.t - (st.readyAt || this.t), grace = RECIPES[st.recipe].burnGrace || BURN_GRACE;
+        if (!st.burning && since >= grace) { st.burning = true; this.events.push({ type: 'FoodBurnWarning', x: st.x, y: st.y }); }
+        if (st.burning && since >= grace + BURN_HARD && !st.collecting) {
+          st.burned = true; st.ready = false; this.events.push({ type: 'FoodBurned', x: st.x, y: st.y });
+          this._nudgeRep(-2.5, 'burned food');
+        }
+      }
     }
     this._stepZombies(dt);
     this._stepCustomers(dt);
@@ -394,7 +465,23 @@
       var working = z.state === 'toPass' || z.state === 'toCustomer' || z.state === 'toClean' || z.state === 'cleaning' || z.state === 'toStove' || z.state === 'toDeposit';
       if (working) z.energy = Math.max(0, z.energy - DRAIN * dt);
       else if (z.state === 'resting') z.energy = Math.min(100, z.energy + REGEN_REST * dt);
-      else z.energy = Math.min(100, z.energy + REGEN_IDLE * dt);
+      else if (z.state !== 'daydream') z.energy = Math.min(100, z.energy + REGEN_IDLE * dt);
+
+      // Low-energy hazards (Phase 7). A tired zombie may zone out; a critically
+      // drained, impatient one may scare a diner off — costing you rating.
+      if (z.state === 'daydream') {
+        if (this.t >= z.dazeUntil) { z.state = 'idle'; }
+        continue;
+      }
+      var idleish = (z.state === 'idle' || z.state === 'returning');
+      if (z.energy <= SCARE_E && z.role !== 'rest' && Math.random() < (1.1 - z.patience) * 0.6 * dt) {
+        var victim = this._nearestWaiting(z);
+        if (victim) { this.events.push({ type: 'ZombieScaredCustomer', x: victim.x, y: victim.y, name: z.name }); this._nudgeRep(-3, 'a zombie scared a customer'); this._leave(victim, false); victim.scared = true; z.energy = Math.max(0, z.energy - 3); }
+      } else if (z.energy <= DAYDREAM_E && idleish && Math.random() < 0.25 * dt) {
+        z.state = 'daydream'; z.dazeUntil = this.t + 2 + Math.random() * 2;
+        this.events.push({ type: 'ZombieDaydreaming', x: z.x, y: z.y, name: z.name });
+        continue;
+      }
 
       // cleaning is a timed (non-moving) task
       if (z.state === 'cleaning') {
@@ -433,18 +520,21 @@
         if (dt2 && dt2.dirty) { z.state = 'cleaning'; z.cleanStart = this.t; }
         else { if (dt2) dt2.cleaning = null; z.cleanId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
       } else if (z.state === 'toStove') {
-        // commanded carry: pick the finished batch up off the stove
+        // commanded carry: pick the finished batch up, OR clear a burnt mess
         var sst = byId(this.stoves, z.stoveId);
-        if (sst && sst.ready && sst.recipe) {
+        if (sst && sst.burned) {
+          this.clearBurned(sst.id); sst.collecting = false;
+          z.stoveId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy);
+        } else if (sst && sst.ready && sst.recipe) {
           var rr2 = RECIPES[sst.recipe];
           z.carryBatch = { id: sst.recipe, n: rr2.batch };
-          sst.recipe = null; sst.start = 0; sst.ready = false; sst.readyAt = 0;
+          sst.recipe = null; sst.start = 0; sst.ready = false; sst.readyAt = 0; sst.burning = false; sst.collecting = false;
           z.state = 'toDeposit'; routeTo(this, z, PASS.x, PASS.y + 22);
-        } else { z.stoveId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
+        } else { if (sst) sst.collecting = false; z.stoveId = null; z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
       } else if (z.state === 'toDeposit') {
         if (z.carryBatch) {
           var added = 0;
-          for (var b = 0; b < z.carryBatch.n && this.ready.length < POOL_CAP; b++) { this.ready.push(z.carryBatch.id); added++; }
+          for (var b = 0; b < z.carryBatch.n && this.ready.length < COUNTER_CAP; b++) { this.ready.push(z.carryBatch.id); added++; }
           this.events.push({ type: 'plated', x: PASS.x, y: PASS.y, emoji: (RECIPES[z.carryBatch.id] || {}).emoji || '🍽️', n: added });
           z.carryBatch = null;
         }
@@ -456,24 +546,43 @@
   World.prototype._releaseJob = function (z) {
     if (z.job) { var c = byId(this.customers, z.job); if (c && c.assigned === z.id) c.assigned = null; z.job = null; }
     if (z.carry) { this.ready.push(z.carry); z.carry = null; }
-    if (z.carryBatch) { for (var b = 0; b < z.carryBatch.n && this.ready.length < POOL_CAP; b++) this.ready.push(z.carryBatch.id); z.carryBatch = null; }
+    if (z.carryBatch) { for (var b = 0; b < z.carryBatch.n && this.ready.length < COUNTER_CAP; b++) this.ready.push(z.carryBatch.id); z.carryBatch = null; }
     if (z.cleanId) { var tb = byId(this.tables, z.cleanId); if (tb && tb.cleaning === z.id) tb.cleaning = null; z.cleanId = null; }
-    z.stoveId = null;
+    if (z.stoveId) { var sv = byId(this.stoves, z.stoveId); if (sv && sv.collecting) sv.collecting = false; z.stoveId = null; }
   };
-  // Assign an idle zombie a task, respecting its role. 'auto' serves first,
-  // then buses dirty tables; 'waiter'/'cleaner' only do their job.
+  World.prototype._nearestWaiting = function (z) {
+    var best = null, bd = 1e9;
+    for (var i = 0; i < this.customers.length; i++) { var c = this.customers[i]; if (c.state !== 'waiting' && c.state !== 'eating') continue; var d = dist(z.x, z.y, c.x, c.y); if (d < bd) { bd = d; best = c; } }
+    return best;
+  };
+  // Auto-mode job priority (Phase 8): move finished food off the stove before
+  // it burns -> serve the most impatient diner -> clear a burnt stove -> bus a
+  // dirty table -> idle. 'waiter'/'cleaner' roles only do their own job.
   World.prototype._assign = function (z) {
     var canServe = z.role === 'auto' || z.role === 'waiter';
     var canClean = z.role === 'auto' || z.role === 'cleaner';
-    if (canServe && this.ready.length) {
-      for (var i = 0; i < this.customers.length; i++) {
-        var c = this.customers[i];
-        if (c.state === 'waiting' && !c.assigned) {
-          c.assigned = z.id; z.job = c.id; z.carry = this.ready.pop();
-          z.state = 'toPass'; routeTo(this, z, PASS.x, PASS.y + 22); return;
-        }
+    var i;
+    // 1. rescue finished food from the pass-blocking stoves
+    if (canServe && this.ready.length < COUNTER_CAP) {
+      for (i = 0; i < this.stoves.length; i++) {
+        var fs = this.stoves[i];
+        if (fs.ready && fs.recipe && !fs.collecting) { fs.collecting = true; z.stoveId = fs.id; z.state = 'toStove'; routeTo(this, z, fs.x, fs.y + 40); return; }
       }
     }
+    // 2. serve the most impatient hungry customer we have food for
+    if (canServe && this.ready.length) {
+      var pickC = null, worst = -1;
+      for (i = 0; i < this.customers.length; i++) {
+        var c = this.customers[i];
+        if (c.state === 'waiting' && !c.assigned) { var waited = this.t - c.wait; if (waited > worst) { worst = waited; pickC = c; } }
+      }
+      if (pickC) { pickC.assigned = z.id; z.job = pickC.id; z.carry = this.ready.pop(); z.state = 'toPass'; routeTo(this, z, PASS.x, PASS.y + 22); return; }
+    }
+    // 3. clear a burnt stove so it can cook again
+    if (canServe) {
+      for (i = 0; i < this.stoves.length; i++) { var bs = this.stoves[i]; if (bs.burned && !bs.collecting) { bs.collecting = true; z.stoveId = bs.id; z.state = 'toStove'; routeTo(this, z, bs.x, bs.y + 40); return; } }
+    }
+    // 4. bus a dirty table
     if (canClean) {
       for (var j = 0; j < this.tables.length; j++) {
         var tb = this.tables[j];
@@ -490,9 +599,10 @@
     if (z.energy < TIRED && hit.kind !== 'rest') return { ok: false, msg: z.name + ' is exhausted — feed or let them rest' };
     if (hit.kind === 'stove') {
       var st = byId(this.stoves, hit.id); if (!st) return { ok: false, msg: '' };
+      if (st.burned) { this._releaseJob(z); st.collecting = true; z.state = 'toStove'; z.stoveId = st.id; routeTo(this, z, st.x, st.y + 40); return { ok: true, msg: z.name + ' is scraping off the burnt food' }; }
       if (!st.ready) return { ok: false, msg: st.recipe ? 'Still cooking' : 'Nothing to pick up — start a cook first' };
       this._releaseJob(z);
-      z.state = 'toStove'; z.stoveId = st.id; routeTo(this, z, st.x, st.y + 40);
+      st.collecting = true; z.state = 'toStove'; z.stoveId = st.id; routeTo(this, z, st.x, st.y + 40);
       return { ok: true, msg: z.name + ' is collecting the food' };
     }
     if (hit.kind === 'customer') {
@@ -527,7 +637,7 @@
       if (c.state !== 'waiting' && c.state !== 'paying') continue;
       if (dist(x, y, c.x, c.y - 16) < 46) return { kind: 'customer', id: c.id, state: c.state, infectable: c.infectable };
     }
-    for (i = 0; i < this.stoves.length; i++) { var s = this.stoves[i]; if (dist(x, y, s.x, s.y) < 55) return { kind: 'stove', id: s.id, ready: s.ready, cooking: !!s.recipe }; }
+    for (i = 0; i < this.stoves.length; i++) { var s = this.stoves[i]; if (dist(x, y, s.x, s.y) < 55) return { kind: 'stove', id: s.id, ready: s.ready, cooking: !!s.recipe, burned: !!s.burned }; }
     for (i = 0; i < this.tables.length; i++) { var tb = this.tables[i]; if (tb.dirty && dist(x, y, tb.x, tb.y) < 55) return { kind: 'table', id: tb.id }; }
     return null;
   };
@@ -535,16 +645,26 @@
   World.prototype._stepCustomers = function (dt) {
     for (var i = this.customers.length - 1; i >= 0; i--) {
       var c = this.customers[i], arr = step(this, c, dt, SPEED);
-      if (c.state === 'toTable') { if (arr) { c.state = 'waiting'; c.wait = this.t; c.face = 'U'; } }
+      if (c.state === 'toTable') { if (arr) { c.state = 'waiting'; c.wait = this.t; c.face = 'U'; this.events.push({ type: 'CustomerSeated', x: c.x, y: c.y }); } }
       else if (c.state === 'waiting') {
-        if (!c.assigned && this.t - c.wait > this.patience()) { this._leave(c); }
+        // patience drains while waiting for food; the longer they wait the worse
+        // their mood (and the smaller the tip) when finally served.
+        var waited = this.t - c.wait, pat = this.patience();
+        c.annoyed = waited > pat * 0.6;
+        if (!c.assigned && waited > pat) { this._nudgeRep(-2, 'customer left hungry'); this.events.push({ type: 'CustomerLeftAngry', x: c.x, y: c.y }); this._leave(c); }
       } else if (c.state === 'eating') {
+        if (c.serveWait == null) { c.serveWait = this.t - c.wait; }   // captured at service
         if (this.t - c.eat >= EAT_TIME) {
-          c.state = 'paying'; c.pay = Math.round((RECIPES[c.dish] || RECIPES.coffee).price * this.tipMult());
-          c.xp = (RECIPES[c.dish] || RECIPES.coffee).xp; c.payAt = this.t;
+          var r = (RECIPES[c.dish] || RECIPES.coffee);
+          // mood from how long they waited + table cleanliness when seated
+          var ratio = c.serveWait / this.patience();
+          c.mood = ratio < 0.45 ? 'happy' : ratio < 0.85 ? 'neutral' : 'angry';
+          var mult = c.mood === 'happy' ? 1.15 : c.mood === 'angry' ? 0.7 : 1;
+          c.state = 'paying'; c.pay = Math.max(1, Math.round(r.price * this.tipMult() * mult));
+          c.xp = r.xp; c.payAt = this.t;
         }
       } else if (c.state === 'paying') {
-        if (this.t - c.payAt >= AUTO_PAY) { this.coins += c.pay; this.served++; this._gainXp(c.xp); this.events.push({ type: 'coin', x: c.x, y: c.y, amount: c.pay, xp: c.xp }); this._leave(c, true); }
+        if (this.t - c.payAt >= AUTO_PAY) { this._payAndLeave(c); }
       } else if (c.state === 'leaving') {
         if (arr) this.customers.splice(i, 1);
       }

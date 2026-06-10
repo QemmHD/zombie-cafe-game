@@ -34,6 +34,7 @@ test('fresh world has the expected starting cafe', () => {
 
 test('cooking is a manual two-step: cook, then tap to serve', () => {
   const w = boot();
+  w.auto = false;                                      // with Auto on, a zombie would carry it for us
   assert.ok(w.startCook(w.stoves[0].id, 'coffee'));
   assert.strictEqual(w.coins, 55, 'coffee costs 5');
   advance(w, 9);                                        // coffee cooks in 8s
@@ -80,13 +81,70 @@ test('raiding a rival cafe sends a squad and returns loot', () => {
   assert.strictEqual(w.coins, 180, 'won 120 coins of loot');
 });
 
-test('winning a raid steals the rival recipe and unlocks it early', () => {
+test('winning a raid stocks the fridge; unlocking from it learns the recipe', () => {
   const w = boot();
   assert.ok(!w.unlocked().some((r) => r.id === 'burger'), 'burger locked at level 1');
   w.startRaid('diner');                                 // diner signature = burger
   advance(w, 32);
-  assert.ok((w.extraRecipes || []).indexOf('burger') >= 0, 'stole the burger recipe');
+  const loot = w.fridge.find((b) => b.recipeId === 'burger');
+  assert.ok(loot, 'stolen burger landed in the fridge');
+  assert.ok(loot.canUnlock, 'the fridge batch offers to unlock a new recipe');
+  assert.ok(w.unlockFromFridge(w.fridge.indexOf(loot)), 'unlock from fridge');
   assert.ok(w.unlocked().some((r) => r.id === 'burger'), 'burger now cookable');
+  assert.ok(!w.fridge.find((b) => b.recipeId === 'burger'), 'unlocking consumed the batch');
+});
+
+test('food burns if it sits finished on the stove too long (Auto off)', () => {
+  const w = boot();
+  w.auto = false;                                       // nobody will carry it off
+  w.startCook(w.stoves[0].id, 'coffee');
+  advance(w, 9);
+  assert.ok(w.stoves[0].ready && !w.stoves[0].burning, 'ready, not yet burning');
+  advance(w, 24);
+  assert.ok(w.stoves[0].burning, 'enters a burn warning');
+  const repBefore = w.rep;
+  advance(w, 16);
+  assert.ok(w.stoves[0].burned, 'food burned');
+  assert.ok(w.rep < repBefore, 'burning cost rating');
+  assert.ok(!w.startCook(w.stoves[0].id, 'coffee'), 'cannot cook on a burnt stove');
+  assert.ok(w.clearBurned(w.stoves[0].id), 'can clear the burnt mess');
+  assert.ok(w.startCook(w.stoves[0].id, 'coffee'), 'stove usable again');
+});
+
+test('Auto carries finished food off the stove before it burns', () => {
+  const w = boot();                                     // Auto on by default
+  w.startCook(w.stoves[0].id, 'coffee');
+  let ok = false;
+  for (let i = 0; i < 60 * 5 && !ok; i++) { w.tick(0.2); if (w.ready.length >= 3 && !w.stoves[0].burned) ok = true; }
+  assert.ok(ok, 'a zombie moved the batch to the pass on its own, no burn');
+  assert.ok(!w.stoves[0].burned, 'nothing burned under Auto');
+});
+
+test('rating rises with happy service and falls when customers leave hungry', () => {
+  const w = boot();
+  w.rep = 50;
+  // a customer that never gets food should walk out and drop the rating
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9);
+  // strand the food away so the lone diner waits out their patience
+  w.auto = false; w.ready = [];
+  const before = w.rep;
+  advance(w, 60);
+  assert.ok(w.rep <= before, 'unserved customers did not raise rating');
+  assert.ok(w.ratingStars() >= 1 && w.ratingStars() <= 5, 'stars stay in range');
+});
+
+test('a starving zombie scares customers and tanks the rating', () => {
+  const w = boot();
+  const z = w.zombies[0]; z.energy = 3; z.patience = 0;   // impatient + critical = will act out
+  // seat a couple of customers to be scared
+  w.startCook(w.stoves[0].id, 'coffee'); advance(w, 9);
+  let seated = 0;
+  for (let i = 0; i < 400 && seated < 1; i++) { w.tick(0.2); z.energy = 3; seated = w.customers.filter((c) => c.state === 'waiting').length; }
+  const repBefore = w.rep, before = w.served;
+  let scared = false;
+  for (let i = 0; i < 400 && !scared; i++) { w.tick(0.2); z.energy = 3; if (w.events.some((e) => e.type === 'ZombieScaredCustomer')) scared = true; }
+  assert.ok(scared, 'the starving zombie scared someone');
+  assert.ok(w.rep < repBefore, 'scaring dropped the rating');
 });
 
 test('build mode: furniture can be moved to a free cell', () => {

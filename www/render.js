@@ -257,9 +257,10 @@
 
   Renderer.prototype._stove = function (c, st, world, t, sel) {
     var p = this.project(st.x, st.y), S = this.S, x = p.x, y = p.y;
-    if (this._selZ && st.ready) this._hl(c, x, y + S * 0.2, S * 1.05, t);
+    if (this._selZ && (st.ready || st.burned)) this._hl(c, x, y + S * 0.2, S * 1.05, t);
     this._shadow(c, x, y + S * 0.16, S * 0.4);
-    if (st.ready) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
+    if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
+    if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
     // body
     c.fillStyle = sel ? '#566' : C.steelD; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.66, 8); c.fill();
     c.fillStyle = C.steel; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.2, 8); c.fill();
@@ -271,11 +272,19 @@
     c.fillStyle = C.gold; circle(c, x - S * 0.28, y - S * 0.4, S * 0.04); circle(c, x - S * 0.14, y - S * 0.4, S * 0.04);
     var r = recipe(st.recipe) || { time: 1, emoji: '🍳', batch: 0 };
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    if (st.ready) {
+    if (st.burned) {
+      // charred lump + rising smoke + a red CLEAR tag (Phase 4 burn state)
+      smoke(c, x, y - S * 0.3, S, t, '#555');
+      c.fillStyle = '#1c1c1c'; circle(c, x, y - S * 0.26, S * 0.12); c.fillStyle = '#333'; circle(c, x - S * 0.06, y - S * 0.3, S * 0.06);
+      c.fillStyle = C.blood; rr(c, x - S * 0.4, y - S * 0.7, S * 0.8, S * 0.2, 6); c.fill();
+      c.fillStyle = '#fff'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText('🔥 CLEAR', x, y - S * 0.6);
+    } else if (st.ready) {
+      if (st.burning) smoke(c, x, y - S * 0.34, S, t, '#777');
       c.fillStyle = '#54585c'; rr(c, x - S * 0.16, y - S * 0.36, S * 0.32, S * 0.16, 4); c.fill();
       c.font = (S * 0.26) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - S * 0.28);
-      c.fillStyle = C.toxic; rr(c, x - S * 0.36, y - S * 0.7, S * 0.72, S * 0.2, 6); c.fill();
-      c.fillStyle = '#07210a'; c.font = 'bold ' + (S * 0.14) + 'px system-ui'; c.fillText('SERVE ▸', x, y - S * 0.6);
+      var rdy = st.burning ? C.blood : C.toxic;
+      c.fillStyle = rdy; rr(c, x - S * 0.36, y - S * 0.7, S * 0.72, S * 0.2, 6); c.fill();
+      c.fillStyle = st.burning ? '#fff' : '#07210a'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText(st.burning ? '⚠ BURNING' : 'SERVE ▸', x, y - S * 0.6);
       if (r.batch) badge(c, x + S * 0.34, y - S * 0.66, '' + r.batch, C.blood, S);
     } else if (st.recipe) {
       for (var i = -1; i <= 1; i++) { c.fillStyle = i === 0 ? '#ffb43d' : '#ff7a2d'; circle(c, x + i * S * 0.1, y - S * 0.18 + Math.sin(t * 9 + i) * 2, S * 0.07); }
@@ -333,7 +342,8 @@
     // energy bar when tired-ish
     if (z.energy < 65) { var bw = S * 0.42; c.fillStyle = 'rgba(0,0,0,.55)'; rr(c, x - bw / 2, hy - S * 0.42, bw, S * 0.07, 3); c.fill(); var ef = Math.max(0, z.energy) / 100; c.fillStyle = z.energy > 45 ? C.toxic : z.energy > 22 ? C.gold : C.blood; rr(c, x - bw / 2, hy - S * 0.42, bw * ef, S * 0.07, 3); c.fill(); }
     // status / carry bubble
-    if (z.state === 'resting') bubble(c, x, y - S * 0.95, '💤', '#cfe', S);
+    if (z.state === 'daydream') bubble(c, x, y - S * 0.95, '💭', '#cfe', S);
+    else if (z.state === 'resting') bubble(c, x, y - S * 0.95, '💤', '#cfe', S);
     else if (z.state === 'cleaning' || z.state === 'toClean') bubble(c, x, y - S * 0.95, '🧽', '#fff', S);
     else if (z.carry) bubble(c, x, y - S * 0.95, (recipe(z.carry) || {}).emoji || '🍽️', '#fff', S);
     else if (z.carryBatch) bubble(c, x, y - S * 0.95, (recipe(z.carryBatch.id) || {}).emoji || '🍽️', '#fff', S);
@@ -378,6 +388,14 @@
   function circle(c, x, y, r) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
   function blob(c, x, y, r) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0, 0, 7); c.fill(); }
   function line(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+  // rising puffs of smoke for burning/burnt food
+  function smoke(c, x, y, S, t, col) {
+    for (var i = 0; i < 3; i++) {
+      var ph = (t * 0.9 + i * 0.5) % 1, yy = y - ph * S * 0.7, xx = x + Math.sin((t + i) * 2) * S * 0.1;
+      c.fillStyle = 'rgba(' + (col === '#555' ? '70,70,70,' : '120,120,120,') + (0.5 * (1 - ph)) + ')';
+      circle(c, xx, yy, S * (0.07 + ph * 0.12));
+    }
+  }
   function stroke(c, col, w) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; }
   function body(c, x, y, w, h, col) { c.fillStyle = col; rr(c, x - w / 2, y - h / 2, w, h, w * 0.4); c.fill(); c.strokeStyle = C.out; c.lineWidth = w * 0.09; c.stroke(); }
   function chair(c, x, y, S, back) { c.fillStyle = C.woodD; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.fill(); if (back) { c.fillStyle = C.wood; rr(c, x - S * 0.13, y - S * 0.32, S * 0.26, S * 0.12, 4); c.fill(); } c.strokeStyle = C.out; c.lineWidth = S * 0.02; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.stroke(); }

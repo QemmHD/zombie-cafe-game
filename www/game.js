@@ -30,13 +30,22 @@
   }
 
   // ---- HUD ------------------------------------------------------------
+  var repFlash = 0, repFlashDir = 1;
+  function stars() {
+    var s = world.ratingStars(), full = Math.floor(s + 0.001), half = (s - full) >= 0.5;
+    var out = ''; for (var i = 0; i < 5; i++) out += i < full ? '★' : (i === full && half ? '⯨' : '☆');
+    return out;
+  }
   function renderHUD() {
     var need = world.xpNeed(world.level), pct = Math.min(100, world.xp / need * 100);
     var raidNote = world.raid ? '<span class="raidpill">⚔️ ' + clock(world.raid.returnsAt - world.t) + '</span>' : '';
+    var flashCls = repFlash > 0 ? (repFlashDir > 0 ? ' up' : ' down') : '';
+    if (repFlash > 0) repFlash--;
     el('hud').innerHTML =
       '<div class="stat coins"><span class="ico">🪙</span>' + fmt(world.coins) + '</div>' +
       '<div class="stat toxin"><span class="ico">☣️</span>' + fmt(world.toxin) + '</div>' +
-      '<div class="level-wrap"><div class="level-row"><span>Lv <b>' + world.level + '</b></span>' + raidNote + '</div>' +
+      '<div class="level-wrap"><div class="level-row"><span class="rating' + flashCls + '">' + stars() + '</span>' +
+      '<span>Lv <b>' + world.level + '</b></span>' + raidNote + '</div>' +
       '<div class="xpbar"><i style="width:' + pct + '%"></i></div></div>' +
       '<div class="stat zombies"><span class="ico">🧟</span>' + world.zombies.length + (world.raid ? '<small>+' + world.raid.squad + '</small>' : '') + '</div>';
   }
@@ -73,6 +82,13 @@
       else if (e.type === 'plated') { floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox'); }
       else if (e.type === 'raidStart') toast('⚔️ Squad sent to raid ' + e.rival.name);
       else if (e.type === 'raidEnd') raidResult(e);
+      else if (e.type === 'fridge') floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox');
+      else if (e.type === 'FoodBurned') { floatText(e.x, e.y - 30, '🔥 burnt!', 'bad'); toast('🔥 A dish burned — move finished food to the pass faster!'); }
+      else if (e.type === 'ZombieScaredCustomer') { floatText(e.x, e.y - 20, '😱', 'bad'); toast('😱 A starving zombie scared a customer off! Feed your staff.'); }
+      else if (e.type === 'ZombieDaydreaming') floatText(e.x, e.y - 40, '💭');
+      else if (e.type === 'recipeUnlocked') toast('📖 New recipe unlocked: ' + e.recipe.emoji + ' ' + e.recipe.name);
+      else if (e.type === 'ratingUp') { repFlash = 30; repFlashDir = 1; }
+      else if (e.type === 'ratingDown') { repFlash = 30; repFlashDir = -1; }
     });
   }
 
@@ -115,7 +131,8 @@
     if (!hit2) return;
     if (hit2.kind === 'stove') {
       var st = world.stoves.filter(function (s) { return s.id === hit2.id; })[0];
-      if (st.ready) {
+      if (st.burned) { world.clearBurned(st.id); toast('🧽 Wiped the burnt food off the stove'); }
+      else if (st.ready) {
         if (world.auto) world.plateStove(st.id);                 // casual tap-to-serve
         else { redX(clientX, clientY); toast('Auto is off — tap a zombie, then this stove'); }
       } else if (st.recipe) rushConfirm(st.id);
@@ -248,6 +265,19 @@
       '<button class="buy coin" data-act="close" style="margin-top:14px;justify-content:center;width:100%;">Nice</button></div></div>');
   }
 
+  function openFridge() {
+    var rows = world.fridge.map(function (b, i) {
+      var r = recipeById(b.recipeId) || { emoji: '🍽️', name: b.recipeId };
+      var known = r.level <= world.level || (world.extraRecipes || []).indexOf(b.recipeId) >= 0;
+      var btns = '<button class="buy coin" data-act="fridge-serve" data-id="' + i + '">Serve ' + b.servings + '</button>';
+      if (b.canUnlock && !known) btns = '<button class="buy toxin" data-act="fridge-unlock" data-id="' + i + '">📖 Unlock</button>' + btns;
+      return '<div class="row"><div class="r-ico">' + r.emoji + '</div><div class="r-body"><div class="r-name">' + r.name +
+        (known ? '' : ' <span style="color:var(--toxic)">NEW</span>') + '</div><div class="r-meta">' + b.servings + ' servings · stolen from ' + (b.source || 'a raid') + '</div></div>' + btns + '</div>';
+    }).join('');
+    if (!world.fridge.length) rows = '<p class="hint">The fridge is empty. Win raids to stock it with stolen food and new recipes.</p>';
+    openSheet('<div class="sheet">' + head('🧊 Fridge') + '<p class="hint">Raid loot. Serve it on the pass, or unlock a brand-new recipe (uses up that batch).</p><div class="list">' + rows + '</div></div>');
+  }
+
   function openHelp() {
     function h(i, n, b) { return '<div class="row"><div class="r-ico">' + i + '</div><div class="r-body"><div class="r-name">' + n + '</div><div class="r-desc">' + b + '</div></div></div>'; }
     openSheet('<div class="sheet">' + head('❓ How to play') + '<div class="list">' +
@@ -255,8 +285,11 @@
       h('👆', 'Command', 'Tap a zombie to select it (green ring), then tap a glowing target: a ready stove to carry food, a hungry customer to serve, a dirty table to clean. Tap the floor to deselect.') +
       h('🤖', 'Auto', 'Auto ON: zombies find work themselves and tapping a SERVE stove plates instantly. Auto OFF: nothing happens until YOU command it — full Zombie Cafe style.') +
       h('🪙', 'Collect', 'When a customer shows a coin, tap them to grab coins + XP.') +
+      h('🔥', 'Don\'t burn it!', 'Finished food sits on the stove — move it to the pass (or let Auto carry it) before it burns. Burnt food is wasted and drops your rating. Tap a burnt stove to wipe it clean.') +
+      h('⭐', 'Rating', 'The stars (top bar) rise with fast, happy service and clean tables, and fall from long waits, dirty tables and burnt food. Higher rating = more & richer customers.') +
       h('🧟‍♀️', 'Infect', 'Tap a customer with a green 🧟 bubble to spend toxin and turn them into a new zombie worker.') +
-      h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes — win loot and steal their recipe.') +
+      h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes — win loot into your 🧊 Fridge and unlock their recipe.') +
+      h('🧊', 'Fridge', 'Stolen raid food lives here. Serve it on the pass, or unlock a brand-new recipe from it.') +
       h('😴', 'Staff', 'Tap a zombie to see its energy & stats. Working tires them; tired zombies rest. Set a job (Auto/Waiter/Cleaner/Rest) or Feed them toxin to refill.') +
       h('🧽', 'Clean', 'After customers eat, tables get dirty (flies!). Zombies bus them so new customers can sit.') +
       h('🔨', 'Build', 'Tap Build, then tap a table / stove / decoration and tap where to move it. Rearrange your whole cafe.') +
@@ -291,6 +324,9 @@
     else if (act === 'open-shop') openShop();
     else if (act === 'open-recipes') openRecipes();
     else if (act === 'open-map') openMap();
+    else if (act === 'open-fridge') openFridge();
+    else if (act === 'fridge-serve') { world.serveFromFridge(+a.dataset.id); openFridge(); }
+    else if (act === 'fridge-unlock') { world.unlockFromFridge(+a.dataset.id); openFridge(); }
     else if (act === 'open-help') openHelp();
     else if (act === 'open-build') setEdit(true);
     else if (act === 'build-done') setEdit(false);

@@ -18,6 +18,10 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
 .level-wrap { display:flex; flex-direction:column; gap:4px; min-width:0; }
 .level-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--muted); }
 .level-row b { color:var(--text); }
+.rating { color:var(--gold); letter-spacing:1px; font-size:13px; }
+.rating.up { animation:repup .8s ease; } .rating.down { animation:repdown .8s ease; }
+@keyframes repup { 0%,100%{ color:var(--gold);} 30%{ color:var(--toxic); text-shadow:0 0 8px var(--toxic);} }
+@keyframes repdown { 0%,100%{ color:var(--gold);} 30%{ color:var(--blood); text-shadow:0 0 8px var(--blood);} }
 .raidpill { color:var(--blood); font-weight:800; }
 .xpbar { height:7px; background:#0c140e; border:1px solid var(--line); border-radius:999px; overflow:hidden; }
 .xpbar > i { display:block; height:100%; background:linear-gradient(90deg,var(--toxic-dim),var(--toxic)); width:0%; transition:width .3s ease; }
