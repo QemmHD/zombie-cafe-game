@@ -39,8 +39,24 @@ window.SHOP = [
   { id: 'fountain',kind: 'decor',  name: 'Blood Fountain',emoji: '⛲',       cur: 'toxin', base: 12,    grow: 1, ambiance: 60, desc: '+60 ambiance. The crowd loves it.' },
 ];
 
-// Cosmetic pool of the humans who wander in. Purely visual variety.
-window.CUSTOMER_FACES = [
-  '👨', '👩', '🧑', '👴', '👵',
-  '👱', '👲', '👳', '👶', '🧔',
+// Shirt colours for the humans who wander in — drawn procedurally on canvas.
+window.CUSTOMER_COLORS = [
+  '#e06666', '#6fa8dc', '#f6b26b', '#93c47d', '#c27ba0',
+  '#ffd966', '#8e7cc3', '#76a5af', '#d5a6bd', '#a4c2f4',
+];
+window.SKIN_TONES = ['#f1c89b', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
+
+/*
+ * RIVALS — the other cafes you can raid ("take over other places"). Send a
+ * squad of zombies; if your power (squad size + level) beats the rival's
+ * `defense`, you win `reward` coins (+ sometimes toxin). Raids take real time;
+ * your zombies are away serving in the squad until they return with the loot.
+ */
+window.RIVALS = [
+  { id: 'diner',   name: "Greasy Joe's Diner",  emoji: '🍳', defense: 12,  squad: 1, time: 30,   reward: 120,   toxin: 0, level: 1 },
+  { id: 'taqueria',name: 'El Muerto Taqueria',  emoji: '🌮', defense: 30,  squad: 2, time: 60,   reward: 320,   toxin: 1, level: 2 },
+  { id: 'noodle',  name: 'Phantom Noodle Bar',  emoji: '🍜', defense: 60,  squad: 3, time: 120,  reward: 750,   toxin: 1, level: 4 },
+  { id: 'steak',   name: 'Bonepit Steakhouse',  emoji: '🥩', defense: 110, squad: 4, time: 240,  reward: 1800,  toxin: 2, level: 6 },
+  { id: 'sushi',   name: 'Kraken Sushi Co.',    emoji: '🍣', defense: 200, squad: 6, time: 480,  reward: 4200,  toxin: 3, level: 8 },
+  { id: 'casino',  name: 'Necropolis Casino',   emoji: '🎰', defense: 380, squad: 8, time: 900,  reward: 11000, toxin: 6, level: 10 },
 ];

@@ -17,26 +17,22 @@
 <body>
   <div id="app">
     <header id="hud"></header>
-    <main id="floor">
-      <section id="kitchen-wrap">
-        <h2 class="section-label">🔪 Kitchen</h2>
-        <div id="kitchen" class="stations"></div>
-      </section>
-      <section id="dining-wrap">
-        <h2 class="section-label">🍽️ Dining Room</h2>
-        <div id="dining" class="tables"></div>
-      </section>
+    <main id="stage">
+      <canvas id="game"></canvas>
     </main>
     <nav id="toolbar">
-      <button class="tool" data-action="open-shop">🛒<span>Shop</span></button>
-      <button class="tool" data-action="open-recipes">📖<span>Recipes</span></button>
-      <button class="tool" data-action="open-help">❓<span>How</span></button>
+      <button class="tool" data-act="open-shop">🛒<span>Shop</span></button>
+      <button class="tool" data-act="open-map">⚔️<span>Raid</span></button>
+      <button class="tool" data-act="open-recipes">📖<span>Recipes</span></button>
+      <button class="tool" data-act="open-help">❓<span>How</span></button>
     </nav>
   </div>
   <div id="fx"></div>
   <div id="modal-root"></div>
 
   <script src="data.js"></script>
+  <script src="world.js"></script>
+  <script src="render.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
