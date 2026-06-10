@@ -14,8 +14,11 @@
 (function () {
   'use strict';
 
-  var W = 720, H = 1280;
-  var SPEED = 165;          // px / second walking speed
+  // The world is a flat tile PLANE (logical floor coords). The renderer
+  // projects it into an isometric view. COLS x ROWS tiles of size TILE.
+  var TILE = 120, COLS = 7, ROWS = 8;
+  var W = COLS * TILE, H = ROWS * TILE;     // 840 x 960 plane
+  var SPEED = 150;          // plane-units / second walking speed
   var EAT_TIME = 5;
   var AUTO_PAY = 12;        // auto-collect a paying customer after this long
   var POOL_CAP = 40;
@@ -34,20 +37,22 @@
   function uid() { return Math.random().toString(36).slice(2, 9); }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   var COLORS = window.CUSTOMER_COLORS, SKINS = window.SKIN_TONES;
+  var HAIRS = ['#2b2b2b', '#5a3a1a', '#7a5230', '#d9c27a', '#b04a2a', '#888', '#3a2a4a'];
 
   // ---- layout: fixed slots for furniture & key points ----------------
-  var STOVE_SLOTS = [ {x:96,y:150}, {x:221,y:150}, {x:346,y:150}, {x:471,y:150}, {x:596,y:150}, {x:660,y:150} ];
+  // Kitchen appliances line the back wall (row ~0). 6 slots across.
+  var STOVE_SLOTS = [ {x:90,y:78}, {x:210,y:78}, {x:330,y:78}, {x:510,y:78}, {x:630,y:78}, {x:750,y:78} ];
   // The dining floor is a 4x5 grid of cells. Tables AND decor occupy cells, so
   // decorating your cafe trades off seating — just like the original.
   var CELLS = (function () {
-    var xs = [120, 280, 440, 600], ys = [470, 620, 770, 920, 1055], out = [];
+    var xs = [130, 320, 510, 700], ys = [330, 462, 594, 726, 852], out = [];
     for (var r = 0; r < ys.length; r++) for (var c = 0; c < xs.length; c++) out.push({ x: xs[c], y: ys[r] });
     return out;
   })();
   var TABLE_SLOTS = CELLS;
-  var PASS = { x: 360, y: 250 };
-  var DOOR = { x: 360, y: 1215 };
-  function home(i) { return { x: 180 + (i % 5) * 90, y: 330 + Math.floor(i / 5) * 64 }; }
+  var PASS = { x: 420, y: 168 };
+  var DOOR = { x: 420, y: 930 };
+  function home(i) { return { x: 110 + (i % 5) * 150, y: 210 + Math.floor(i / 5) * 64 }; }
 
   // =====================================================================
   function World(saved) { this.events = []; saved ? this._restore(saved) : this._fresh(); }
@@ -260,10 +265,10 @@
     var free = this.tables.filter(function (tb) { return !tb.by; });
     if (!free.length) return;
     var tb = pick(free), c = {
-      id: uid(), x: DOOR.x, y: DOOR.y, tx: tb.x, ty: tb.y + 42, table: tb.id,
+      id: uid(), x: DOOR.x, y: DOOR.y, tx: tb.x, ty: tb.y + 20, table: tb.id,
       state: 'toTable', wait: 0, eat: 0, pay: 0, xp: 0, dish: null,
       assigned: null, infectable: Math.random() < INFECT_CHANCE,
-      color: pick(COLORS), skin: pick(SKINS), face: 'U', step: Math.random() * 6,
+      color: pick(COLORS), skin: pick(SKINS), hair: pick(HAIRS), face: 'U', step: Math.random() * 6,
     };
     tb.by = c.id; this.customers.push(c);
   };
@@ -302,7 +307,7 @@
       var c = this.customers[i];
       if (c.state === 'waiting' && !c.assigned) {
         c.assigned = z.id; z.job = c.id; z.carry = this.ready.pop();
-        z.state = 'toPass'; z.tx = PASS.x; z.ty = PASS.y + 28; return;
+        z.state = 'toPass'; z.tx = PASS.x; z.ty = PASS.y + 22; return;
       }
     }
   };
@@ -355,6 +360,7 @@
 
   // expose constants the renderer needs
   World.W = W; World.H = H; World.PASS = PASS; World.DOOR = DOOR; World.STOVE_SLOTS = STOVE_SLOTS; World.CELLS = CELLS;
+  World.TILE = TILE; World.COLS = COLS; World.ROWS = ROWS;
   window.createWorld = function (saved) { return new World(saved); };
   window.World = World;
 })();

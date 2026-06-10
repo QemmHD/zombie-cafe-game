@@ -41,12 +41,8 @@
   }
 
   // ---- FX -------------------------------------------------------------
-  function toScreen(x, y) {
-    var dpr = canvas.width / canvas.clientWidth;
-    return { x: (x * renderer.scale + renderer.ox) / dpr, y: (y * renderer.scale + renderer.oy) / dpr };
-  }
   function floatText(wx, wy, text, cls) {
-    var p = toScreen(wx, wy), f = document.createElement('div');
+    var p = renderer.toClient(wx, wy), f = document.createElement('div');
     f.className = 'float ' + (cls || ''); f.textContent = text;
     f.style.left = p.x + 'px'; f.style.top = p.y + 'px';
     el('fx').appendChild(f); setTimeout(function () { f.remove(); }, 1000);

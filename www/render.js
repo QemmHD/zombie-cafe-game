@@ -1,267 +1,363 @@
 /* =====================================================================
- * Zombie Cafe — 2D canvas renderer + sprite drawing.
+ * Zombie Cafe — isometric 2.5D renderer.
  *
- * Draws the top-down cafe: tiled floor, kitchen counter with stoves, tables,
- * and procedurally-drawn walking characters (green zombie staff + colourful
- * human customers) with a little walk bob, plus food/coin/think bubbles.
- * Pure drawing — it reads a World and paints it; no game state lives here.
+ * The world is a flat COLS x ROWS tile plane; this projects it into a chunky
+ * isometric room and paints outlined cartoon sprites: hunched zombie staff
+ * (chef hats, aprons, drool), big-headed human customers with expressions,
+ * tables with cloths + chairs, ovens, a serving counter, a fridge, plus floor
+ * grime, plants and props. Everything is depth-sorted by tile (x+y).
+ *
+ * Sprites are drawn as upright "billboards" sized to the on-screen tile, so
+ * characters stay big and readable regardless of the iso squish. All drawing
+ * is in device pixels; project()/unproject() bridge plane <-> screen.
  * ===================================================================== */
 (function () {
   'use strict';
-  var W = 720, H = 1280;
-  var EMOJI = {}; (window.RECIPES || []).forEach(function (r) { EMOJI[r.id] = r.emoji; });
+  var Wld = window.World;
+  function recipe(id) { for (var i = 0; i < (window.RECIPES || []).length; i++) if (window.RECIPES[i].id === id) return window.RECIPES[i]; return null; }
+  function shop(id) { for (var i = 0; i < (window.SHOP || []).length; i++) if (window.SHOP[i].id === id) return window.SHOP[i]; return null; }
 
-  function Renderer(canvas) {
-    this.cv = canvas; this.ctx = canvas.getContext('2d');
-    this.scale = 1; this.ox = 0; this.oy = 0;
-    this.resize();
-  }
+  // palette
+  var C = {
+    out: '#15160f', floorL: '#8b9088', floorD: '#7c827a', grout: '#5f655d',
+    wallL: '#6e8a72', wallR: '#566e5b', wallTop: '#84a085', skirt: '#3c4d40',
+    outside: '#1b2a1c', street: '#2a2c25',
+    zSkin: '#7fcf57', zSkinD: '#5aa83f', apron: '#d8d2c0', hat: '#f4f1e8',
+    cloth1: '#c44', cloth2: '#eee', wood: '#7a5436', woodD: '#5d3f28',
+    steel: '#9aa0a6', steelD: '#6c7176', gold: '#ffcf4d', toxic: '#7cff5a', blood: '#d8413a',
+  };
+
+  function Renderer(canvas) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this.resize(); }
+
   Renderer.prototype.resize = function () {
     var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-    var cw = this.cv.clientWidth, ch = this.cv.clientHeight;
+    this.dpr = dpr;
+    var cw = this.cv.clientWidth || 360, ch = this.cv.clientHeight || 640;
     this.cv.width = Math.round(cw * dpr); this.cv.height = Math.round(ch * dpr);
-    var s = Math.min(cw / W, ch / H);
-    this.scale = s * dpr;
-    this.ox = (this.cv.width - W * this.scale) / 2;
-    this.oy = (this.cv.height - H * this.scale) / 2;
+    var cvW = this.cv.width, cvH = this.cv.height, W = Wld.W, H = Wld.H;
+    var spanX = W + H;                                  // isoX ranges over [-H, W]
+    var KX = (cvW * 0.97) / spanX;
+    var KY = KX * 0.56;
+    var wall = KX * 230;
+    var contentH = (W + H) * KY + wall;                // floor diamond height + wall
+    if (contentH > cvH * 0.99) { var f = cvH * 0.99 / contentH; KX *= f; KY *= f; wall *= f; contentH = cvH * 0.99; }
+    this.KX = KX; this.KY = KY; this.wall = wall;
+    this.OX = cvW / 2 + ((H - W) / 2) * KX;             // centre the diamond horizontally
+    this.OY = (cvH - contentH) / 2 + wall;
+    this.TW = Wld.TILE * KX * 2;                        // on-screen tile diamond size
+    this.TH = Wld.TILE * KY * 2;
+    this.S = this.TW;                                   // sprite scale reference
   };
-  // screen (client) point -> world coordinates
-  Renderer.prototype.toWorld = function (cx, cy) {
-    var dpr = this.cv.width / this.cv.clientWidth;
-    return { x: (cx * dpr - this.ox) / this.scale, y: (cy * dpr - this.oy) / this.scale };
-  };
+  Renderer.prototype.project = function (x, y) { return { x: this.OX + (x - y) * this.KX, y: this.OY + (x + y) * this.KY }; };
+  Renderer.prototype.unproject = function (px, py) { var ix = (px - this.OX) / this.KX, iy = (py - this.OY) / this.KY; return { x: (ix + iy) / 2, y: (iy - ix) / 2 }; };
+  Renderer.prototype.toWorld = function (cx, cy) { return this.unproject(cx * this.dpr, cy * this.dpr); };
+  Renderer.prototype.toClient = function (x, y) { var p = this.project(x, y); return { x: p.x / this.dpr, y: p.y / this.dpr }; };
 
+  // ---- main draw ------------------------------------------------------
   Renderer.prototype.draw = function (world, t, ui) {
     ui = ui || {};
-    var c = this.ctx;
+    var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0);
-    c.fillStyle = '#0b0f0c'; c.fillRect(0, 0, this.cv.width, this.cv.height);
-    c.setTransform(this.scale, 0, 0, this.scale, this.ox, this.oy);
-    // clip to room
-    c.save(); c.beginPath(); c.rect(0, 0, W, H); c.clip();
-
+    c.fillStyle = C.outside; c.fillRect(0, 0, cvW, cvH);
+    this._outside(c);
+    this._walls(c);
     this._floor(c);
-    if (ui.edit) this._buildGrid(c, world, ui);
-    this._kitchen(c, world);
-    // draw furniture + actors sorted by y for a little depth
-    var sel = ui.selected;
-    var items = [];
-    world.decors.forEach(function (d) { items.push({ y: d.y, fn: function () { drawDecor(c, d, sel && sel.id === d.id); } }); });
-    world.tables.forEach(function (tb) { items.push({ y: tb.y, fn: function () { drawTable(c, tb, sel && sel.id === tb.id); } }); });
-    world.stoves.forEach(function (st) { items.push({ y: st.y + 30, fn: function () { drawStove(c, st, world, t, sel && sel.id === st.id); } }); });
-    if (!ui.edit) {
-      world.customers.forEach(function (cu) { items.push({ y: cu.y, fn: function () { drawCustomer(c, cu, world, t); } }); });
-      world.zombies.forEach(function (z) { items.push({ y: z.y, fn: function () { drawZombie(c, z, t); } }); });
-    }
-    items.sort(function (a, b) { return a.y - b.y; });
-    items.forEach(function (it) { it.fn(); });
+    if (ui.edit) this._grid(c, world, ui);
 
+    // depth-sorted drawables
+    var self = this, items = [];
+    function add(x, y, fn) { items.push({ d: x + y, fn: fn }); }
+    add(Wld.PASS.x, Wld.PASS.y - 1, function () { self._pass(c, world); });
+    world.decors.forEach(function (d) { add(d.x, d.y, function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
+    world.tables.forEach(function (tb) { add(tb.x, tb.y, function () { self._table(c, tb, ui.selected && ui.selected.id === tb.id); }); });
+    world.stoves.forEach(function (st) { add(st.x, st.y, function () { self._stove(c, st, world, t, ui.selected && ui.selected.id === st.id); }); });
+    if (!ui.edit) {
+      world.customers.forEach(function (cu) { add(cu.x, cu.y, function () { self._customer(c, cu, world, t); }); });
+      world.zombies.forEach(function (z) { add(z.x, z.y, function () { self._zombie(c, z, t); }); });
+    }
+    items.sort(function (a, b) { return a.d - b.d; });
+    items.forEach(function (it) { it.fn(); });
     this._door(c);
+  };
+
+  // ---- environment ----------------------------------------------------
+  Renderer.prototype._diamond = function (c, x, y) { var p = this.project(x, y); c.lineTo(p.x, p.y); };
+  Renderer.prototype._roomPath = function (c) {
+    var W = Wld.W, H = Wld.H; c.beginPath();
+    var a = this.project(0, 0); c.moveTo(a.x, a.y);
+    this._diamond(c, W, 0); this._diamond(c, W, H); this._diamond(c, 0, H); c.closePath();
+  };
+  Renderer.prototype._outside = function (c) {
+    // a paved street margin just outside the room (front-left & front-right)
+    var W = Wld.W, H = Wld.H, m = Wld.TILE * 0.7;
+    c.fillStyle = C.street;
+    c.beginPath();
+    var pts = [ [0, H], [W, H], [W + m, H + m], [-m, H + m] ].map(function (p) { return this.project(p[0], p[1]); }, this);
+    c.moveTo(pts[0].x, pts[0].y); for (var i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y); c.closePath(); c.fill();
+  };
+  Renderer.prototype._walls = function (c) {
+    var W = Wld.W, H = Wld.H, wall = this.wall;
+    var A = this.project(0, 0), B = this.project(W, 0), D = this.project(0, H);
+    // right-back wall (edge A-B)
+    c.fillStyle = C.wallR;
+    c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.lineTo(B.x, B.y - wall); c.lineTo(A.x, A.y - wall); c.closePath(); c.fill();
+    // left-back wall (edge A-D)
+    c.fillStyle = C.wallL;
+    c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(D.x, D.y); c.lineTo(D.x, D.y - wall); c.lineTo(A.x, A.y - wall); c.closePath(); c.fill();
+    // top trims
+    c.fillStyle = C.wallTop;
+    c.beginPath(); c.moveTo(A.x, A.y - wall); c.lineTo(B.x, B.y - wall); c.lineTo(B.x, B.y - wall - 10); c.lineTo(A.x, A.y - wall - 10); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(A.x, A.y - wall); c.lineTo(D.x, D.y - wall); c.lineTo(D.x, D.y - wall - 10); c.lineTo(A.x, A.y - wall - 10); c.closePath(); c.fill();
+    // a window + a crooked picture on the walls for life
+    this._wallWindow(c, B, A, wall, 0.5);
+    this._wallPic(c, A, D, wall, 0.55);
+    // skirting
+    c.strokeStyle = C.skirt; c.lineWidth = Math.max(2, this.KX * 14);
+    c.beginPath(); c.moveTo(B.x, B.y); c.lineTo(A.x, A.y); c.lineTo(D.x, D.y); c.stroke();
+  };
+  Renderer.prototype._wallWindow = function (c, P0, P1, wall, f) {
+    var x = P0.x + (P1.x - P0.x) * f, y = P0.y + (P1.y - P0.y) * f, w = this.TW * 0.7, h = wall * 0.42;
+    c.save(); c.translate(x, y - wall * 0.62);
+    c.fillStyle = '#2a3b44'; c.fillRect(-w / 2, -h / 2, w, h);
+    c.fillStyle = '#3f5a66'; c.fillRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8);
+    c.fillStyle = 'rgba(255,255,255,.08)'; c.beginPath(); c.moveTo(-w / 2 + 4, h / 2 - 4); c.lineTo(2, -h / 2 + 4); c.lineTo(w / 2 - 4, -h / 2 + 4); c.closePath(); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = 3; c.strokeRect(-w / 2, -h / 2, w, h); c.beginPath(); c.moveTo(0, -h / 2); c.lineTo(0, h / 2); c.moveTo(-w / 2, 0); c.lineTo(w / 2, 0); c.stroke();
     c.restore();
   };
-
-  // build-mode grid overlay: show every cell, highlight free ones
-  Renderer.prototype._buildGrid = function (c, world, ui) {
-    var cells = window.World.CELLS;
-    for (var i = 0; i < cells.length; i++) {
-      var free = world.cellFree(i, ui.selected ? ui.selected.id : null);
-      c.fillStyle = free ? 'rgba(124,255,90,.10)' : 'rgba(216,65,58,.08)';
-      c.strokeStyle = free ? 'rgba(124,255,90,.45)' : 'rgba(216,65,58,.3)';
-      c.lineWidth = 2;
-      roundRect(c, cells[i].x - 58, cells[i].y - 40, 116, 80, 12); c.fill(); c.stroke();
-    }
+  Renderer.prototype._wallPic = function (c, P0, P1, wall, f) {
+    var x = P0.x + (P1.x - P0.x) * f, y = P0.y + (P1.y - P0.y) * f, s = this.TW * 0.4;
+    c.save(); c.translate(x, y - wall * 0.6); c.rotate(-0.06);
+    c.fillStyle = '#caa46a'; c.fillRect(-s / 2, -s / 2, s, s);
+    c.fillStyle = '#3a2c4a'; c.fillRect(-s / 2 + 5, -s / 2 + 5, s - 10, s - 10);
+    c.fillStyle = C.toxic; c.font = 'bold ' + (s * 0.5) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('☠', 0, 2);
+    c.strokeStyle = C.out; c.lineWidth = 3; c.strokeRect(-s / 2, -s / 2, s, s); c.restore();
   };
-
   Renderer.prototype._floor = function (c) {
-    var tile = 60;
-    for (var y = 0; y < H; y += tile) for (var x = 0; x < W; x += tile) {
-      var even = ((x / tile) + (y / tile)) % 2 === 0;
-      c.fillStyle = even ? '#1a241c' : '#16201a';
-      c.fillRect(x, y, tile, tile);
+    var W = Wld.W, H = Wld.H, T = Wld.TILE;
+    c.save(); this._roomPath(c); c.clip();
+    for (var gy = 0; gy < H; gy += T) for (var gx = 0; gx < W; gx += T) {
+      var cx = gx + T / 2, cy = gy + T / 2, p = this.project(cx, cy);
+      var even = ((gx / T) + (gy / T)) % 2 === 0;
+      c.fillStyle = even ? C.floorL : C.floorD;
+      c.beginPath();
+      c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill();
+      c.strokeStyle = C.grout; c.lineWidth = 1.2; c.stroke();
+      // a little grime / slime per some tiles (deterministic by tile)
+      var n = (gx * 13 + gy * 7) % 11;
+      if (n === 0) { c.fillStyle = 'rgba(60,90,40,.35)'; blob(c, p.x + 6, p.y + 3, this.TW * 0.12); }
+      else if (n === 3) { c.fillStyle = 'rgba(40,30,20,.30)'; blob(c, p.x - 8, p.y - 2, this.TW * 0.09); }
     }
-    // outer walls
-    c.fillStyle = '#0d140f'; c.fillRect(0, 0, W, 60);
-    c.fillStyle = 'rgba(255,255,255,.03)'; c.fillRect(0, 60, W, 4);
+    c.restore();
   };
-  Renderer.prototype._kitchen = function (c, world) {
-    // back counter band
-    c.fillStyle = '#223026'; c.fillRect(0, 70, W, 150);
-    c.fillStyle = '#2c3d31'; c.fillRect(0, 200, W, 22);
-    // the "pass" where ready dishes wait
-    var P = window.World.PASS;
-    c.fillStyle = '#3a5142'; roundRect(c, P.x - 70, P.y - 4, 140, 40, 8); c.fill();
-    c.fillStyle = '#daf5dd'; c.font = 'bold 22px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
-    var n = world.ready.length;
-    if (n > 0) {
-      var show = Math.min(n, 5);
-      for (var i = 0; i < show; i++) c.fillText(EMOJI[world.ready[world.ready.length - 1 - i]] || '🍽️', P.x - (show - 1) * 13 + i * 26, P.y + 16);
-      if (n > 5) { c.fillStyle = '#7cff5a'; c.font = 'bold 14px system-ui'; c.fillText('+' + (n - 5), P.x + 78, P.y + 16); }
-    } else {
-      c.fillStyle = '#5d7a64'; c.font = '12px system-ui'; c.fillText('pass', P.x, P.y + 16);
+  Renderer.prototype._grid = function (c, world, ui) {
+    var cells = Wld.CELLS, sel = ui.selected ? ui.selected.id : null;
+    for (var i = 0; i < cells.length; i++) {
+      var p = this.project(cells[i].x, cells[i].y), free = world.cellFree(i, sel);
+      c.fillStyle = free ? 'rgba(124,255,90,.16)' : 'rgba(216,65,58,.14)';
+      c.strokeStyle = free ? 'rgba(124,255,90,.7)' : 'rgba(216,65,58,.5)';
+      c.lineWidth = 2.5;
+      c.beginPath(); c.moveTo(p.x, p.y - this.TH / 2); c.lineTo(p.x + this.TW / 2, p.y); c.lineTo(p.x, p.y + this.TH / 2); c.lineTo(p.x - this.TW / 2, p.y); c.closePath(); c.fill(); c.stroke();
     }
   };
   Renderer.prototype._door = function (c) {
-    var D = window.World.DOOR;
-    c.fillStyle = '#0d140f'; c.fillRect(0, H - 40, W, 40);
-    c.fillStyle = '#3a2a1a'; roundRect(c, D.x - 55, H - 64, 110, 60, 8); c.fill();
-    c.fillStyle = '#6b4a2a'; roundRect(c, D.x - 46, H - 56, 92, 56, 6); c.fill();
-    c.fillStyle = '#ffcf4d'; c.beginPath(); c.arc(D.x + 30, H - 30, 4, 0, 7); c.fill();
-    c.fillStyle = '#caa46a'; c.font = 'bold 12px system-ui'; c.textAlign = 'center'; c.fillText('ENTRANCE', D.x, H - 70);
+    var p = this.project(Wld.DOOR.x, Wld.DOOR.y), w = this.TW * 0.6, h = this.TW * 0.7;
+    c.fillStyle = C.woodD; rr(c, p.x - w / 2, p.y - h, w, h, 6); c.fill();
+    c.fillStyle = C.wood; rr(c, p.x - w / 2 + 5, p.y - h + 5, w - 10, h - 5, 4); c.fill();
+    c.fillStyle = C.gold; circle(c, p.x + w / 2 - 12, p.y - h / 2, 3);
+    c.fillStyle = '#caa46a'; c.font = 'bold ' + (this.TW * 0.14) + 'px system-ui'; c.textAlign = 'center'; c.fillText('OPEN', p.x, p.y - h - 6);
   };
 
-  // ---- sprites --------------------------------------------------------
-  function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  // ---- furniture ------------------------------------------------------
+  Renderer.prototype._shadow = function (c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.26)'; c.beginPath(); c.ellipse(x, y, w, w * 0.45, 0, 0, 7); c.fill(); };
 
-  function shadow(c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(x, y, w, w * 0.4, 0, 0, 7); c.fill(); }
+  Renderer.prototype._pass = function (c, world) {
+    var p = this.project(Wld.PASS.x, Wld.PASS.y), w = this.TW * 1.5, h = this.TH * 0.9, S = this.S;
+    this._shadow(c, p.x, p.y + h * 0.5, w * 0.5);
+    // steel counter (iso slab)
+    c.fillStyle = C.steelD; iso(c, p.x, p.y + 8, w, h); c.fill();
+    c.fillStyle = C.steel; iso(c, p.x, p.y, w, h); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
+    // ready dishes stacked
+    var n = world.ready.length, show = Math.min(n, 5);
+    for (var i = 0; i < show; i++) {
+      var dx = p.x - (show - 1) * S * 0.16 + i * S * 0.32;
+      c.fillStyle = '#eee'; c.beginPath(); c.ellipse(dx, p.y - 6, S * 0.13, S * 0.07, 0, 0, 7); c.fill();
+      c.font = (S * 0.22) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText((recipe(world.ready[world.ready.length - 1 - i]) || {}).emoji || '🍽️', dx, p.y - 12);
+    }
+    if (n > 5) badge(c, p.x + w * 0.42, p.y - 14, '+' + (n - 5), C.blood, S);
+    if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.textAlign = 'center'; c.fillText('PASS', p.x, p.y); }
+  };
 
-  function drawTable(c, tb, selected) {
-    var lift = selected ? 10 : 0;
-    // chairs (top + bottom of the table)
-    c.fillStyle = '#42301f';
-    roundRect(c, tb.x - 13, tb.y - 40 - lift, 26, 16, 5); c.fill();
-    roundRect(c, tb.x - 13, tb.y + 22 - lift, 26, 16, 5); c.fill();
-    shadow(c, tb.x, tb.y + 26, 34);
-    c.fillStyle = '#5a3d28'; c.beginPath(); c.ellipse(tb.x, tb.y - lift, 34, 26, 0, 0, 7); c.fill();
-    c.fillStyle = '#6e4d34'; c.beginPath(); c.ellipse(tb.x, tb.y - 3 - lift, 34, 26, 0, 0, 7); c.fill();
-    c.fillStyle = '#825c3f'; c.beginPath(); c.ellipse(tb.x, tb.y - 3 - lift, 24, 17, 0, 0, 7); c.fill();
-    if (selected) selRing(c, tb.x, tb.y - lift, 40);
-  }
+  Renderer.prototype._table = function (c, tb, sel) {
+    var p = this.project(tb.x, tb.y), S = this.S, lift = sel ? S * 0.18 : 0; var y = p.y - lift;
+    // chairs (back then front drawn around)
+    chair(c, p.x - S * 0.5, y - S * 0.12, S, 1);
+    chair(c, p.x + S * 0.5, y - S * 0.12, S, 1);
+    this._shadow(c, p.x, p.y + S * 0.18, S * 0.5);
+    chair(c, p.x, y + S * 0.34, S, 0);
+    // pedestal
+    c.fillStyle = C.woodD; rr(c, p.x - S * 0.06, y - S * 0.05, S * 0.12, S * 0.32, 3); c.fill();
+    // round top with cloth + checker
+    c.fillStyle = C.woodD; c.beginPath(); c.ellipse(p.x, y + 4, S * 0.42, S * 0.22, 0, 0, 7); c.fill();
+    c.fillStyle = C.cloth1; c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.fill();
+    c.save(); c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.clip();
+    c.fillStyle = 'rgba(255,255,255,.85)';
+    for (var i = -3; i <= 3; i++) for (var j = -3; j <= 3; j++) if ((i + j) % 2 === 0) c.fillRect(p.x + i * S * 0.12, y + j * S * 0.07 - S * 0.03, S * 0.12, S * 0.07);
+    c.restore();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.ellipse(p.x, y, S * 0.42, S * 0.22, 0, 0, 7); c.stroke();
+    // a plate on top
+    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(p.x, y - 2, S * 0.12, S * 0.06, 0, 0, 7); c.fill();
+    if (sel) selRing(c, p.x, y, S * 0.5);
+  };
 
-  function drawDecor(c, d, selected) {
-    var it = (window.SHOP || []).filter(function (s) { return s.id === d.deco; })[0] || {};
-    var x = d.x, y = d.y, lift = selected ? 10 : 0; y -= lift;
-    shadow(c, x, y + 22, 22);
+  Renderer.prototype._decor = function (c, d, sel) {
+    var p = this.project(d.x, d.y), S = this.S, it = shop(d.deco) || {}, lift = sel ? S * 0.18 : 0, y = p.y - lift;
+    this._shadow(c, p.x, p.y + S * 0.12, S * 0.32);
+    c.lineWidth = S * 0.03; c.strokeStyle = C.out;
     switch (it.art) {
       case 'plant':
-        c.fillStyle = '#8a5a36'; roundRect(c, x - 12, y + 4, 24, 18, 4); c.fill();
-        c.fillStyle = '#2f8f3a'; c.beginPath(); c.arc(x, y - 4, 16, 0, 7); c.fill();
-        c.fillStyle = '#3fb04a'; c.beginPath(); c.arc(x - 7, y - 10, 9, 0, 7); c.arc(x + 7, y - 8, 8, 0, 7); c.fill(); break;
+        c.fillStyle = '#7a4b2a'; rr(c, p.x - S * 0.16, y - S * 0.02, S * 0.32, S * 0.28, 4); c.fill(); c.stroke();
+        c.fillStyle = '#2f8f3a'; circle(c, p.x, y - S * 0.28, S * 0.26); c.fillStyle = '#3fb04a'; circle(c, p.x - S * 0.14, y - S * 0.42, S * 0.16); circle(c, p.x + S * 0.14, y - S * 0.38, S * 0.14); c.strokeStyle = C.out; c.beginPath(); c.arc(p.x, y - S * 0.28, S * 0.26, 0, 7); c.stroke(); break;
       case 'lamp':
-        c.strokeStyle = '#3a3a3a'; c.lineWidth = 4; line(c, x, y + 24, x, y - 6);
-        c.fillStyle = '#ffcf4d'; c.beginPath(); c.moveTo(x - 16, y - 4); c.lineTo(x + 16, y - 4); c.lineTo(x + 10, y - 22); c.lineTo(x - 10, y - 22); c.closePath(); c.fill();
-        c.fillStyle = 'rgba(255,207,77,.25)'; c.beginPath(); c.arc(x, y, 26, 0, 7); c.fill(); break;
+        c.strokeStyle = '#2a2a2a'; c.lineWidth = S * 0.05; line(c, p.x, y + S * 0.3, p.x, y - S * 0.4);
+        c.fillStyle = C.gold; c.beginPath(); c.moveTo(p.x - S * 0.26, y - S * 0.34); c.lineTo(p.x + S * 0.26, y - S * 0.34); c.lineTo(p.x + S * 0.16, y - S * 0.64); c.lineTo(p.x - S * 0.16, y - S * 0.64); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke();
+        c.fillStyle = 'rgba(255,207,77,.22)'; circle(c, p.x, y - S * 0.3, S * 0.5); break;
       case 'rug':
-        c.fillStyle = '#7a1f24'; roundRect(c, x - 40, y - 26, 80, 52, 10); c.fill();
-        c.strokeStyle = '#c0902f'; c.lineWidth = 3; roundRect(c, x - 33, y - 19, 66, 38, 8); c.stroke(); break;
+        c.fillStyle = '#7a1f24'; iso(c, p.x, y, S * 1.1, S * 0.55); c.fill(); c.stroke();
+        c.strokeStyle = C.gold; c.lineWidth = S * 0.04; iso(c, p.x, y, S * 0.8, S * 0.4); c.stroke(); break;
       case 'jukebox':
-        c.fillStyle = '#5a2a6a'; roundRect(c, x - 18, y - 26, 36, 50, 8); c.fill();
-        c.fillStyle = '#ffcf4d'; roundRect(c, x - 12, y - 20, 24, 14, 4); c.fill();
-        c.fillStyle = '#b06bff'; c.beginPath(); c.arc(x, y + 6, 7, 0, 7); c.fill(); break;
+        c.fillStyle = '#5a2a6a'; rr(c, p.x - S * 0.24, y - S * 0.66, S * 0.48, S * 0.84, 8); c.fill(); c.stroke();
+        c.fillStyle = C.gold; rr(c, p.x - S * 0.16, y - S * 0.58, S * 0.32, S * 0.22, 4); c.fill();
+        c.fillStyle = '#b06bff'; circle(c, p.x, y - S * 0.12, S * 0.12); break;
       case 'fountain':
-        c.fillStyle = '#444'; c.beginPath(); c.ellipse(x, y + 8, 26, 14, 0, 0, 7); c.fill();
-        c.fillStyle = '#7a1f24'; c.beginPath(); c.ellipse(x, y + 4, 22, 11, 0, 0, 7); c.fill();
-        c.fillStyle = '#d8413a'; roundRect(c, x - 4, y - 18, 8, 22, 3); c.fill();
-        c.beginPath(); c.arc(x, y - 18, 6, 0, 7); c.fill(); break;
-      default:
-        c.fillStyle = '#445'; roundRect(c, x - 14, y - 14, 28, 28, 6); c.fill();
+        c.fillStyle = '#555'; c.beginPath(); c.ellipse(p.x, y + S * 0.1, S * 0.38, S * 0.2, 0, 0, 7); c.fill(); c.stroke();
+        c.fillStyle = '#7a1f24'; c.beginPath(); c.ellipse(p.x, y + S * 0.04, S * 0.3, S * 0.15, 0, 0, 7); c.fill();
+        c.fillStyle = C.blood; rr(c, p.x - S * 0.05, y - S * 0.34, S * 0.1, S * 0.4, 3); c.fill(); circle(c, p.x, y - S * 0.34, S * 0.09); break;
+      default: c.fillStyle = '#556'; rr(c, p.x - S * 0.2, y - S * 0.2, S * 0.4, S * 0.4, 6); c.fill(); c.stroke();
     }
-    if (selected) selRing(c, x, y, 30);
-  }
-  function selRing(c, x, y, r) { c.strokeStyle = '#7cff5a'; c.lineWidth = 3; c.setLineDash([6, 5]); c.beginPath(); c.arc(x, y, r + 6, 0, 7); c.stroke(); c.setLineDash([]); }
+    if (sel) selRing(c, p.x, y, S * 0.4);
+  };
 
-  function bob(e) { return Math.sin(e.step) * (e.state === 'idle' || e.state === 'waiting' || e.state === 'eating' || e.state === 'paying' ? 0.6 : 2.4); }
-
-  function drawZombie(c, z, t) {
-    var x = z.x, y = z.y, b = bob(z);
-    shadow(c, x, y + 18, 16);
-    // legs
-    c.strokeStyle = '#3f7a36'; c.lineWidth = 6; c.lineCap = 'round';
-    var sw = Math.sin(z.step) * (z.state === 'idle' ? 1 : 5);
-    line(c, x - 5, y + 8, x - 5 + sw, y + 20); line(c, x + 5, y + 8, x + 5 - sw, y + 20);
+  Renderer.prototype._stove = function (c, st, world, t, sel) {
+    var p = this.project(st.x, st.y), S = this.S, x = p.x, y = p.y;
+    this._shadow(c, x, y + S * 0.16, S * 0.4);
+    if (st.ready) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.72, S, S * 0.95, 12); c.fill(); }
     // body
-    c.fillStyle = '#6abf4b'; roundRect(c, x - 12, y - 12 - b, 24, 26, 9); c.fill();
-    c.fillStyle = 'rgba(0,0,0,.12)'; roundRect(c, x - 12, y + 2 - b, 24, 12, 7); c.fill();
-    // arms (carry food forward)
-    c.strokeStyle = '#5aa83f'; c.lineWidth = 5;
-    if (z.carry) { line(c, x - 9, y - 6 - b, x - 14, y - 14 - b); line(c, x + 9, y - 6 - b, x + 14, y - 14 - b); }
-    else { line(c, x - 11, y - 6 - b, x - 15, y + 2 - b); line(c, x + 11, y - 6 - b, x + 15, y + 2 - b); }
-    // head
-    c.fillStyle = '#7bd35a'; c.beginPath(); c.arc(x, y - 20 - b, 11, 0, 7); c.fill();
-    // face
-    c.fillStyle = '#13240f';
-    var lx = z.face === 'R' ? 1 : z.face === 'L' ? -1 : 0;
-    c.beginPath(); c.arc(x - 4 + lx, y - 21 - b, 1.7, 0, 7); c.arc(x + 4 + lx, y - 21 - b, 1.7, 0, 7); c.fill();
-    c.strokeStyle = '#13240f'; c.lineWidth = 1.4; line(c, x - 4, y - 15 - b, x + 4, y - 15 - b);
-    // stitch on head
-    c.lineWidth = 1; line(c, x - 8, y - 24 - b, x - 4, y - 22 - b);
-    // carried dish bubble
-    if (z.carry) bubble(c, x, y - 38 - b, EMOJI[z.carry] || '🍽️');
-  }
-
-  function drawCustomer(c, cu, world, t) {
-    var x = cu.x, y = cu.y, b = bob(cu);
-    shadow(c, x, y + 18, 15);
-    c.strokeStyle = '#222'; c.lineWidth = 6; c.lineCap = 'round';
-    var sw = Math.sin(cu.step) * (cu.state === 'toTable' || cu.state === 'leaving' ? 5 : 0.5);
-    c.strokeStyle = '#33373a';
-    line(c, x - 5, y + 8, x - 5 + sw, y + 20); line(c, x + 5, y + 8, x + 5 - sw, y + 20);
-    // body (shirt)
-    c.fillStyle = cu.color; roundRect(c, x - 11, y - 11 - b, 22, 24, 8); c.fill();
-    // arms
-    c.strokeStyle = cu.color; c.lineWidth = 5; line(c, x - 10, y - 5 - b, x - 14, y + 2 - b); line(c, x + 10, y - 5 - b, x + 14, y + 2 - b);
-    // head
-    c.fillStyle = cu.skin; c.beginPath(); c.arc(x, y - 19 - b, 10, 0, 7); c.fill();
-    c.fillStyle = '#2b2b2b'; c.beginPath(); c.arc(x, y - 25 - b, 10, Math.PI, 2 * Math.PI); c.fill(); // hair
-    c.fillStyle = '#222';
-    var lx = cu.face === 'R' ? 1.5 : cu.face === 'L' ? -1.5 : 0;
-    c.beginPath(); c.arc(x - 3.5 + lx, y - 19 - b, 1.5, 0, 7); c.arc(x + 3.5 + lx, y - 19 - b, 1.5, 0, 7); c.fill();
-    // state bubble
-    if (cu.state === 'waiting') {
-      if (cu.infectable) bubble(c, x, y - 40 - b, '🧟', '#7cff5a');
-      else bubble(c, x, y - 40 - b, '🍴');
-      // patience ring
-      var p = 1 - Math.min(1, (world.t - cu.wait) / world.patience());
-      ring(c, x + 20, y - 30 - b, 9, p, p > 0.4 ? '#7cff5a' : p > 0.18 ? '#ffcf4d' : '#d8413a');
-    } else if (cu.state === 'eating') {
-      bubble(c, x, y - 40 - b, EMOJI[cu.dish] || '🍽️');
-    } else if (cu.state === 'paying') {
-      bubble(c, x, y - 40 - b, '🪙', '#ffcf4d');
-    }
-  }
-
-  function bubble(c, x, y, txt, ring) {
-    c.fillStyle = ring || '#eef6ee';
-    c.beginPath(); c.arc(x, y, 13, 0, 7); c.fill();
-    c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, 11, 0, 7); c.fill();
-    c.font = '15px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#111';
-    c.fillText(txt, x, y + 1);
-  }
-  function ring(c, x, y, r, frac, col) {
-    c.strokeStyle = 'rgba(0,0,0,.4)'; c.lineWidth = 3; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
-    c.strokeStyle = col; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI); c.stroke();
-  }
-  function line(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
-
-  function drawStove(c, st, world, t, selected) {
-    var x = st.x, y = st.y;
-    shadow(c, x, y + 22, 26);
-    if (st.ready) { c.fillStyle = 'rgba(124,255,90,' + (0.18 + 0.12 * Math.sin(t * 5)) + ')'; roundRect(c, x - 32, y - 30, 64, 62, 12); c.fill(); }
-    c.fillStyle = selected ? '#4a5560' : '#3a3f44'; roundRect(c, x - 26, y - 22, 52, 46, 8); c.fill();
-    c.fillStyle = '#2a2e32'; roundRect(c, x - 20, y - 16, 40, 24, 6); c.fill();
-    c.fillStyle = '#1c1f22'; c.beginPath(); c.arc(x, y - 4, 14, 0, 7); c.fill();
-    var r = window.RECIPES.find ? window.RECIPES.find(function (q) { return q.id === st.recipe; }) : null;
-    r = r || { time: 1, emoji: '🍳', batch: 0 };
+    c.fillStyle = sel ? '#566' : C.steelD; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.66, 8); c.fill();
+    c.fillStyle = C.steel; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.2, 8); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = S * 0.035; rr(c, x - S * 0.42, y - S * 0.5, S * 0.84, S * 0.66, 8); c.stroke();
+    // oven door + window
+    c.fillStyle = '#23262a'; rr(c, x - S * 0.3, y - S * 0.26, S * 0.6, S * 0.36, 5); c.fill();
+    c.fillStyle = '#3a3f45'; rr(c, x - S * 0.22, y - S * 0.2, S * 0.44, S * 0.24, 4); c.fill();
+    // knobs
+    c.fillStyle = C.gold; circle(c, x - S * 0.28, y - S * 0.4, S * 0.04); circle(c, x - S * 0.14, y - S * 0.4, S * 0.04);
+    var r = recipe(st.recipe) || { time: 1, emoji: '🍳', batch: 0 };
+    c.textAlign = 'center'; c.textBaseline = 'middle';
     if (st.ready) {
-      // finished food sitting on the stove — tap to serve
-      c.fillStyle = '#54585c'; roundRect(c, x - 12, y - 12, 24, 14, 4); c.fill();
-      c.font = '18px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - 4);
-      c.fillStyle = '#07210a'; roundRect(c, x - 26, y - 36, 52, 16, 6); c.fillStyle = '#7cff5a'; roundRect(c, x - 26, y - 36, 52, 16, 6); c.fill();
-      c.fillStyle = '#07210a'; c.font = 'bold 11px system-ui'; c.fillText('SERVE ▸', x, y - 28);
-      c.fillStyle = '#fff'; bubbleCount(c, x + 22, y - 30, st && r.batch ? r.batch : 0);
+      c.fillStyle = '#54585c'; rr(c, x - S * 0.16, y - S * 0.36, S * 0.32, S * 0.16, 4); c.fill();
+      c.font = (S * 0.26) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - S * 0.28);
+      c.fillStyle = C.toxic; rr(c, x - S * 0.36, y - S * 0.7, S * 0.72, S * 0.2, 6); c.fill();
+      c.fillStyle = '#07210a'; c.font = 'bold ' + (S * 0.14) + 'px system-ui'; c.fillText('SERVE ▸', x, y - S * 0.6);
+      if (r.batch) badge(c, x + S * 0.34, y - S * 0.66, '' + r.batch, C.blood, S);
     } else if (st.recipe) {
+      for (var i = -1; i <= 1; i++) { c.fillStyle = i === 0 ? '#ffb43d' : '#ff7a2d'; circle(c, x + i * S * 0.1, y - S * 0.18 + Math.sin(t * 9 + i) * 2, S * 0.07); }
+      c.fillStyle = '#54585c'; rr(c, x - S * 0.16, y - S * 0.34, S * 0.32, S * 0.16, 4); c.fill();
+      c.font = (S * 0.22) + 'px system-ui'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - S * 0.26);
       var frac = Math.min(1, (world.t - st.start) / r.time);
-      for (var i = -1; i <= 1; i++) { c.fillStyle = i === 0 ? '#ffb43d' : '#ff7a2d'; c.beginPath(); c.arc(x + i * 6, y - 4 + Math.sin(t * 8 + i) * 1.5, 4 + Math.random() * 1.5, 0, 7); c.fill(); }
-      c.fillStyle = '#54585c'; roundRect(c, x - 12, y - 12, 24, 14, 4); c.fill();
-      c.font = '16px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff'; c.fillText(r.emoji, x, y - 5);
-      c.fillStyle = '#0c140e'; roundRect(c, x - 24, y - 34, 48, 7, 3); c.fill();
-      c.fillStyle = '#7cff5a'; roundRect(c, x - 24, y - 34, 48 * frac, 7, 3); c.fill();
+      c.fillStyle = '#0c140e'; rr(c, x - S * 0.36, y - S * 0.66, S * 0.72, S * 0.1, 4); c.fill();
+      c.fillStyle = C.toxic; rr(c, x - S * 0.36, y - S * 0.66, S * 0.72 * frac, S * 0.1, 4); c.fill();
     } else {
-      c.fillStyle = '#7cff5a'; c.font = 'bold 20px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('+', x, y - 3);
-      c.fillStyle = '#5d7a64'; c.font = '10px system-ui'; c.fillText('cook', x, y + 16);
+      c.fillStyle = C.toxic; c.font = 'bold ' + (S * 0.3) + 'px system-ui'; c.fillText('+', x, y - S * 0.2);
+      c.fillStyle = 'rgba(230,243,231,.6)'; c.font = 'bold ' + (S * 0.12) + 'px system-ui'; c.fillText('COOK', x, y - S * 0.02);
     }
-    if (selected) selRing(c, x, y, 32);
+    if (sel) selRing(c, x, y - S * 0.15, S * 0.5);
+  };
+
+  // ---- characters -----------------------------------------------------
+  function facing(e) { return e.face === 'L' ? -1 : e.face === 'R' ? 1 : 0; }
+
+  Renderer.prototype._zombie = function (c, z, t) {
+    var p = this.project(z.x, z.y), S = this.S, walk = (z.state !== 'idle');
+    var bob = Math.sin(z.step * 2) * (walk ? S * 0.04 : S * 0.012);
+    var x = p.x, y = p.y - bob, lx = facing(z);
+    this._shadow(c, p.x, p.y + S * 0.04, S * 0.26);
+    var sw = Math.sin(z.step * 2) * (walk ? S * 0.08 : 0);
+    // legs
+    stroke(c, C.zSkinD, S * 0.1); line(c, x - S * 0.07, y - S * 0.02, x - S * 0.07 + sw, y + S * 0.16); line(c, x + S * 0.07, y - S * 0.02, x + S * 0.07 - sw, y + S * 0.16);
+    // body (apron)
+    body(c, x, y - S * 0.18, S * 0.34, S * 0.4, C.zSkin);
+    c.fillStyle = C.apron; rr(c, x - S * 0.13, y - S * 0.28, S * 0.26, S * 0.34, 5); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();
+    // arms (carry forward if holding a plate)
+    stroke(c, C.zSkin, S * 0.085);
+    if (z.carry) { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.24, y - S * 0.42); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.24, y - S * 0.42); }
+    else { line(c, x - S * 0.16, y - S * 0.3, x - S * 0.22, y - S * 0.12); line(c, x + S * 0.16, y - S * 0.3, x + S * 0.22, y - S * 0.12); }
+    // big head
+    var hy = y - S * 0.56;
+    c.fillStyle = C.zSkin; circle(c, x, hy, S * 0.22); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.arc(x, hy, S * 0.22, 0, 7); c.stroke();
+    c.fillStyle = C.zSkinD; c.beginPath(); c.arc(x, hy, S * 0.22, 0.3, Math.PI - 0.3); c.fill();      // jaw shade
+    // tired eyes
+    c.fillStyle = '#fff'; circle(c, x - S * 0.08 + lx * S * 0.02, hy - S * 0.02, S * 0.055); circle(c, x + S * 0.08 + lx * S * 0.02, hy - S * 0.02, S * 0.055);
+    c.fillStyle = C.out; circle(c, x - S * 0.08 + lx * S * 0.03, hy - S * 0.01, S * 0.025); circle(c, x + S * 0.08 + lx * S * 0.03, hy - S * 0.01, S * 0.025);
+    c.strokeStyle = C.out; c.lineWidth = S * 0.018; line(c, x - S * 0.13, hy - S * 0.08, x - S * 0.03, hy - S * 0.06); line(c, x + 0.03 * S, hy - S * 0.06, x + S * 0.13, hy - S * 0.08);
+    // teeth grin + drool
+    c.fillStyle = '#2a160f'; rr(c, x - S * 0.08, hy + S * 0.06, S * 0.16, S * 0.05, 2); c.fill();
+    c.fillStyle = '#fff'; for (var i = 0; i < 3; i++) c.fillRect(x - S * 0.07 + i * S * 0.05, hy + S * 0.06, S * 0.03, S * 0.05);
+    c.fillStyle = '#bfe6c0'; circle(c, x + S * 0.06, hy + S * 0.13, S * 0.018);
+    // chef hat
+    c.fillStyle = C.hat; rr(c, x - S * 0.14, hy - S * 0.3, S * 0.28, S * 0.12, 4); c.fill(); circle(c, x - S * 0.1, hy - S * 0.32, S * 0.07); circle(c, x, hy - S * 0.35, S * 0.08); circle(c, x + S * 0.1, hy - S * 0.32, S * 0.07); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.beginPath(); c.rect(x - S * 0.14, hy - S * 0.22, S * 0.28, S * 0.05); c.stroke();
+    if (z.carry) bubble(c, x, y - S * 0.92, (recipe(z.carry) || {}).emoji || '🍽️', '#fff', S);
+  };
+
+  Renderer.prototype._customer = function (c, cu, world, t) {
+    var p = this.project(cu.x, cu.y), S = this.S, sitting = (cu.state === 'eating' || cu.state === 'paying' || cu.state === 'waiting');
+    var walk = (cu.state === 'toTable' || cu.state === 'leaving');
+    var bob = Math.sin(cu.step * 2) * (walk ? S * 0.04 : 0);
+    var x = p.x, y = p.y - bob - (sitting ? S * 0.04 : 0), lx = facing(cu);
+    this._shadow(c, p.x, p.y + S * 0.04, S * 0.24);
+    var sw = Math.sin(cu.step * 2) * (walk ? S * 0.08 : 0);
+    stroke(c, '#33363a', S * 0.09); line(c, x - S * 0.06, y - S * 0.02, x - S * 0.06 + sw, y + S * 0.15); line(c, x + S * 0.06, y - S * 0.02, x + S * 0.06 - sw, y + S * 0.15);
+    body(c, x, y - S * 0.18, S * 0.3, S * 0.36, cu.color);
+    stroke(c, cu.color, S * 0.08); line(c, x - S * 0.14, y - S * 0.28, x - S * 0.2, y - S * 0.12); line(c, x + S * 0.14, y - S * 0.28, x + S * 0.2, y - S * 0.12);
+    var hy = y - S * 0.52;
+    c.fillStyle = cu.skin; circle(c, x, hy, S * 0.2); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.beginPath(); c.arc(x, hy, S * 0.2, 0, 7); c.stroke();
+    // hair
+    c.fillStyle = cu.hair || '#2b2b2b'; c.beginPath(); c.arc(x, hy - S * 0.04, S * 0.2, Math.PI + 0.3, 2 * Math.PI - 0.3); c.fill();
+    // eyes + expression
+    c.fillStyle = '#fff'; circle(c, x - S * 0.07 + lx * S * 0.02, hy, S * 0.05); circle(c, x + S * 0.07 + lx * S * 0.02, hy, S * 0.05);
+    c.fillStyle = C.out; circle(c, x - S * 0.07 + lx * S * 0.03, hy + S * 0.005, S * 0.022); circle(c, x + S * 0.07 + lx * S * 0.03, hy + S * 0.005, S * 0.022);
+    var angry = cu.state === 'waiting' && (world.t - cu.wait) > world.patience() * 0.6;
+    c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.beginPath();
+    if (cu.state === 'paying' || cu.state === 'eating') { c.arc(x, hy + S * 0.06, S * 0.06, 0.15 * Math.PI, 0.85 * Math.PI); }      // smile
+    else if (angry) { c.moveTo(x - S * 0.06, hy + S * 0.1); c.lineTo(x + S * 0.06, hy + S * 0.1); c.moveTo(x - S * 0.11, hy - S * 0.06); c.lineTo(x - S * 0.03, hy - S * 0.03); c.moveTo(x + S * 0.03, hy - S * 0.03); c.lineTo(x + S * 0.11, hy - S * 0.06); }
+    else { c.moveTo(x - S * 0.04, hy + S * 0.08); c.lineTo(x + S * 0.04, hy + S * 0.08); }
+    c.stroke();
+    // thought bubble
+    if (cu.state === 'waiting') {
+      bubble(c, x + S * 0.28, y - S * 0.78, cu.infectable ? '🧟' : (angry ? '😠' : '🍴'), cu.infectable ? C.toxic : '#fff', S);
+      var pat = 1 - Math.min(1, (world.t - cu.wait) / world.patience());
+      ring(c, x + S * 0.28, y - S * 0.55, S * 0.1, pat, pat > 0.4 ? C.toxic : pat > 0.18 ? C.gold : C.blood, S);
+    } else if (cu.state === 'eating') bubble(c, x + S * 0.28, y - S * 0.78, (recipe(cu.dish) || {}).emoji || '🍽️', '#fff', S);
+    else if (cu.state === 'paying') bubble(c, x + S * 0.28, y - S * 0.78, '🪙', C.gold, S);
+  };
+
+  // ---- primitives -----------------------------------------------------
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function iso(c, x, y, w, h) { c.beginPath(); c.moveTo(x, y - h / 2); c.lineTo(x + w / 2, y); c.lineTo(x, y + h / 2); c.lineTo(x - w / 2, y); c.closePath(); }
+  function circle(c, x, y, r) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
+  function blob(c, x, y, r) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0, 0, 7); c.fill(); }
+  function line(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+  function stroke(c, col, w) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; }
+  function body(c, x, y, w, h, col) { c.fillStyle = col; rr(c, x - w / 2, y - h / 2, w, h, w * 0.4); c.fill(); c.strokeStyle = C.out; c.lineWidth = w * 0.09; c.stroke(); }
+  function chair(c, x, y, S, back) { c.fillStyle = C.woodD; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.fill(); if (back) { c.fillStyle = C.wood; rr(c, x - S * 0.13, y - S * 0.32, S * 0.26, S * 0.12, 4); c.fill(); } c.strokeStyle = C.out; c.lineWidth = S * 0.02; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.stroke(); }
+  function selRing(c, x, y, r) { c.strokeStyle = C.toxic; c.lineWidth = 3; c.setLineDash([7, 5]); c.beginPath(); c.arc(x, y, r + 6, 0, 7); c.stroke(); c.setLineDash([]); }
+  function ring(c, x, y, r, frac, col, S) { c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = S * 0.04; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); c.strokeStyle = col; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI); c.stroke(); }
+  function bubble(c, x, y, txt, col, S) {
+    c.fillStyle = col; circle(c, x, y, S * 0.18); c.fillStyle = '#fff'; circle(c, x, y, S * 0.15);
+    c.fillStyle = col === '#fff' ? '#fff' : col; circle(c, x, y, S * 0.155); c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.beginPath(); c.arc(x, y, S * 0.16, 0, 7); c.stroke();
+    c.fillStyle = '#111'; c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, x, y + 1);
+    c.fillStyle = '#fff'; circle(c, x - S * 0.16, y + S * 0.16, S * 0.03); circle(c, x - S * 0.22, y + S * 0.22, S * 0.02);
   }
-  function bubbleCount(c, x, y, n) { if (!n) return; c.fillStyle = '#d8413a'; c.beginPath(); c.arc(x, y, 9, 0, 7); c.fill(); c.fillStyle = '#fff'; c.font = 'bold 11px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(n, x, y + 1); }
+  function badge(c, x, y, txt, col, S) { c.fillStyle = col; circle(c, x, y, S * 0.13); c.strokeStyle = '#fff'; c.lineWidth = S * 0.02; c.beginPath(); c.arc(x, y, S * 0.13, 0, 7); c.stroke(); c.fillStyle = '#fff'; c.font = 'bold ' + (S * 0.16) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, x, y + 1); }
 
   window.Renderer = Renderer;
 })();
