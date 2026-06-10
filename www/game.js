@@ -5,8 +5,9 @@
  * ===================================================================== */
 (function () {
   'use strict';
-  var SAVE_KEY = 'zombiecafe.save.v2';
+  var SAVE_KEY = 'zombiecafe.save.v3';
   var world, renderer, canvas, lastFrame = 0, lastSave = 0;
+  var editMode = false, selected = null;   // build mode + currently lifted furniture
 
   function el(id) { return document.getElementById(id); }
   function now() { return Date.now() / 1000; }
@@ -72,6 +73,7 @@
       else if (e.type === 'warn') toast(e.msg);
       else if (e.type === 'bought') toast(e.item.emoji + ' ' + e.item.name + ' added!');
       else if (e.type === 'infect') { floatText(e.x, e.y - 30, '🧟 +1 staff', 'tox'); }
+      else if (e.type === 'plated') { floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox'); }
       else if (e.type === 'raidStart') toast('⚔️ Squad sent to raid ' + e.rival.name);
       else if (e.type === 'raidEnd') raidResult(e);
     });
@@ -80,9 +82,9 @@
   // ---- loop -----------------------------------------------------------
   function frame(ts) {
     var dt = lastFrame ? (ts - lastFrame) / 1000 : 0; lastFrame = ts;
-    world.tick(dt);
+    if (!editMode) world.tick(dt);        // freeze the sim while rearranging
     drainEvents();
-    renderer.draw(world, ts / 1000);
+    renderer.draw(world, ts / 1000, { edit: editMode, selected: selected });
     renderHUD();
     save(false);
     requestAnimationFrame(frame);
@@ -91,15 +93,36 @@
   // ---- input on the cafe ---------------------------------------------
   function onTap(clientX, clientY) {
     var w = renderer.toWorld(clientX, clientY);
+    if (editMode) return onTapEdit(w);
     var hit = world.pickAt(w.x, w.y);
     if (!hit) return;
     if (hit.kind === 'stove') {
       var st = world.stoves.filter(function (s) { return s.id === hit.id; })[0];
-      if (!st.recipe) openCook(st.id); else rushConfirm(st.id);
+      if (st.ready) world.plateStove(st.id);          // tap-to-serve
+      else if (st.recipe) rushConfirm(st.id);          // rush a cooking dish
+      else openCook(st.id);                            // start a cook
     } else if (hit.kind === 'customer') {
       if (hit.paying) world.collectCustomer(hit.id);
       else if (hit.infectable) infectConfirm(hit.id);
     }
+  }
+  // Build mode: first tap lifts a piece; next tap on a spot drops it there.
+  function onTapEdit(w) {
+    if (selected) {
+      if (selected.kind === 'stove') { var slot = world.stoveSlotAt(w.x, w.y); if (slot >= 0 && world.moveStove(selected.id, slot)) { selected = null; return; } }
+      else { var cell = world.cellAt(w.x, w.y); if (cell >= 0) { var ok = selected.kind === 'table' ? world.moveTable(selected.id, cell) : world.moveDecor(selected.id, cell); if (ok) { selected = null; return; } } }
+      // tapped elsewhere: try to pick a different piece, else deselect
+      var p = world.pickFurnitureAt(w.x, w.y); selected = p || null; return;
+    }
+    selected = world.pickFurnitureAt(w.x, w.y);
+    if (!selected) toast('Tap a table, stove or decoration to move it');
+  }
+  function setEdit(on) {
+    editMode = on; selected = null;
+    var b = el('buildbar');
+    if (on) { if (!b) { b = document.createElement('div'); b.id = 'buildbar'; b.className = 'buildbar'; b.innerHTML = '🔨 Build mode — tap a piece, then tap where to put it <button class="buy coin" data-act="build-done">Done</button>'; document.body.appendChild(b); } }
+    else if (b) b.remove();
+    renderHUD();
   }
 
   // ---- modals ---------------------------------------------------------
@@ -163,6 +186,7 @@
       '<div class="r-t">' + (w ? 'Raid successful!' : 'Raid repelled') + '</div>' +
       '<div class="r-s">' + e.rival.emoji + ' ' + e.rival.name + '</div>' +
       '<div class="loot">+🪙' + fmt(e.loot) + (e.toxin ? ' +☣' + e.toxin : '') + '</div>' +
+      (e.recipe ? '<div class="r-s" style="color:var(--toxic);margin-top:8px;">📖 Stole recipe: ' + e.recipe.emoji + ' ' + e.recipe.name + '!</div>' : '') +
       '<div class="r-s">Your squad returns to work.</div>' +
       '<button class="buy coin" data-act="close" style="margin-top:14px;justify-content:center;width:100%;">Nice</button></div></div>');
   }
@@ -170,12 +194,13 @@
   function openHelp() {
     function h(i, n, b) { return '<div class="row"><div class="r-ico">' + i + '</div><div class="r-body"><div class="r-name">' + n + '</div><div class="r-desc">' + b + '</div></div></div>'; }
     openSheet('<div class="sheet">' + head('❓ How to play') + '<div class="list">' +
-      h('🔪', 'Cook', 'Tap a stove in the kitchen, pick a dish. It cooks in real time, then lands on the pass counter.') +
-      h('🧟', 'Serve', 'Your zombie staff walk dishes from the pass to seated customers automatically. More zombies = faster service.') +
+      h('🔪', 'Cook', 'Tap a stove, pick a dish. It cooks in real time, then glows with a SERVE tag.') +
+      h('🍽️', 'Serve', 'Tap a glowing SERVE stove to plate the food. Your zombie staff then carry it from the pass to seated customers. More zombies = faster service.') +
       h('🪙', 'Collect', 'When a customer shows a coin, tap them to grab coins + XP.') +
       h('🧟‍♀️', 'Infect', 'Tap a customer with a green 🧟 bubble to spend toxin and turn them into a new zombie worker.') +
-      h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes for loot.') +
-      h('🛒', 'Grow', 'Buy stoves, tables, staff and decor in the Shop. Decor raises ambiance (faster, richer customers).') +
+      h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes — win loot and steal their recipe.') +
+      h('🔨', 'Build', 'Tap Build, then tap a table / stove / decoration and tap where to move it. Rearrange your whole cafe.') +
+      h('🛒', 'Grow', 'Buy stoves, tables, staff and decor in the Shop. Decor sits on the floor and raises ambiance (faster, richer customers).') +
       '</div></div>');
   }
 
@@ -207,6 +232,8 @@
     else if (act === 'open-recipes') openRecipes();
     else if (act === 'open-map') openMap();
     else if (act === 'open-help') openHelp();
+    else if (act === 'open-build') setEdit(true);
+    else if (act === 'build-done') setEdit(false);
     renderHUD();
   });
 

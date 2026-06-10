@@ -33,10 +33,13 @@ window.SHOP = [
   { id: 'table',   kind: 'table',  name: 'Bistro Table',  emoji: '🪑', cur: 'coin',  base: 100,  grow: 1.6, desc: 'Seat one more customer at a time.' },
   { id: 'zombie',  kind: 'zombie', name: 'Hire Zombie',   emoji: '🧟', cur: 'toxin', base: 3,    grow: 1.5, desc: 'Staff serve customers. More = faster service.' },
 
-  { id: 'lamp',    kind: 'decor',  name: 'Spooky Lamp',   emoji: '🕯️', cur: 'coin', base: 300,   grow: 1, ambiance: 6,  desc: '+6 ambiance. Customers arrive sooner & tip more.' },
-  { id: 'cobweb',  kind: 'decor',  name: 'Cobweb Corner', emoji: '🕸️', cur: 'coin', base: 900,   grow: 1, ambiance: 14, desc: '+14 ambiance.' },
-  { id: 'jukebox', kind: 'decor',  name: 'Haunted Jukebox', emoji: '🎷', cur: 'coin', base: 2500,  grow: 1, ambiance: 30, desc: '+30 ambiance.' },
-  { id: 'fountain',kind: 'decor',  name: 'Blood Fountain',emoji: '⛲',       cur: 'toxin', base: 12,    grow: 1, ambiance: 60, desc: '+60 ambiance. The crowd loves it.' },
+  // Decor is placed on the floor (takes a cell) and is repeatable — fill the
+  // cafe to raise ambiance. `art` tells the renderer how to draw it.
+  { id: 'plant',   kind: 'decor',  name: 'Potted Fern',   emoji: '🪴', art: 'plant',   cur: 'coin', base: 120,  grow: 1.25, ambiance: 5,  desc: '+5 ambiance. Customers arrive sooner & tip more.' },
+  { id: 'lamp',    kind: 'decor',  name: 'Spooky Lamp',   emoji: '🕯️', art: 'lamp',   cur: 'coin', base: 300,  grow: 1.3,  ambiance: 9,  desc: '+9 ambiance.' },
+  { id: 'rug',     kind: 'decor',  name: 'Crimson Rug',   emoji: '🟥', art: 'rug',     cur: 'coin', base: 600,  grow: 1.3,  ambiance: 14, desc: '+14 ambiance.' },
+  { id: 'jukebox', kind: 'decor',  name: 'Haunted Jukebox', emoji: '🎷', art: 'jukebox', cur: 'coin', base: 1800, grow: 1.35, ambiance: 26, desc: '+26 ambiance.' },
+  { id: 'fountain',kind: 'decor',  name: 'Blood Fountain',emoji: '⛲', art: 'fountain', cur: 'toxin', base: 8,   grow: 1.4,  ambiance: 50, desc: '+50 ambiance. The crowd loves it.' },
 ];
 
 // Shirt colours for the humans who wander in — drawn procedurally on canvas.
@@ -52,11 +55,13 @@ window.SKIN_TONES = ['#f1c89b', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
  * `defense`, you win `reward` coins (+ sometimes toxin). Raids take real time;
  * your zombies are away serving in the squad until they return with the loot.
  */
+// `recipe` is the rival's signature dish — beating them steals the recipe and
+// unlocks it early (just like raiding for recipes in the original).
 window.RIVALS = [
-  { id: 'diner',   name: "Greasy Joe's Diner",  emoji: '🍳', defense: 12,  squad: 1, time: 30,   reward: 120,   toxin: 0, level: 1 },
-  { id: 'taqueria',name: 'El Muerto Taqueria',  emoji: '🌮', defense: 30,  squad: 2, time: 60,   reward: 320,   toxin: 1, level: 2 },
-  { id: 'noodle',  name: 'Phantom Noodle Bar',  emoji: '🍜', defense: 60,  squad: 3, time: 120,  reward: 750,   toxin: 1, level: 4 },
-  { id: 'steak',   name: 'Bonepit Steakhouse',  emoji: '🥩', defense: 110, squad: 4, time: 240,  reward: 1800,  toxin: 2, level: 6 },
-  { id: 'sushi',   name: 'Kraken Sushi Co.',    emoji: '🍣', defense: 200, squad: 6, time: 480,  reward: 4200,  toxin: 3, level: 8 },
-  { id: 'casino',  name: 'Necropolis Casino',   emoji: '🎰', defense: 380, squad: 8, time: 900,  reward: 11000, toxin: 6, level: 10 },
+  { id: 'diner',   name: "Greasy Joe's Diner",  emoji: '🍳', defense: 12,  squad: 1, time: 30,   reward: 120,   toxin: 0, level: 1, recipe: 'burger' },
+  { id: 'taqueria',name: 'El Muerto Taqueria',  emoji: '🌮', defense: 30,  squad: 2, time: 60,   reward: 320,   toxin: 1, level: 2, recipe: 'taco' },
+  { id: 'noodle',  name: 'Phantom Noodle Bar',  emoji: '🍜', defense: 60,  squad: 3, time: 120,  reward: 750,   toxin: 1, level: 4, recipe: 'pizza' },
+  { id: 'steak',   name: 'Bonepit Steakhouse',  emoji: '🥩', defense: 110, squad: 4, time: 240,  reward: 1800,  toxin: 2, level: 6, recipe: 'sushi' },
+  { id: 'sushi',   name: 'Kraken Sushi Co.',    emoji: '🍣', defense: 200, squad: 6, time: 480,  reward: 4200,  toxin: 3, level: 8, recipe: 'cake' },
+  { id: 'casino',  name: 'Necropolis Casino',   emoji: '🎰', defense: 380, squad: 8, time: 900,  reward: 11000, toxin: 6, level: 10, recipe: 'pie' },
 ];

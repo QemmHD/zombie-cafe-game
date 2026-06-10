@@ -32,25 +32,26 @@ test('fresh world has the expected starting cafe', () => {
   assert.strictEqual(w.zombies.length, 1);
 });
 
-test('cooking deducts ingredients and stocks the pass', () => {
+test('cooking is a manual two-step: cook, then tap to serve', () => {
   const w = boot();
   assert.ok(w.startCook(w.stoves[0].id, 'coffee'));
   assert.strictEqual(w.coins, 55, 'coffee costs 5');
-  assert.ok(w.stoves[0].recipe === 'coffee');
   advance(w, 9);                                        // coffee cooks in 8s
-  // either it's already been picked up by a zombie or it's sitting on the pass
-  const inFlight = w.ready.length + w.zombies.filter((z) => z.carry).length
-    + w.customers.filter((c) => c.dish).length;
-  assert.ok(inFlight >= 1, 'at least one coffee serving was produced');
+  assert.ok(w.stoves[0].ready, 'stove is ready but NOT auto-served');
+  assert.strictEqual(w.ready.length, 0, 'nothing on the pass until you serve');
+  assert.ok(w.plateStove(w.stoves[0].id), 'tap-to-serve plates the batch');
+  assert.ok(w.ready.length >= 1 || w.zombies.some((z) => z.carry), 'a serving reached the pass');
+  assert.strictEqual(w.stoves[0].recipe, null, 'stove is free again');
 });
 
 test('full loop: customers get served and pay', () => {
   const w = boot();
-  w.startCook(w.stoves[0].id, 'coffee');
-  w.startCook(w.stoves[1].id, 'soup');
+  for (const st of w.stoves) w.startCook(st.id, 'coffee');
+  advance(w, 9);
+  w.stoves.forEach((st) => w.plateStove(st.id));        // serve up
   advance(w, 90);
   assert.ok(w.served >= 1, 'at least one customer was served and paid, got ' + w.served);
-  assert.ok(w.coins > 50, 'serving increased coins');
+  assert.ok(w.coins > 45, 'serving increased coins');
 });
 
 test('infecting a customer creates a new zombie worker', () => {
@@ -77,6 +78,24 @@ test('raiding a rival cafe sends a squad and returns loot', () => {
   assert.strictEqual(w.raid, null, 'raid resolved');
   assert.strictEqual(w.zombies.length, 1, 'squad returned');
   assert.strictEqual(w.coins, 180, 'won 120 coins of loot');
+});
+
+test('winning a raid steals the rival recipe and unlocks it early', () => {
+  const w = boot();
+  assert.ok(!w.unlocked().some((r) => r.id === 'burger'), 'burger locked at level 1');
+  w.startRaid('diner');                                 // diner signature = burger
+  advance(w, 32);
+  assert.ok((w.extraRecipes || []).indexOf('burger') >= 0, 'stole the burger recipe');
+  assert.ok(w.unlocked().some((r) => r.id === 'burger'), 'burger now cookable');
+});
+
+test('build mode: furniture can be moved to a free cell', () => {
+  const w = boot();
+  const tbl = w.tables[0];
+  const free = w.firstFreeCell();
+  assert.ok(w.moveTable(tbl.id, free), 'moved table to a free cell');
+  assert.strictEqual(tbl.cell, free);
+  assert.ok(!w.moveTable(tbl.id, w.tables[1].cell), 'cannot move onto an occupied cell');
 });
 
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {

@@ -57,6 +57,8 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
 .buy:active { transform:scale(.96); }
 .locked { opacity:.5; }
 .raidbar, .raidpill2 { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:13px; color:var(--text); margin-bottom:12px; }
+.buildbar { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(76px + var(--safe-bottom)); z-index:60; display:flex; align-items:center; gap:10px; background:rgba(10,16,11,.97); border:1px solid var(--toxic); color:var(--text); padding:8px 10px 8px 14px; border-radius:999px; font-size:13px; font-weight:700; max-width:94%; box-shadow:0 0 20px rgba(124,255,90,.25); }
+.buildbar .buy { padding:7px 14px; }
 
 /* raid result */
 .result { text-align:center; padding:14px 6px 6px; }

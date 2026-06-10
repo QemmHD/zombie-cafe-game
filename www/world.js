@@ -19,6 +19,7 @@
   var EAT_TIME = 5;
   var AUTO_PAY = 12;        // auto-collect a paying customer after this long
   var POOL_CAP = 40;
+  var STOVE_AUTOPLATE = 30;     // idle safety net: auto-serve a finished stove
   var MAX_STOVES = 6, MAX_TABLES = 16;
   var INFECT_CHANCE = 0.16, INFECT_COST = 2;
 
@@ -36,11 +37,14 @@
 
   // ---- layout: fixed slots for furniture & key points ----------------
   var STOVE_SLOTS = [ {x:96,y:150}, {x:221,y:150}, {x:346,y:150}, {x:471,y:150}, {x:596,y:150}, {x:660,y:150} ];
-  var TABLE_SLOTS = (function () {
-    var xs = [120, 280, 440, 600], ys = [480, 650, 820, 985], out = [];
+  // The dining floor is a 4x5 grid of cells. Tables AND decor occupy cells, so
+  // decorating your cafe trades off seating — just like the original.
+  var CELLS = (function () {
+    var xs = [120, 280, 440, 600], ys = [470, 620, 770, 920, 1055], out = [];
     for (var r = 0; r < ys.length; r++) for (var c = 0; c < xs.length; c++) out.push({ x: xs[c], y: ys[r] });
     return out;
   })();
+  var TABLE_SLOTS = CELLS;
   var PASS = { x: 360, y: 250 };
   var DOOR = { x: 360, y: 1215 };
   function home(i) { return { x: 180 + (i % 5) * 90, y: 330 + Math.floor(i / 5) * 64 }; }
@@ -51,14 +55,27 @@
   World.prototype._fresh = function () {
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
-    this.ready = []; this.spawnAt = 1.2; this.raid = null;
+    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = [];
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
-    this.tables = [ this._mkTable(0), this._mkTable(1), this._mkTable(2) ];
+    this.decors = [];
+    this.tables = [ this._mkTable(0), this._mkTable(5), this._mkTable(2) ];
     this.customers = [];
     this.zombies = [ this._mkZombie(0) ];
   };
-  World.prototype._mkStove  = function (i) { var s = STOVE_SLOTS[i]; return { id: uid(), slot: i, x: s.x, y: s.y, recipe: null, start: 0, ready: false }; };
-  World.prototype._mkTable  = function (i) { var s = TABLE_SLOTS[i]; return { id: uid(), slot: i, x: s.x, y: s.y, by: null }; };
+  World.prototype._mkStove  = function (slot) { var s = STOVE_SLOTS[slot]; return { id: uid(), slot: slot, x: s.x, y: s.y, recipe: null, start: 0, ready: false }; };
+  World.prototype._mkTable  = function (cell) { var s = CELLS[cell]; return { id: uid(), cell: cell, x: s.x, y: s.y, by: null }; };
+  World.prototype._mkDecor  = function (deco, cell) { var s = CELLS[cell]; return { id: uid(), deco: deco, cell: cell, x: s.x, y: s.y }; };
+
+  // ---- grid helpers (build / placement) ------------------------------
+  World.prototype.cellFree = function (cell, exceptId) {
+    for (var i = 0; i < this.tables.length; i++) if (this.tables[i].cell === cell && this.tables[i].id !== exceptId) return false;
+    for (var j = 0; j < this.decors.length; j++) if (this.decors[j].cell === cell && this.decors[j].id !== exceptId) return false;
+    return true;
+  };
+  World.prototype.firstFreeCell = function () { for (var i = 0; i < CELLS.length; i++) if (this.cellFree(i)) return i; return -1; };
+  World.prototype.freeStoveSlot = function () {
+    for (var s = 0; s < STOVE_SLOTS.length; s++) { var used = false; for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === s) used = true; if (!used) return s; } return -1;
+  };
   World.prototype._mkZombie = function (i) { var h = home(i); return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, carry: null, job: null, face: 'L', step: Math.random() * 6 }; };
 
   // ---- save / load ----------------------------------------------------
@@ -66,14 +83,14 @@
     return {
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
-      spawnAt: this.spawnAt, raid: this.raid,
-      stoves: this.stoves, tables: this.tables, zombies: this.zombies, customers: this.customers,
+      spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes,
+      stoves: this.stoves, tables: this.tables, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
   World.prototype._restore = function (s) {
     for (var k in s) this[k] = s[k];
     this.events = []; this.customers = this.customers || []; this.ready = this.ready || [];
-    this.decor = this.decor || {};
+    this.decor = this.decor || {}; this.decors = this.decors || [];
     // forward-compat: ensure zombies have home + render fields
     var self = this;
     (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; });
@@ -84,22 +101,23 @@
     this.t += elapsed; this.customers = [];
     this.tables.forEach(function (tb) { tb.by = null; });
     for (var i = 0; i < this.stoves.length; i++) {
-      var st = this.stoves[i]; if (st.recipe && this.t >= st.start + RECIPES[st.recipe].time) this._finishStove(st);
+      var st = this.stoves[i]; if (st.recipe && this.t >= st.start + RECIPES[st.recipe].time) { st.ready = true; st.readyAt = this.t; this.plateStove(st); }
     }
     if (this.raid && this.t >= this.raid.returnsAt) this._resolveRaid();
   };
 
   // ---- derived --------------------------------------------------------
-  World.prototype.ambiance = function () { var a = 0; for (var id in this.decor) { var it = shopById(id); if (it) a += it.ambiance || 0; } return a; };
+  World.prototype.ambiance = function () { var a = 0; for (var i = 0; i < this.decors.length; i++) { var it = shopById(this.decors[i].deco); if (it) a += it.ambiance || 0; } return a; };
   World.prototype.tipMult = function () { return 1 + this.ambiance() / 200; };
   World.prototype.patience = function () { return 20 + this.ambiance() / 8; };
   World.prototype.spawnEvery = function () { return Math.max(2.2, 6 / (1 + this.ambiance() / 50)); };
   World.prototype.xpNeed = function (lvl) { return Math.floor(60 * Math.pow(lvl, 1.4)); };
-  World.prototype.unlocked = function () { var L = this.level; return (window.RECIPES || []).filter(function (r) { return r.level <= L; }); };
+  World.prototype.unlocked = function () { var L = this.level, ex = this.extraRecipes || []; return (window.RECIPES || []).filter(function (r) { return r.level <= L || ex.indexOf(r.id) >= 0; }); };
   World.prototype.priceFor = function (item) {
-    if (item.kind === 'decor') return item.base;
-    var owned = item.kind === 'stove' ? this.stoves.length : item.kind === 'table' ? this.tables.length : this.zombies.length + (this.raid ? this.raid.squad : 0);
-    var freeStart = item.kind === 'stove' ? 2 : item.kind === 'table' ? 3 : 1;
+    var owned;
+    if (item.kind === 'decor') owned = this.decors.filter(function (d) { return d.deco === item.id; }).length;
+    else owned = item.kind === 'stove' ? this.stoves.length : item.kind === 'table' ? this.tables.length : this.zombies.length + (this.raid ? this.raid.squad : 0);
+    var freeStart = item.kind === 'stove' ? 2 : item.kind === 'table' ? 3 : item.kind === 'decor' ? 0 : 1;
     return Math.round(item.base * Math.pow(item.grow, owned - freeStart));
   };
   World.prototype.totalZombies = function () { return this.zombies.length + (this.raid ? this.raid.squad : 0); };
@@ -128,10 +146,17 @@
     if (this.toxin < cost) { this.events.push({ type: 'warn', msg: 'Need ' + cost + ' toxin to rush' }); return false; }
     this.toxin -= cost; st.start = this.t - r.time; return true;
   };
-  World.prototype._finishStove = function (st) {
-    var r = RECIPES[st.recipe];
-    for (var i = 0; i < r.batch && this.ready.length < POOL_CAP; i++) this.ready.push(r.id);
-    st.recipe = null; st.start = 0; st.ready = false;
+  // Plate a finished stove: send its batch to the serving counter (the "pass"),
+  // from which zombie staff carry dishes to customers. This is the manual
+  // "tap to serve" step from the original — call it when st.ready is true.
+  World.prototype.plateStove = function (stoveId) {
+    var st = typeof stoveId === 'object' ? stoveId : byId(this.stoves, stoveId);
+    if (!st || !st.recipe || !st.ready) return false;
+    var r = RECIPES[st.recipe], added = 0;
+    for (var i = 0; i < r.batch && this.ready.length < POOL_CAP; i++) { this.ready.push(r.id); added++; }
+    this.events.push({ type: 'plated', x: st.x, y: st.y, emoji: r.emoji, n: added });
+    st.recipe = null; st.start = 0; st.ready = false; st.readyAt = 0;
+    return true;
   };
   World.prototype.collectCustomer = function (cid) {
     var c = byId(this.customers, cid); if (!c || c.state !== 'paying') return false;
@@ -155,16 +180,30 @@
     var it = shopById(itemId); if (!it) return false;
     var cost = this.priceFor(it), bag = it.cur, have = bag === 'coin' ? this.coins : this.toxin;
     if (have < cost) { this.events.push({ type: 'warn', msg: 'Not enough ' + (bag === 'coin' ? 'coins' : 'toxin') }); return false; }
-    if (it.kind === 'stove' && this.stoves.length >= MAX_STOVES) { this.events.push({ type: 'warn', msg: 'Kitchen is full' }); return false; }
-    if (it.kind === 'table' && this.tables.length >= MAX_TABLES) { this.events.push({ type: 'warn', msg: 'Dining room is full' }); return false; }
-    if (it.kind === 'decor' && this.decor[it.id]) { this.events.push({ type: 'warn', msg: 'Already owned' }); return false; }
+    if (it.kind === 'stove' && this.freeStoveSlot() < 0) { this.events.push({ type: 'warn', msg: 'Kitchen is full' }); return false; }
+    if ((it.kind === 'table' || it.kind === 'decor') && this.firstFreeCell() < 0) { this.events.push({ type: 'warn', msg: 'No floor space — sell or rearrange' }); return false; }
     if (bag === 'coin') this.coins -= cost; else this.toxin -= cost;
-    if (it.kind === 'stove') this.stoves.push(this._mkStove(this.stoves.length));
-    else if (it.kind === 'table') this.tables.push(this._mkTable(this.tables.length));
+    if (it.kind === 'stove') this.stoves.push(this._mkStove(this.freeStoveSlot()));
+    else if (it.kind === 'table') this.tables.push(this._mkTable(this.firstFreeCell()));
     else if (it.kind === 'zombie') this.zombies.push(this._mkZombie(this.zombies.length));
-    else if (it.kind === 'decor') this.decor[it.id] = 1;
+    else if (it.kind === 'decor') this.decors.push(this._mkDecor(it.id, this.firstFreeCell()));
     this.events.push({ type: 'bought', item: it });
     return true;
+  };
+
+  // ---- build mode: move / sell furniture -----------------------------
+  World.prototype.moveTable = function (id, cell) { var t = byId(this.tables, id); if (!t || !this.cellFree(cell, id)) return false; t.cell = cell; t.x = CELLS[cell].x; t.y = CELLS[cell].y; return true; };
+  World.prototype.moveDecor = function (id, cell) { var d = byId(this.decors, id); if (!d || !this.cellFree(cell, id)) return false; d.cell = cell; d.x = CELLS[cell].x; d.y = CELLS[cell].y; return true; };
+  World.prototype.moveStove = function (id, slot) { var s = byId(this.stoves, id); for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === slot && this.stoves[i].id !== id) return false; if (!s) return false; s.slot = slot; s.x = STOVE_SLOTS[slot].x; s.y = STOVE_SLOTS[slot].y; return true; };
+  World.prototype.cellAt = function (x, y) {
+    var best = -1, bd = 80;
+    for (var i = 0; i < CELLS.length; i++) { var d = Math.hypot(x - CELLS[i].x, y - CELLS[i].y); if (d < bd) { bd = d; best = i; } }
+    return best;
+  };
+  World.prototype.stoveSlotAt = function (x, y) {
+    var best = -1, bd = 70;
+    for (var i = 0; i < STOVE_SLOTS.length; i++) { var d = Math.hypot(x - STOVE_SLOTS[i].x, y - STOVE_SLOTS[i].y); if (d < bd) { bd = d; best = i; } }
+    return best;
   };
 
   // ---- raids (take over other cafes) ---------------------------------
@@ -185,9 +224,16 @@
     var win = power >= rv.defense;
     var loot = win ? rv.reward : Math.floor(rv.reward * 0.15);
     this.coins += loot; if (win) this.toxin += rv.toxin || 0;
-    if (win) this._gainXp(Math.round(rv.defense));
+    var gotRecipe = null;
+    if (win) {
+      this._gainXp(Math.round(rv.defense));
+      this.extraRecipes = this.extraRecipes || [];
+      if (rv.recipe && this.level < (RECIPES[rv.recipe] || {}).level && this.extraRecipes.indexOf(rv.recipe) < 0) {
+        this.extraRecipes.push(rv.recipe); gotRecipe = RECIPES[rv.recipe];
+      }
+    }
     for (var i = 0; i < squad; i++) this.zombies.push(this._mkZombie(this.zombies.length));
-    this.events.push({ type: 'raidEnd', rival: rv, win: win, loot: loot, toxin: win ? (rv.toxin || 0) : 0 });
+    this.events.push({ type: 'raidEnd', rival: rv, win: win, loot: loot, toxin: win ? (rv.toxin || 0) : 0, recipe: gotRecipe });
     this.raid = null;
   };
 
@@ -196,7 +242,13 @@
     if (dt > 0.25) dt = 0.25;                          // clamp big frame gaps
     this.t += dt;
     this._spawn();
-    for (var i = 0; i < this.stoves.length; i++) { var st = this.stoves[i]; if (st.recipe && this.t >= st.start + RECIPES[st.recipe].time) this._finishStove(st); }
+    for (var i = 0; i < this.stoves.length; i++) {
+      var st = this.stoves[i];
+      if (st.recipe && !st.ready && this.t >= st.start + RECIPES[st.recipe].time) { st.ready = true; st.readyAt = this.t; }
+      // faithful to the original you tap to serve; auto-plate only as an idle
+      // safety net so an unattended stove eventually frees up.
+      if (st.ready && this.t - (st.readyAt || this.t) >= STOVE_AUTOPLATE) this.plateStove(st.id);
+    }
     this._stepZombies(dt);
     this._stepCustomers(dt);
     if (this.raid && this.t >= this.raid.returnsAt) this._resolveRaid();
@@ -292,8 +344,17 @@
     return best;
   };
 
+  // build mode: nearest movable furniture to a point
+  World.prototype.pickFurnitureAt = function (x, y) {
+    var best = null, bd = 50;
+    for (var i = 0; i < this.tables.length; i++) { var t = this.tables[i], d = dist(x, y, t.x, t.y); if (d < bd) { bd = d; best = { kind: 'table', id: t.id }; } }
+    for (var j = 0; j < this.decors.length; j++) { var de = this.decors[j], dd = dist(x, y, de.x, de.y); if (dd < bd) { bd = dd; best = { kind: 'decor', id: de.id }; } }
+    for (var k = 0; k < this.stoves.length; k++) { var s = this.stoves[k], ds = dist(x, y, s.x, s.y); if (ds < 55 && (!best || ds < bd)) { best = { kind: 'stove', id: s.id }; } }
+    return best;
+  };
+
   // expose constants the renderer needs
-  World.W = W; World.H = H; World.PASS = PASS; World.DOOR = DOOR; World.STOVE_SLOTS = STOVE_SLOTS;
+  World.W = W; World.H = H; World.PASS = PASS; World.DOOR = DOOR; World.STOVE_SLOTS = STOVE_SLOTS; World.CELLS = CELLS;
   window.createWorld = function (saved) { return new World(saved); };
   window.World = World;
 })();
