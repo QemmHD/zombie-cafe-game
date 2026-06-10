@@ -8,13 +8,14 @@
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html,body { margin:0; height:100%; overflow:hidden; }
 body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
-/* landscape-first full-bleed shell */
-#app { display:flex; flex-direction:column; height:100vh; height:100dvh; width:100%; margin:0 auto; padding-top:var(--safe-top); }
+/* landscape-first full-bleed shell — the world canvas fills the screen and the
+   HUD / rail / toolbar OVERLAY it (like a real mobile tycoon). */
+#app { position:relative; height:100vh; height:100dvh; width:100%; overflow:hidden; }
 
 /* HUD — maroon scalloped mobile-tycoon bar */
 :root { --maroon:#7a2128; --maroon-d:#561218; --cream:#f4e9cf; }
-#hud { flex:0 0 auto; position:relative; display:flex; justify-content:space-between; align-items:center; gap:8px;
-  padding:8px 12px 10px; z-index:6;
+#hud { position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:8px calc(12px + env(safe-area-inset-right,0px)) 10px calc(12px + env(safe-area-inset-left,0px)); z-index:6;
   background:linear-gradient(180deg,#8a2a30,var(--maroon) 55%,var(--maroon-d));
   border-bottom:3px solid var(--maroon-d);
   box-shadow:0 3px 0 rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.12);
@@ -57,12 +58,12 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
 .xpbar { height:7px; background:#0c140e; border:1px solid var(--line); border-radius:999px; overflow:hidden; }
 .xpbar > i { display:block; height:100%; background:linear-gradient(90deg,var(--toxic-dim),var(--toxic)); width:0%; transition:width .3s ease; }
 
-/* Stage / canvas */
-#stage { flex:1 1 auto; position:relative; overflow:hidden; }
+/* Stage / canvas — fills the whole screen */
+#stage { position:absolute; inset:0; overflow:hidden; }
 #game { position:absolute; inset:0; width:100%; height:100%; display:block; }
 
 /* Left vertical button rail — chunky illustrated stickers */
-#rail { position:absolute; left:8px; top:10px; display:flex; flex-direction:column; gap:8px; z-index:4; }
+#rail { position:absolute; left:calc(8px + env(safe-area-inset-left,0px)); top:64px; display:flex; flex-direction:column; gap:8px; z-index:4; }
 .railbtn { position:relative; width:50px; height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
   background:linear-gradient(180deg,#2a3a2e,#1a261d); border:2px solid #0e160f; color:var(--text); border-radius:14px; font-size:21px;
   box-shadow:0 3px 0 rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.08); transform:rotate(-2deg); }
@@ -75,9 +76,10 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
   background:linear-gradient(180deg,#ff5b4d,#d8413a); color:#fff; font-size:11px; font-weight:900; line-height:18px; text-align:center;
   border:2px solid #4a1010; box-shadow:0 1px 0 rgba(0,0,0,.4); }
 
-/* Toolbar — blackboard slab in a wood frame */
-#toolbar { flex:0 0 auto; display:flex; gap:10px; padding:8px 14px calc(8px + var(--safe-bottom));
-  background:linear-gradient(180deg,#6b4a2a,#4a3018); border-top:3px solid #2c1c0e; z-index:5;
+/* Toolbar — blackboard slab in a wood frame, overlaid at the bottom */
+#toolbar { position:absolute; bottom:0; left:0; right:0; display:flex; gap:10px;
+  padding:8px calc(14px + env(safe-area-inset-right,0px)) calc(8px + var(--safe-bottom)) calc(14px + env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,rgba(107,74,42,.96),rgba(74,48,24,.96)); border-top:3px solid #2c1c0e; z-index:5;
   box-shadow:inset 0 3px 8px rgba(0,0,0,.5); }
 .tool { flex:1; max-width:140px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:2px;
   background:linear-gradient(180deg,#242a22,#171c16); border:2px solid #0e160f; color:var(--cream); border-radius:12px; padding:8px 4px; font-size:21px;

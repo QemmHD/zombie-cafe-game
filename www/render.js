@@ -44,10 +44,10 @@
     var cvW = this.cv.width, cvH = this.cv.height, W = Wld.W, H = Wld.H;
     var spanX = W + H;                                  // isoX ranges over [-H, W]
     var wallU = 210;                                    // wall height in KX units
-    // CONTAIN the café with a margin so the exterior block (grass/road/
-    // sidewalk) frames it on all sides — works in landscape and portrait.
-    var KXw = (cvW * 0.90) / spanX;                     // diamond width <= 90% screen
-    var KXh = (cvH * 0.80) / (spanX * 0.56 + wallU);    // content height <= 80% screen
+    // Fill the screen: the world canvas is full-bleed and the HUD/rail/toolbar
+    // overlay it, so the café is large with the block framing it (no black bars).
+    var KXw = (cvW * 0.98) / spanX;                     // diamond width <= 98% screen
+    var KXh = (cvH * 0.88) / (spanX * 0.56 + wallU);    // content height <= 88% screen
     var KX = Math.min(KXw, KXh);
     var KY = KX * 0.56, wall = KX * wallU;
     var contentH = spanX * KY + wall;
@@ -121,9 +121,9 @@
   // grass verge → sidewalk → floor, so it never floats in empty space.
   Renderer.prototype._ground = function (c) {
     var self = this, W = Wld.W, H = Wld.H, cvW = this.cv.width, cvH = this.cv.height, T = Wld.TILE, S = this.S;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#26361b'; c.fillRect(0, 0, cvW, cvH);
+    c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = C.grassD; c.fillRect(0, 0, cvW, cvH);   // grass base (no dark corners)
     // outer grass
-    c.fillStyle = C.grass; this._planeRect(c, -T * 12, -T * 12, W + T * 12, H + T * 12); c.fill();
+    c.fillStyle = C.grass; this._planeRect(c, -T * 30, -T * 30, W + T * 30, H + T * 30); c.fill();
     this._tex(c, function () { this._planeRect(c, -T * 12, -T * 12, W + T * 12, H + T * 12); }, function (bb) {
       scatter(c, bb, 140, 7, function (x, y, r, i) { speck(c, x, y, S * (0.025 + r * 0.04), i % 3 ? C.grassD : C.grassL); });
     });
