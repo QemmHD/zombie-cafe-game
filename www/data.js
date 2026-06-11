@@ -41,7 +41,7 @@ window.RECIPE_VARIANTS = [
   { id: 'bulk',   name: 'Bulk',       tag: '📦',   dLevel: 4, batchMult: 2, costMult: 2 },
   { id: 'frozen', name: 'Frozen',     tag: '🧊',   dLevel: 4, timeMult: 2, priceMult: 0.75 },
   { id: 'vspicy', name: 'Very Spicy', tag: '🌶️🌶️', dLevel: 6, xpMult: 1.20, costMult: 1.2 },
-  { id: 'vfancy', name: 'Very Fancy', tag: '✨✨',  dLevel: 6, priceMult: 1.5, costMult: 1.55 },
+  { id: 'vfancy', name: 'Very Fancy', tag: '✨✨',  dLevel: 6, priceMult: 1.67, costMult: 1.7 },
   { id: 'vquick', name: 'Very Quick', tag: '⏩⏩',  dLevel: 7, timeMult: 0.8, costMult: 1.2 },
 ];
 (function () {
@@ -172,8 +172,15 @@ window.CUSTOMER_TYPES = [
   // read as raid material at a glance: terrible tipper, monster in a fight.
   { id: 'brawler',  name: 'Brawler',      rarity: 'elite',  weight: 3,  levelReq: 3, ratingReq: 2.5,
     pay: 1.0, tip: 0.05, patience: 0.8, infect: { cash: 500 }, shirt: '#8a2f2f', hat: 'mohawk', gloves: '#c43a2e',
-    card: { tip: 1, spd: 10, str: 11, flavor: 'Went twelve rounds with the reaper and asked for a thirteenth.' },
-    z: { role: 'Slugger', speed: 1.3, serve: 1.0, clean: 0.9, cook: 0.9, attack: 28, maxEnergy: 150, patience: 0.7, rarity: 'elite', trait: 'Knockout' } },
+    card: { tip: 1, spd: 7, str: 9, flavor: 'Went twelve rounds with the reaper and asked for a thirteenth.' },
+    z: { role: 'Slugger', speed: 1.3, serve: 1.0, clean: 0.9, cook: 0.9, attack: 28, maxEnergy: 160, patience: 0.7, rarity: 'elite', trait: 'Knockout' } },
+  // The aspirational cash-sink elite: slow, tanky, regenerates fast — the
+  // original's armored-knight archetype (E350 · spd 3 · atk 7 · tip 6, huge
+  // CASH cost, +30% regen), with our own name and look.
+  { id: 'knight',   name: 'Rustplate Knight', rarity: 'elite', weight: 2, levelReq: 8, ratingReq: 3,
+    pay: 1.6, tip: 0.45, patience: 1.3, infect: { cash: 9500 }, shirt: '#8d98a6', hat: 'helm', gloves: '#76818f',
+    card: { tip: 6, spd: 3, str: 7, flavor: 'The armor rusted shut decades ago. Nobody has asked what is inside.' },
+    z: { role: 'Bulwark', speed: 0.75, serve: 0.9, clean: 1.0, cook: 1.0, attack: 24, maxEnergy: 250, patience: 1.5, rarity: 'elite', trait: 'Ironhide' } },
 ];
 
 /*

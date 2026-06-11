@@ -113,6 +113,21 @@
       return { selZ: z.id };
     },
 
+    expanded: function (w) {
+      // two expansions bought: the floor has grown into the corner lot's
+      // grass; new tables sit out on the expansion band
+      w.coins = 99999; w.toxin = 99; w.level = 9;
+      w.expandCafe(false); w.expandCafe(false);            // 7x8 -> 9x10
+      w.buy('table'); w.buy('table');
+      var band = [];
+      for (var i = 25; i < 200 && band.length < 2; i++) if (w.cellUsable(i) && !w.cellFree(i) === false && w.cellFree(i)) band.push(i);
+      var extra = w.tables.slice(3);
+      extra.forEach(function (tb, k) { if (band[k] != null) w.moveTable(tb.id, band[k]); });
+      w._syncChairs();
+      seat(w, w.tables[3] || w.tables[0], 'eating', 2, 'U');
+      return { shell: true };
+    },
+
     raidBattle: function (w) {
       // mid-raid at the rival diner: one zombie fighting inside, one still
       // lined up on the sidewalk, counter food stealable, chef on the line

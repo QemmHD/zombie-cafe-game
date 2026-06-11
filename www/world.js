@@ -15,9 +15,11 @@
   'use strict';
 
   // The world is a flat tile PLANE (logical floor coords). The renderer
-  // projects it into an isometric view. COLS x ROWS tiles of size TILE.
-  var TILE = 120, COLS = 7, ROWS = 8;
-  var W = COLS * TILE, H = ROWS * TILE;     // 840 x 960 plane
+  // projects it into an isometric view. COLS x ROWS tiles of size TILE —
+  // the BASE size; buying expansions grows the floor into the grass lot
+  // (the original's expansion system: each step +1 column +1 row).
+  var TILE = 120, COLS = 7, ROWS = 8, MAX_EXP = 4;
+  var W = COLS * TILE, H = ROWS * TILE;     // base 840 x 960 plane
   var SPEED = 150;          // plane-units / second walking speed
   var EAT_TIME = 5;
   var AUTO_PAY = 12;        // auto-collect a paying customer after this long
@@ -64,8 +66,15 @@
   // The dining floor: cols 1-5 x rows 2-6 of exact tile centers. Tables AND
   // decor occupy cells (decorating trades off seating); col 0/6 stay as aisles.
   var CELLS = (function () {
-    var xs = [180, 300, 420, 540, 660], ys = [300, 420, 540, 660, 780], out = [];
-    for (var r = 0; r < ys.length; r++) for (var c = 0; c < xs.length; c++) out.push({ x: xs[c], y: ys[r] });
+    var out = [], c, r;
+    for (r = 2; r <= 6; r++) for (c = 1; c <= 5; c++) out.push({ x: c * TILE + 60, y: r * TILE + 60 });
+    // expansion bands appended in tier order (so saved cell indexes never
+    // shift): tier e opens column 5+e and row 6+e of dining floor
+    for (var e = 1; e <= MAX_EXP; e++) {
+      var C2 = 5 + e, R2 = 6 + e;
+      for (r = 2; r <= R2 - 1; r++) out.push({ x: C2 * TILE + 60, y: r * TILE + 60 });
+      for (c = 1; c <= C2; c++) out.push({ x: c * TILE + 60, y: R2 * TILE + 60 });
+    }
     return out;
   })();
   var TABLE_SLOTS = CELLS;
@@ -84,7 +93,7 @@
   World.prototype._fresh = function () {
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
-    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.battle = null; this.extraRecipes = []; this.auto = true; this.review = null;
+    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.battle = null; this.extraRecipes = []; this.auto = true; this.review = null; this.expansion = 0;
     this.rep = REP_START; this.fridge = []; this.storage = []; this.extraSlots = 0; this.passUnits = 2;   // rep, raid-loot fridge, stored furniture, bonus staff slots
     this.cafeName = 'The Rotten Spoon';
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
@@ -148,9 +157,43 @@
   World.prototype._mkDecor  = function (deco, cell) { var s = CELLS[cell]; return { id: uid(), deco: deco, cell: cell, x: s.x, y: s.y }; };
 
   // ---- grid helpers (build / placement) ------------------------------
+  // a dining cell is usable only if the café has expanded far enough
+  World.prototype.cellUsable = function (cell) {
+    var s = CELLS[cell]; if (!s) return false;
+    var c = Math.floor(s.x / TILE), r = Math.floor(s.y / TILE);
+    return c <= 5 + (this.expansion || 0) && r <= 6 + (this.expansion || 0);
+  };
   World.prototype.cellFree = function (cell, exceptId) {
+    if (!this.cellUsable(cell)) return false;
     for (var i = 0; i < this.tables.length; i++) if (this.tables[i].cell === cell && this.tables[i].id !== exceptId) return false;
     for (var j = 0; j < this.decors.length; j++) if (this.decors[j].cell === cell && this.decors[j].id !== exceptId) return false;
+    return true;
+  };
+  // ---- café expansion (faithful ladder, scaled to our economy) --------
+  // The original sold each +1col/+1row step for cash OR toxin:
+  // 3.5k / 25k(10☣) / 75k(30☣) / 100k(40☣) / 120k(50☣) / 150k(50☣)...
+  // Ours: 4 steps on the same shape, level-gated like the original (L7+).
+  var EXPANSIONS = [
+    { coin: 1500, level: 7 },
+    { coin: 4000, toxin: 10, level: 9 },
+    { coin: 9000, toxin: 30, level: 11 },
+    { coin: 18000, toxin: 40, level: 13 },
+  ];
+  World.prototype.nextExpansion = function () { return EXPANSIONS[this.expansion || 0] || null; };
+  World.prototype.expandCafe = function (useToxin) {
+    var ex = this.nextExpansion();
+    if (!ex) { this.events.push({ type: 'warn', msg: 'The café is already at its largest' }); return false; }
+    if (this.level < ex.level) { this.events.push({ type: 'warn', msg: 'Expansion unlocks at level ' + ex.level }); return false; }
+    if (useToxin) {
+      if (!ex.toxin) { this.events.push({ type: 'warn', msg: 'This step is cash-only' }); return false; }
+      if (this.toxin < ex.toxin) { this.events.push({ type: 'warn', msg: 'Need ' + ex.toxin + ' toxin' }); return false; }
+      this.toxin -= ex.toxin;
+    } else {
+      if (this.coins < ex.coin) { this.events.push({ type: 'warn', msg: 'Need ' + ex.coin + ' coins' }); return false; }
+      this.coins -= ex.coin;
+    }
+    this.expansion = (this.expansion || 0) + 1;
+    this.events.push({ type: 'expanded', cols: this.colsNow(), rows: this.rowsNow() });
     return true;
   };
   World.prototype.firstFreeCell = function () { for (var i = 0; i < CELLS.length; i++) if (this.cellFree(i)) return i; return -1; };
@@ -175,7 +218,7 @@
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
       spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
-      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, passUnits: this.passUnits, cafeName: this.cafeName, review: this.review,
+      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, passUnits: this.passUnits, cafeName: this.cafeName, review: this.review, expansion: this.expansion,
       stoves: this.stoves, tables: this.tables, chairs: this.chairs, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
@@ -189,6 +232,7 @@
     if (this.passUnits == null) this.passUnits = 2;
     if (!this.cafeName) this.cafeName = 'The Rotten Spoon';
     if (this.review === undefined) this.review = null;
+    if (this.expansion == null) this.expansion = 0;
     // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
     (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } z.inBattle = false; z.battleTarget = null; });
@@ -492,8 +536,11 @@
     if (this.review.tasks.every(function (t) { return t.done >= t.goal; })) {
       this.review.stars = Math.min(REVIEW_MAX, this.review.stars + 1);
       this.events.push({ type: 'reviewPassed', stars: this.review.stars });
+      // faithful decay clock: each pass ADDS time to the fade timer, capped
+      // (the original: 48h, +36h, +24h per further pass, one-week cap)
+      var ext = Math.min(this.t + REVIEW_DECAY * 4.6, Math.max(this.review.decayAt, this.t) + REVIEW_DECAY * 1.3);
       var stars = this.review.stars;
-      this.review = this._mkReview(); this.review.stars = stars;
+      this.review = this._mkReview(); this.review.stars = stars; this.review.decayAt = ext;
     }
   };
   World.prototype.bribeTask = function (i) {
@@ -748,7 +795,7 @@
       var cur = q.shift();
       for (var d = 0; d < 4; d++) {
         var nc = cur[0] + DIRS[d][0], nr = cur[1] + DIRS[d][1], k = nc + ',' + nr;
-        if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || seen[k]) continue;
+        if (nc < 0 || nr < 0 || nc >= this.colsNow() || nr >= this.rowsNow() || seen[k]) continue;
         if (Math.abs(nc - tc) <= 0 && Math.abs(nr - tr) <= 0) return true;   // reached the table tile's neighbour chain
         if (blocked[k]) continue;
         seen[k] = 1; q.push([nc, nr]);
@@ -856,11 +903,14 @@
   // walkable unless a furniture footprint blocks them. Characters claim a
   // standing tile so they never stack, and they stop at INTERACTION tiles
   // beside objects (never inside them).
-  function tcol(x) { return clampi(Math.floor(x / TILE), 0, COLS - 1); }
-  function trow(y) { return clampi(Math.floor(y / TILE), 0, ROWS - 1); }
+  function tcol(x) { return clampi(Math.floor(x / TILE), 0, COLS + MAX_EXP - 1); }
+  function trow(y) { return clampi(Math.floor(y / TILE), 0, ROWS + MAX_EXP - 1); }
   World.prototype.tileCenter = function (c, r) { return { x: c * TILE + TILE / 2, y: r * TILE + TILE / 2 }; };
   World.prototype.tileOf = function (x, y) { return [tcol(x), trow(y)]; };
-  World.prototype.inBounds = function (c, r) { return c >= 0 && r >= 0 && c < COLS && r < ROWS; };
+  // current (possibly expanded) grid size
+  World.prototype.colsNow = function () { return COLS + (this.expansion || 0); };
+  World.prototype.rowsNow = function () { return ROWS + (this.expansion || 0); };
+  World.prototype.inBounds = function (c, r) { return c >= 0 && r >= 0 && c < this.colsNow() && r < this.rowsNow(); };
   // resolve any object to its explicit visual ANCHOR type (Stage 4.6E)
   World.prototype.anchorOf = function (obj) {
     if (!obj) return 'FLOOR_BASE_CENTER';
@@ -962,7 +1012,7 @@
     var cand = [[tc, tr + 1], [tc, tr - 1], [tc + 1, tr], [tc - 1, tr], [tc + 1, tr + 1], [tc - 1, tr + 1], [tc, tr]];
     cand.forEach(function (cell) {
       var c = cell[0], r = cell[1], k = tkey(c, r);
-      if (c < 0 || r < 0 || c >= COLS || r >= ROWS || blocked[k] || occ[k]) return;
+      if (c < 0 || r < 0 || c >= self.colsNow() || r >= self.rowsNow() || blocked[k] || occ[k]) return;
       var ctr = self.tileCenter(c, r), d = Math.hypot((fromX == null ? tx : fromX) - ctr.x, (fromY == null ? ty : fromY) - ctr.y);
       if (d < bd) { bd = d; best = ctr; }
     });
@@ -984,7 +1034,7 @@
       if (cur[0] === tc && cur[1] === tr) { found = true; break; }
       for (var i = 0; i < 4; i++) {
         var nc = cur[0] + DIRS[i][0], nr = cur[1] + DIRS[i][1], kk = tkey(nc, nr);
-        if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS || seen[kk]) continue;
+        if (nc < 0 || nr < 0 || nc >= this.colsNow() || nr >= this.rowsNow() || seen[kk]) continue;
         if (blocked[kk] && kk !== tgtK) continue;          // target tile is always enterable
         seen[kk] = 1; prev[kk] = cur; q.push([nc, nr]);
       }
@@ -1314,7 +1364,7 @@
 
   // expose constants the renderer needs
   World.W = W; World.H = H; World.PASS = PASS; World.PASS_W = 2; World.DOOR = DOOR; World.STOVE_SLOTS = STOVE_SLOTS; World.CELLS = CELLS;
-  World.TILE = TILE; World.COLS = COLS; World.ROWS = ROWS;
+  World.TILE = TILE; World.COLS = COLS; World.ROWS = ROWS; World.MAX_EXP = MAX_EXP;
   window.createWorld = function (saved) { return new World(saved); };
   window.World = World;
 })();

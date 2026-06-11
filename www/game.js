@@ -125,6 +125,7 @@
       else if (e.type === 'zombieLevel') { floatText(e.x, e.y - 44, '⬆ Lv ' + e.level, 'xp'); toast('⬆ ' + e.name + ' reached level ' + e.level + ' — energy fully restored!'); }
       else if (e.type === 'reviewPassed') toast('📋 Review passed — ✦ purple bonus star earned! (' + e.stars + '/3)');
       else if (e.type === 'reviewDecay') toast('📋 A purple bonus star faded (' + e.stars + '/3 left)');
+      else if (e.type === 'expanded') toast('📐 Café expanded to ' + e.cols + '×' + e.rows + ' — more floor to fill!');
       else if (e.type === 'ratingUp') { repFlash = 30; repFlashDir = 1; }
       else if (e.type === 'ratingDown') { repFlash = 30; repFlashDir = -1; }
     });
@@ -314,6 +315,21 @@
         return '<div class="row' + (aff ? '' : ' locked') + '"><div class="r-ico">' + it.emoji + '</div><div class="r-body"><div class="r-name">' + it.name + note + '</div><div class="r-desc">' + it.desc + '</div></div>' +
           '<button class="buy ' + bag + '" data-act="buy" data-id="' + it.id + '"' + (aff ? '' : ' disabled') + '>' + label + '</button></div>';
       }).join('') : '<p class="hint">Nothing here yet.</p>') + '</div>';
+      if (shopTab === 'Utility') {
+        // café expansion: buy the grass next door (cash or toxin, level-gated)
+        var ex = world.nextExpansion();
+        var exRow;
+        if (!ex) exRow = '<div class="row"><div class="r-ico">📐</div><div class="r-body"><div class="r-name">Expand Café</div><div class="r-desc">Your café is at its largest — the whole corner lot is yours.</div></div></div>';
+        else {
+          var locked2 = world.level < ex.level;
+          var sz = (world.colsNow() + 1) + '×' + (world.rowsNow() + 1);
+          exRow = '<div class="row' + (locked2 ? ' locked' : '') + '"><div class="r-ico">📐</div><div class="r-body"><div class="r-name">Expand Café → ' + sz + '</div>' +
+            '<div class="r-desc">' + (locked2 ? 'Unlocks at level ' + ex.level : 'Buy the grass next door — a bigger floor for tables, decor and staff.') + '</div></div>' +
+            '<div class="zbtns"><button class="mini coin" data-act="expand-coin"' + (locked2 || world.coins < ex.coin ? ' disabled' : '') + '>🪙 ' + fmt(ex.coin) + '</button>' +
+            (ex.toxin ? '<button class="mini toxin" data-act="expand-tox"' + (locked2 || world.toxin < ex.toxin ? ' disabled' : '') + '>☣ ' + ex.toxin + '</button>' : '') + '</div></div>';
+        }
+        body = body.slice(0, body.lastIndexOf('</div>')) + exRow + '</div>';
+      }
     }
     openSheet('<div class="sheet">' + head('🛒 Store') + '<div class="tabs">' + tabs + '</div>' +
       '<p class="hint">Ambiance <b>' + world.ambiance() + '</b> · pieces sit on the floor — rearrange or sell them in 🔨 Build.</p>' + body + '</div>');
@@ -545,6 +561,8 @@
     else if (act === 'buy') { world.buy(a.dataset.id); openShop(); }
     else if (act === 'raid') { world.startRaid(a.dataset.id); closeSheet(); battleBar(); }
     else if (act === 'deploy-all') { world.deployAll(); battleBar(); }
+    else if (act === 'expand-coin') { world.expandCafe(false); openShop('Utility'); }
+    else if (act === 'expand-tox') { world.expandCafe(true); openShop('Utility'); }
     else if (act === 'retreat') { world.retreat(); deselect(); }
     else if (act === 'energize') { world.energizeZombie(a.dataset.id); var bz = world.zombies.filter(function (s) { return s.id === a.dataset.id; })[0]; if (bz) battleSelBar(bz); }
     else if (act === 'yes') { var cb = confirmCb; confirmCb = null; closeSheet(); if (cb) cb(); }

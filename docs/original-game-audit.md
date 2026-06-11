@@ -325,6 +325,83 @@ Expansion price table; in-raid Energize exact toxin cost; review-board task
 timers and bonus-star decay rate; Boxer's numeric stats (owner screenshot is
 the only source); exact Fancy earnings %.
 
+## 8. Round 4 — revival-repo data mining + web sweep (the deepest layer)
+
+The community revival repo (Airyzz/zombie-cafe-revival) contains the original
+client's **actual data tables** (decoded by its author's Go tools): 216-row
+recipe table, 219-row character table, 484-row furniture/store table, plus the
+original help text. Numbers below come straight from those files — this is
+primary-source data, not wiki recall. (IP note: we mined NUMBERS only; the
+repo's art, names, descriptions, strings, animations and code are
+Capcom/Beeline copyright and were not copied. Reference data stays outside
+this repository.)
+
+### Gaps CLOSED by the data files — and adopted
+- **Expansion price ladder** (was lost): 8×7 $3.5k → 9×8 $25k/10☣ → 10×9
+  $75k/30☣ → 11×10 $100k/40☣ → 12×11 $120k/50☣ → 13×12/14×13/15×14 $150k/50☣
+  each. **ADOPTED**: our café now expands 7×8 → 11×12 in 4 steps
+  (1.5k / 4k+10☣ / 9k+30☣ / 18k+40☣, level-gated 7/9/11/13), bought in
+  Store ▸ Utility; the floor grid literally grows into the corner lot's
+  grass and new dining cells open up. ✅
+- **Energize = 1 toxin** ("a vial of toxin", original help text). Ours
+  already charged exactly that. ✅ confirmed
+- **Review-board timers** (was unknown): 1st purple star fades in 48h; each
+  further pass adds time (+36h, +24h…) capped at one week; bribe 2☣.
+  **ADOPTED**: additive decay clock with cap, scaled to our timebase. ✅
+- **Burn rule confirmed exact**: grace = 1.0× cook time (starter dish
+  special-cased) — precisely our `max(8s, cookTime)` rule. ✅ confirmed
+- **Boxer's real stats** (web rumors wrong): lvl 7, Energy **225**, Spd 7,
+  Atk 9, Tip 1, **15 toxin** (not $500 cash). Our Brawler's card retuned to
+  spd 7 / str 9 / tip 1, energy bumped. ✅
+- **"Knight in Armor" EXISTS exactly as the owner's screenshot showed**:
+  lvl 8, Energy **350**, Spd 3, Atk 7, Tip 6, **$95,000 cash**, Regen ×1.3.
+  (The wiki-only "Black Knight $2M" is a different, later entry.)
+  **ADOPTED** as our original Rustplate Knight: lvl 8, cash-only 9,500
+  coins, slow/tanky (energy 250, atk 24), tip 6 card, great-helm +
+  gauntlets visual. ✅
+- **Very Fancy** (web round): cost +70%, earnings ≈ +67% → retuned. ✅
+
+### Other primary-source facts now on file
+- Recipe economy shape: 216 recipes to level 83; profit ratio 1.5–6×, best
+  on long cooks; XP/min best on short cooks; serving prices 1–3 early, 6–9
+  late; batch sizes run 12 → 1900 servings. Variants are separate rows
+  pinned at stealing level — exactly our derived-entry model.
+- Character table covers customers, premium zombies, chef avatars AND raid
+  enemies in one schema (enemy rows level 255); premium zombies cluster at
+  E500–1200 with one passive each (CookSpeed ×1.1–1.2, TipMult ×2–5, Regen
+  ×1.1–1.5, CookXP ×1.1–1.3) — our trait system's P2 upgrade path.
+- Store data: junk items with NEGATIVE rating (−0.01) you start with and
+  must replace; stove speed tiers ×1.10–1.30; passive-income props with
+  $/hr + cap (vending 25/250 … ATM 200/5000), doors-open requirement;
+  toxin⇄cash exchange tiers (10⇄20k, 30⇄50k, 175⇄250k, 750⇄1M).
+- Raid extras: tombstone consumables (5 s team buff, 5 charges, 24 h
+  recharge); boss chef appears from level 5 with rising odds; ignored
+  rival cafés actively steal your star rating; friend raids 1/day with no
+  defender loss; chef avatar adds defense when you're raided.
+- Meat Locker per data: 5 toxin per +5 hooks, cap 50 (wiki said 100).
+- CORRECTIONS to earlier rounds: **no pet system and no gacha exist in the
+  US/Android data files** — pets (companion vs summoned classes, 5 robot
+  pets that assemble into a giant raid mech) arrived only in the late
+  international version, gacha was JP-only. Pets drop to P3 for us.
+- Player XP curve: need grows ~+10% per level, level 100 ≈ 65.6M cumulative
+  XP (web). Ours (60·lvl^1.4) is steeper early, flatter late — acceptable.
+- Tip mechanics (web): tip rating 10 ≈ $1 per $5 earned; eaten-customer
+  energy table runs 10 → 50+ by toughness; eating a customer in YOUR café
+  costs half a star.
+
+### New P2/P3 backlog from round 4
+P2: passive-income props (rate + cap + doors-open), junk-item cleanup start,
+premium-zombie passives (cook-speed / tip-mult / regen / cook-XP), stove
+speed tiers, toxin⇄cash exchange, enemy-café pressure events, boss-chef
+escalating odds + unique recipe drop. P3: tombstone raid consumables,
+friend economy (fees/orders/friend raids), themed-stove cookbook unlocks,
+chef-avatar defense, pets.
+
+### Still genuinely unknown
+Fancy (non-Very) %, Fresh's exact grace factor (both live only in the
+game's native code), per-merge stat %, money-generator exact rates, NPC
+rival café names, remaining cookbook names.
+
 ## Sources
 - [Zombie Cafe — Wikipedia](https://en.wikipedia.org/wiki/Zombie_Cafe)
 - [Zombie Cafe Wiki (Fandom) — main](https://zombiecafe.fandom.com/wiki/Zombie_Cafe), [Energy level](https://zombiecafe.fandom.com/wiki/Energy_level), [Toxin](https://zombiecafe.fandom.com/wiki/Toxin), [Recipe](https://zombiecafe.fandom.com/wiki/Recipe), [Raid](https://zombiecafe.fandom.com/wiki/Raid), [Rating](https://zombiecafe.fandom.com/wiki/Rating), [Customers](https://zombiecafe.fandom.com/wiki/Customers), [Zombie](https://zombiecafe.fandom.com/wiki/Zombie), [Gacha](https://zombiecafe.fandom.com/wiki/Gacha), [Couch Potato](https://zombiecafe.fandom.com/wiki/Couch_Potato), [Astronaut](https://zombiecafe.fandom.com/wiki/Astronaut), [Composer](https://zombiecafe.fandom.com/wiki/Composer)

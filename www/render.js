@@ -102,6 +102,9 @@
     this._selZ = ui.selZ || null;                       // tap-command selection
     this._foodReady = world.ready.length > 0;
     this._t = t;
+    // café expansion: the floor grid can grow — refit the projection
+    var dw = (world.colsNow ? world.colsNow() : Wld.COLS) * Wld.TILE, dh = (world.rowsNow ? world.rowsNow() : Wld.ROWS) * Wld.TILE;
+    if (dw !== Wld.W || dh !== Wld.H) { Wld.W = dw; Wld.H = dh; Wld.COLS = dw / Wld.TILE; Wld.ROWS = dh / Wld.TILE; this.resize(); }
     if (world.battle) { this._drawBattle(world, t, ui); return; }
     var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -966,6 +969,11 @@
     else if (hat === 'mohawk') { c.fillStyle = '#d8413a'; for (var i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(x + i * S * 0.05, hy - S * 0.16); c.lineTo(x + i * S * 0.05 - S * 0.02, hy - S * 0.34); c.lineTo(x + i * S * 0.05 + S * 0.03, hy - S * 0.16); c.fill(); } }
     else if (hat === 'tophat') { c.fillStyle = '#1c1c22'; c.fillRect(x - S * 0.22, hy - S * 0.12, S * 0.44, S * 0.04); rr(c, x - S * 0.14, hy - S * 0.4, S * 0.28, S * 0.3, 3); c.fill(); }
     else if (hat === 'wizard') { c.fillStyle = '#6a3fb0'; c.beginPath(); c.moveTo(x - S * 0.18, hy - S * 0.08); c.lineTo(x + S * 0.18, hy - S * 0.08); c.lineTo(x + S * 0.02, hy - S * 0.5); c.closePath(); c.fill(); c.fillStyle = C.gold; circle(c, x + S * 0.06, hy - S * 0.26, S * 0.025); }
+    else if (hat === 'helm') {                              // rusted great-helm with a visor slit + plume
+      c.fillStyle = '#8d98a6'; rr(c, x - S * 0.2, hy - S * 0.28, S * 0.4, S * 0.34, S * 0.09); c.fill(); c.stroke();
+      c.fillStyle = '#39404a'; rr(c, x - S * 0.15, hy - S * 0.1, S * 0.3, S * 0.05, S * 0.02); c.fill();
+      c.fillStyle = '#a33f35'; c.beginPath(); c.moveTo(x - S * 0.02, hy - S * 0.28); c.quadraticCurveTo(x + S * 0.06, hy - S * 0.46, x + S * 0.14, hy - S * 0.34); c.quadraticCurveTo(x + S * 0.05, hy - S * 0.34, x + S * 0.02, hy - S * 0.26); c.closePath(); c.fill();
+    }
   };
 
   // ---- primitives -----------------------------------------------------

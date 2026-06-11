@@ -857,3 +857,43 @@ test('review tasks track real progress (serve / cook / earn)', () => {
   assert.ok(w.events.some((e) => e.type === 'reviewPassed'), 'spend completed the board');
   assert.strictEqual(w.bonusStars(), 1, 'board completion earned the star');
 });
+
+test('café expansion: faithful ladder, level-gated, grid grows into the grass', () => {
+  const w = boot();
+  assert.strictEqual(w.colsNow(), 7); assert.strictEqual(w.rowsNow(), 8);
+  const ex = w.nextExpansion();
+  assert.strictEqual(ex.coin, 1500); assert.strictEqual(ex.level, 7);
+  w.coins = 99999;
+  assert.ok(!w.expandCafe(false), 'level-gated (level 1 < 7)');
+  w.level = 7;
+  assert.ok(w.expandCafe(false), 'first expansion bought with cash');
+  assert.strictEqual(w.colsNow(), 8); assert.strictEqual(w.rowsNow(), 9);
+  assert.strictEqual(w.coins, 99999 - 1500);
+  // new band cells become usable; a table can be placed out there
+  const newCell = (() => { for (let i = 25; i < 200; i++) if (w.cellUsable(i) && w.cellFree(i)) return i; return -1; })();
+  assert.ok(newCell >= 25, 'an expansion-band cell is usable');
+  assert.ok(w.moveTable(w.tables[0].id, newCell), 'table moves onto new land');
+  assert.ok(w.inBounds(7, 8), 'expanded tiles are in bounds');
+  assert.ok(!w.inBounds(8, 9), 'beyond the expansion still out of bounds');
+  // second step has a toxin alternate price
+  w.level = 9; w.toxin = 50;
+  assert.ok(w.expandCafe(true), 'second expansion bought with toxin');
+  assert.strictEqual(w.toxin, 40, 'cost 10 toxin');
+  assert.strictEqual(w.colsNow(), 9);
+  // survives save/load
+  const w2 = new w.constructor(JSON.parse(JSON.stringify(w.snapshot())));
+  assert.strictEqual(w2.colsNow(), 9); assert.strictEqual(w2.rowsNow(), 10);
+});
+
+test('Rustplate Knight: knight-tier cash elite matches the recovered archetype', () => {
+  const ctx = { window: {}, Math, Date };
+  vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);
+  const kn = ctx.window.CUSTOMER_TYPES.find((t) => t.id === 'knight');
+  assert.ok(kn, 'knight exists');
+  assert.strictEqual(kn.infect.cash, 9500, 'huge CASH infect cost');
+  assert.ok(!kn.infect.toxin, 'cash-only like the original archetype');
+  assert.strictEqual(kn.card.spd, 3, 'slow'); assert.strictEqual(kn.card.str, 7);
+  assert.strictEqual(kn.card.tip, 6, 'good tipper');
+  assert.ok(kn.z.maxEnergy >= 200, 'tank-tier energy pool');
+  assert.strictEqual(kn.levelReq, 8, 'unlocks at level 8 like the original');
+});
