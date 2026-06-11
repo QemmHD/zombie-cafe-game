@@ -240,7 +240,10 @@
     if (this.expansion == null) this.expansion = 0;
     // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
-    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } z.inBattle = false; z.battleTarget = null; });
+    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } z.inBattle = false; z.battleTarget = null;
+      // a save captured mid-raid (battles aren't persisted): bring any zombie
+      // stranded at battle coordinates back home so it isn't stuck off-floor
+      if (!z.stored && z.reanimateUntil <= 0 && (z.x < 0 || z.x > W || z.y < 0 || z.y > H)) { z.x = z.hx; z.y = z.hy; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy; z.path = []; z.state = 'idle'; } });
     (this.tables || []).forEach(function (tb) { if (tb.reserved === undefined) tb.reserved = null; });
     (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } if (!c.type) c.type = 'civilian'; });
     this.tileClaim = {}; this.chairs = this.chairs || []; this._syncChairs();

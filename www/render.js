@@ -648,8 +648,11 @@
     var it = shop(d.deco) || {};
     var wallFlush = WALL_ARTS[it.art] === 1;
     var vo = wallFlush ? { x: 0, y: 0 } : vof(d.id);                 // wall items sit exactly flush
-    var wallBias = wallFlush ? -34 : 0;                              // back edge hugs the wall base
+    var wallBias = wallFlush ? -12 : 0;                              // back edge hugs the wall base
     var p = this.project(d.x + vo.x, d.y + vo.y + wallBias), S = this.S, lift = sel ? S * 0.18 : 0, y = p.y - lift;
+    // wall-flush appliances get a contact shadow so they read as planted on
+    // the floor instead of floating against the wall
+    if (wallFlush) this._shadow(c, p.x, p.y + S * 0.1, S * 0.36);
     // runtime sprite path (selection keeps procedural for the lift + ring)
     var sid = DECOR_SPRITE[it.art];
     if (sid && !sel && this._blit(c, sid, d.x + vo.x, d.y + vo.y + wallBias)) return;
@@ -716,13 +719,14 @@
 
   Renderer.prototype._stove = function (c, st, world, t, sel) {
     // wall-flush appliance: no random offset, back edge hugs the wall base
-    var p = this.project(st.x, st.y - 34), S = this.S, x = p.x, y = p.y;
+    var p = this.project(st.x, st.y - 12), S = this.S, x = p.x, y = p.y;
+    this._shadow(c, x, y + S * 0.12, S * 0.4);            // contact shadow so it sits on the floor
     if (this._selZ && (st.ready || st.burned)) this._hl(c, x, y + S * 0.2, S * 1.05, t);
     if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     // ===== a real iso BOX: bottom diamond on the floor, extruded up =====
     var fw = S * 0.42, fh = S * 0.2, bh = S * 0.52, topY = y - bh;
-    if (!sel && this._blit(c, 'stove_body', st.x, st.y - 34)) { this._stoveState(c, st, world, t, x, y, S, fw, fh, topY); return; }
+    if (!sel && this._blit(c, 'stove_body', st.x, st.y - 12)) { this._stoveState(c, st, world, t, x, y, S, fw, fh, topY); return; }
     this._shadow(c, x, y + fh * 0.3, S * 0.52);
     c.fillStyle = '#15160f'; rr(c, x - fw * 0.78, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill(); rr(c, x + fw * 0.6, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill();   // feet
     var face = function (pts, col) { c.fillStyle = col; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke(); };
