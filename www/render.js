@@ -454,29 +454,25 @@
 
   Renderer.prototype._pass = function (c, world) {
     var S = this.S, T = Wld.TILE;
-    // a real 2-tile service counter: centred between its two footprint tiles
-    var px0 = Wld.PASS.x + T * (Wld.PASS_W - 1) / 2, p = this.project(px0, Wld.PASS.y);
-    var b;
-    if (this._blit(c, 'pass_body', px0, Wld.PASS.y)) {
-      b = { x: p.x, topY: p.y + S * 0.1 - S * 0.3, fw: S * 0.86, fh: S * 0.3 };   // geometry only (body came from the sprite)
-    } else {
-      b = isoBox(c, p.x, p.y + S * 0.1, S * 0.86, S * 0.3, S * 0.3, C.steel, C.steelD);
-      c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.35, b.topY + b.fh * 0.2, b.fw * 0.35); c.restore();
-    }
-    // ready dishes spread ALONG the counter's long axis (world-x), so the row
-    // follows the iso top plane instead of floating in a flat screen line
-    var n = world.ready.length, show = Math.min(n, 4);
-    var topLift = (p.y + S * 0.1) - b.topY;               // height of the top plane above the base
+    // TRUE 2x1 service counter: the base follows the exact 2-tile footprint
+    // (tiles (3,1)+(4,1)), so the visual fits its blocks — no 2x2 sprawl.
+    var x0 = (Wld.PASS.x - T / 2) + 14, x1 = (Wld.PASS.x - T / 2) + T * Wld.PASS_W - 14;
+    var y0 = (Wld.PASS.y - T / 2) + 16, y1 = (Wld.PASS.y + T / 2) - 16;
+    var bh = S * 0.32, cxw = Wld.PASS.x + T * (Wld.PASS_W - 1) / 2;
+    if (!this._blit(c, 'pass_body', cxw, Wld.PASS.y)) this._isoBoxW(c, x0, y0, x1, y1, bh, C.steel, C.steelD);
+    // ready dishes along the counter's long axis, sitting ON the top plane
+    var n = world.ready.length, show = Math.min(n, 5);
     for (var i = 0; i < show; i++) {
-      var dw = this.project(px0 - (show - 1) * 27 + i * 54, Wld.PASS.y);
-      var dx = dw.x, dy = dw.y + S * 0.1 - topLift + S * 0.02;
+      var dw = this.project(cxw - (show - 1) * 27 + i * 54, Wld.PASS.y);
+      var dx = dw.x, dy = dw.y - bh + S * 0.01;
       c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(dx, dy + S * 0.03, S * 0.13, S * 0.05, 0, 0, 7); c.fill();
       c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(dx, dy, S * 0.13, S * 0.06, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
       c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillText((recipe(world.ready[world.ready.length - 1 - i]) || {}).emoji || '🍽️', dx, dy - S * 0.08);
     }
-    if (n > 5) badge(c, b.x + b.fw * 0.7, b.topY - S * 0.1, '+' + (n - 5), C.blood, S);
-    if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.12) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PASS', b.x, b.topY); }
+    var pc = this.project(cxw, Wld.PASS.y);
+    if (n > 5) badge(c, pc.x + S * 0.7, pc.y - bh - S * 0.1, '+' + (n - 5), C.blood, S);
+    if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.12) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PASS', pc.x, pc.y - bh); }
   };
 
   Renderer.prototype._custDish = function (cid) { for (var i = 0; i < this._custs.length; i++) if (this._custs[i].id === cid) return this._custs[i].dish; return null; };
@@ -938,6 +934,29 @@
   }
   // clip helper to a top-diamond so details stay on the surface
   function topClip(c, b) { c.beginPath(); c.moveTo(b.x, b.topY - b.fh); c.lineTo(b.x + b.fw, b.topY); c.lineTo(b.x, b.topY + b.fh); c.lineTo(b.x - b.fw, b.topY); c.closePath(); }
+
+  // ---- TRUE multi-tile iso slab (Stage 4.10C) --------------------------
+  // Footprint is a WORLD rect (x0,y0)-(x1,y1): the base follows the exact
+  // tiles it occupies (a 2x1 object covers 2 tiles, not a 2x2 diamond),
+  // extruded up by bh screen px. Light from upper-left.
+  Renderer.prototype._isoBoxW = function (c, x0, y0, x1, y1, bh, top, side) {
+    var A = this.project(x0, y0), B = this.project(x1, y0), D = this.project(x1, y1), E = this.project(x0, y1);
+    var S = this.S, ow = Math.max(1.5, S * 0.032);
+    var up = function (P) { return { x: P.x, y: P.y - bh }; };
+    // grounded contact shadow hugging the base
+    c.fillStyle = 'rgba(0,0,0,.32)';
+    c.beginPath(); c.moveTo(A.x - 4, A.y + 2); c.lineTo(B.x + 6, B.y + 2); c.lineTo(D.x + 6, D.y + 7); c.lineTo(E.x - 4, E.y + 7); c.closePath(); c.fill();
+    var q = function (p1, p2, p3, p4, col) { c.fillStyle = col; c.beginPath(); c.moveTo(p1.x, p1.y); c.lineTo(p2.x, p2.y); c.lineTo(p3.x, p3.y); c.lineTo(p4.x, p4.y); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = ow; c.stroke(); };
+    q(E, D, up(D), up(E), shade(side, 0.95));   // long front-left face (lit)
+    q(D, B, up(B), up(D), shade(side, 0.62));   // right end face (dark)
+    q(up(A), up(B), up(D), up(E), top);         // top plane
+    // top sheen + grime on the surface
+    c.save(); c.beginPath(); c.moveTo(up(A).x, up(A).y); c.lineTo(up(B).x, up(B).y); c.lineTo(up(D).x, up(D).y); c.lineTo(up(E).x, up(E).y); c.closePath(); c.clip();
+    c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, (up(A).x + up(E).x) / 2, (up(A).y + up(E).y) / 2, S * 0.4);
+    c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, (up(B).x + up(D).x) / 2, (up(B).y + up(D).y) / 2, S * 0.3);
+    c.restore();
+    return { A: A, B: B, D: D, E: E, bh: bh };
+  };
 
   // a chunky steel cooking pot sitting on the burner at (x, y)
   function pot(c, x, y, S, col) {
