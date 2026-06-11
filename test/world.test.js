@@ -77,7 +77,7 @@ test('raid battle: sidewalk line-up, one-by-one deploy, win pays loot', () => {
   const B = w.battle;
   assert.ok(B, 'live battle started');
   assert.strictEqual(B.lineup.length, 1, 'squad lines up on the sidewalk');
-  assert.ok(w.zombies[0].x < 0, 'line-up stands OUTSIDE the café');
+  assert.ok(w.zombies[0].y > 960, 'line-up stands OUTSIDE on the south sidewalk');
   assert.ok(B.enemies.some((e) => e.kind === 'chef'), 'the head chef defends');
   assert.ok(B.enemies.some((e) => e.kind === 'waiter'), 'waiters defend');
   // nothing happens until YOU deploy — one at a time
@@ -799,6 +799,7 @@ test('recipe variants: original multipliers generate derived cookbook entries', 
 
 test('a variant dish cooks, plates and serves end-to-end', () => {
   const w = boot();
+  w.auto = false;                                        // manual flow: idle staff would snatch it instantly
   w.coins = 999;
   assert.ok(w.startCook(w.stoves[0].id, 'coffee.fancy'), 'variant cook starts');
   const st = w.stoves[0];

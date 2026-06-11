@@ -62,7 +62,8 @@
 
   // ---- layout: everything aligned to TILE CENTERS (square grid) -------
   // Kitchen appliances line the back wall on row 0 (slot = a tile center).
-  var STOVE_SLOTS = [ {x:60,y:60}, {x:180,y:60}, {x:300,y:60}, {x:540,y:60}, {x:660,y:60}, {x:780,y:60} ];
+  var STOVE_SLOTS = [ {x:60,y:60}, {x:180,y:60}, {x:300,y:60}, {x:540,y:60}, {x:660,y:60}, {x:780,y:60},
+                      {x:900,y:60}, {x:1020,y:60}, {x:1140,y:60}, {x:1260,y:60} ];   // cols 7-10 open with expansions
   // The dining floor: cols 1-5 x rows 2-6 of exact tile centers. Tables AND
   // decor occupy cells (decorating trades off seating); col 0/6 stay as aisles.
   var CELLS = (function () {
@@ -85,7 +86,10 @@
   // Entrance: a doorway in the LEFT wall (plane x≈0), down toward the dining
   // area (kitchen runs along the top). Customers spawn/leave just inside it.
   var DOOR = { x: 60, y: 600 };
-  function home(i) { return { x: 110 + (i % 5) * 150, y: 210 + Math.floor(i / 5) * 64 }; }
+  // idle staff wait along the LEFT wall (col 0), clear of the serving
+  // counters (row 1, cols 2-5), the dining cells and the door row
+  var HOME_YS = [180, 290, 400, 510, 760, 870];
+  function home(i) { return { x: 64 + Math.floor(i / HOME_YS.length) * 38, y: HOME_YS[i % HOME_YS.length] }; }
 
   // =====================================================================
   function World(saved) { this.events = []; saved ? this._restore(saved) : this._fresh(); }
@@ -197,8 +201,9 @@
     return true;
   };
   World.prototype.firstFreeCell = function () { for (var i = 0; i < CELLS.length; i++) if (this.cellFree(i)) return i; return -1; };
+  World.prototype.stoveSlotUsable = function (s) { var sp = STOVE_SLOTS[s]; return !!sp && Math.floor(sp.x / TILE) < this.colsNow(); };
   World.prototype.freeStoveSlot = function () {
-    for (var s = 0; s < STOVE_SLOTS.length; s++) { var used = false; for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === s) used = true; if (!used) return s; } return -1;
+    for (var s = 0; s < STOVE_SLOTS.length; s++) { if (!this.stoveSlotUsable(s)) continue; var used = false; for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === s) used = true; if (!used) return s; } return -1;
   };
   World.prototype._mkZombie = function (i, rar) { var h = home(i); rar = rar || rollRarity(); var s = statsFor(rar);
     return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, fx: h.x, fy: h.y, path: [], carry: null, carryBatch: null, job: null, cleanId: null, stoveId: null, face: 'L', step: Math.random() * 6,
@@ -568,8 +573,8 @@
     var ready = this.activeZombies().filter(function (z) { return z.reanimateUntil <= this.t; }, this);
     return !this.battle && this.level >= rv.level && ready.length >= 1;
   };
-  // sidewalk line-up spot i: on the pavement outside the door, single file
-  World.prototype._lineupSpot = function (i) { return { x: -64, y: 640 + i * 105 }; };
+  // sidewalk line-up spot i: on the pavement out front, single file
+  World.prototype._lineupSpot = function (i) { return { x: 220 + i * 130, y: ROWS * TILE + 64 }; };   // base-size arena's south pavement
   World.prototype.startRaid = function (rivalId) {
     var rv = RIVAL[rivalId]; if (!this.canRaid(rivalId)) return false;
     var self = this, lineup = [];
@@ -882,7 +887,7 @@
   // Returns { ok, reason }. Used by the placement ghost (green/red).
   World.prototype.placementValidity = function (kind, cell, exceptId) {
     if (kind === 'stove') {
-      if (cell == null || cell < 0) return { ok: false, reason: 'Outside café' };
+      if (cell == null || cell < 0 || !this.stoveSlotUsable(cell)) return { ok: false, reason: 'Outside café' };
       for (var i = 0; i < this.stoves.length; i++) if (this.stoves[i].slot === cell && this.stoves[i].id !== exceptId) return { ok: false, reason: 'Overlaps furniture' };
       return { ok: true };
     }

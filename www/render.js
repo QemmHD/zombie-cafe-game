@@ -14,6 +14,7 @@
 (function () {
   'use strict';
   var Wld = window.World;
+  var BASE_COLS = Wld.COLS, BASE_ROWS = Wld.ROWS;       // pre-expansion grid (raid arenas use this)
   function recipe(id) { for (var i = 0; i < (window.RECIPES || []).length; i++) if (window.RECIPES[i].id === id) return window.RECIPES[i]; return null; }
   function shop(id) { for (var i = 0; i < (window.SHOP || []).length; i++) if (window.SHOP[i].id === id) return window.SHOP[i]; return null; }
 
@@ -102,8 +103,11 @@
     this._selZ = ui.selZ || null;                       // tap-command selection
     this._foodReady = world.ready.length > 0;
     this._t = t;
-    // café expansion: the floor grid can grow — refit the projection
-    var dw = (world.colsNow ? world.colsNow() : Wld.COLS) * Wld.TILE, dh = (world.rowsNow ? world.rowsNow() : Wld.ROWS) * Wld.TILE;
+    // café expansion: the floor grid can grow — refit the projection. The
+    // raid arena (a rival café) always renders at the BASE size.
+    var dw, dh;
+    if (world.battle) { dw = BASE_COLS * Wld.TILE; dh = BASE_ROWS * Wld.TILE; }
+    else { dw = (world.colsNow ? world.colsNow() : Wld.COLS) * Wld.TILE; dh = (world.rowsNow ? world.rowsNow() : Wld.ROWS) * Wld.TILE; }
     if (dw !== Wld.W || dh !== Wld.H) { Wld.W = dw; Wld.H = dh; Wld.COLS = dw / Wld.TILE; Wld.ROWS = dh / Wld.TILE; this.resize(); }
     if (world.battle) { this._drawBattle(world, t, ui); return; }
     var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;

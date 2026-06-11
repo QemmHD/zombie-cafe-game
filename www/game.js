@@ -528,7 +528,11 @@
       h('🔥', 'Don\'t burn it!', 'Finished food sits on the stove — move it to the pass (or let Auto carry it) before it burns. Burnt food is wasted and drops your rating. Tap a burnt stove to wipe it clean.') +
       h('⭐', 'Rating', 'The stars (top bar) rise with fast, happy service and clean tables, and fall from long waits, dirty tables and burnt food. Higher rating = more & richer customers.') +
       h('🧟‍♀️', 'Infect', 'Tap a customer with a green 🧟 bubble to spend toxin and turn them into a new zombie worker.') +
-      h('⚔️', 'Raid', 'Open the Raid Map to send zombie squads to take over rival cafes — win loot into your 🧊 Fridge and unlock their recipe.') +
+      h('⚔️', 'Raid', 'Open the Raid Map to attack a rival café LIVE: your squad lines up on the sidewalk — tap a zombie to send it in one at a time, tap an enemy to attack it, tap their counter to steal food. Waiters are weak; the Head Chef is the boss. ☣ Energize heals mid-fight, 🏳️ retreats (you keep eaten cash).') +
+      h('📋', 'Reviews', 'At level 6 the critics arrive: finish all 4 tasks for a ✦ purple bonus star (max 3 — they fade over time). Bribe a stuck task for 2 toxin.') +
+      h('🌶️', 'Variants', 'Most dishes unlock variant versions (Spicy = more XP, Fancy = more coins, Bulk = double batch, Quick = faster, Fresh = slower to burn, Frozen = long idle cook). Pick them as chips in the cook panel.') +
+      h('📐', 'Expand', 'From level 7, buy the grass next door (Store ▸ Utility) — the floor grid grows for more tables, decor and stoves.') +
+      h('⬆️', 'Staff XP', 'Zombies level up from serving and raid kills — a level-up fully recharges them and raises their stats.') +
       h('🧊', 'Fridge', 'Stolen raid food lives here. Serve it on the pass, or unlock a brand-new recipe from it.') +
       h('😴', 'Staff', 'Tap a zombie to see its energy & stats. Working tires them; tired zombies rest. Set a job (Auto/Waiter/Cleaner/Rest) or Feed them toxin to refill.') +
       h('🧽', 'Clean', 'After customers eat, tables get dirty (flies!). Zombies bus them so new customers can sit.') +
