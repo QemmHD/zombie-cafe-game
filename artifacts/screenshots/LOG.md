@@ -171,6 +171,32 @@ codebase). Per "pick the safest option", the chunky toon-volume objects ARE the
 live 3D engine. If true WebGL models are required, that's a separate, larger
 spike (Three.js layer composited under the 2D characters/UI) — flagged, not done.
 
+## Stage 4.10 — UI proof, mobile framing, art density, baked-sprite pipeline
+- **UI shell IN the canvas** (`Renderer.drawUI`): maroon scalloped HUD (level
+  coin, café name, stars, XP bar, cream $/☣ chips, round RS logo), left sticker
+  rail (STORE/MENU/STAFF/FRIDGE/RAID), bottom wood toolbar w/ chalk buttons.
+  Captured via the new `artReview_uiShell` / `artReview_mobileFrame` states —
+  the proof screenshot finally looks like a mobile tycoon, no black-void frame.
+- **Proportions**: pass counter shrunk from bathtub-size to a service counter.
+- **Environment density**: grass patches + blade tufts + dirt, road cracks/oil/
+  grain, worn walking lanes (kitchen aisle + door trail), grease cloud by the
+  stoves, big faded stains crossing tiles.
+- **Character detail**: droopy eyelids (heavy on zombies), eyelid lines, yellowed
+  zombie eyes, head stitches; the chef reads undead (toque, teeth, hunch).
+- **Baked-sprite asset pipeline** (`npm run bake`): 30 anchored PNGs generated
+  from our own painters into `www/assets/sprites/**` + `manifest.json` (file,
+  frame, anchors, bakeS, footprint, facing, `procedureFallback:true`). Priority-1
+  set covered: chef+server zombies ×4 facings, 3 customer types ×4, table
+  (clean+dirty), chair, stove, 2x1 pass, prep counter, sink, fridge, plant, lamp.
+- Tests: **47/47** (manifest + every priority-1 file exists + 4 facings/char).
+
+**Honest partials:** (1) baked sprites are generated FROM the procedural
+painters — the pipeline makes art *replaceable* (same anchors, drop-in PNGs) but
+does not by itself exceed the procedural art ceiling; hand-drawn/AI-drawn
+replacements are the next real quality jump. (2) Runtime still paints
+procedurally (the bake is the export layer; runtime blitting is wired-ready via
+the manifest but not switched on). (3) Characters improved but remain procedural.
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

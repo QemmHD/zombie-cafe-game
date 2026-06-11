@@ -56,6 +56,7 @@ function capture(name, W, H) {
   const cv = mkCanvas(W, H);
   const r = new ctx.window.Renderer(cv);
   r.draw(world, 6.0, ui);
+  if (ui.shell) r.drawUI(world);          // mobile-framed proofs include the UI shell
   const file = path.join(OUT, name + '.png');
   fs.writeFileSync(file, cv.toBuffer('image/png'));
   return file;

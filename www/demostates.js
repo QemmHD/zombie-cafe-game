@@ -131,6 +131,9 @@
       w.decors.forEach(function (d) { var x = xs[i % 4], y = [330, 600][Math.floor(i / 4)] || 330; d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); i++; });
       w.zombies[0].stored = true; return {};
     },
+    // mobile-framed proofs: the same scenes WITH the canvas-painted UI shell
+    artReview_uiShell: function (w) { DEMOS.starter(w); return { shell: true }; },
+    artReview_mobileFrame: function (w) { DEMOS.busy(w); return { shell: true }; },
     artReview_charactersDirections: function (w) {
       w.tables.forEach(function (tb) { tb.x = -999; }); w.zombies[0].stored = true;
       var faces = ['U', 'D', 'L', 'R'], TY = window.CUSTOMER_TYPES || [];

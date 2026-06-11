@@ -1,0 +1,506 @@
+{
+  "generated": "2026-06-11",
+  "note": "Baked from the game’s own painters — every entry is replaceable by a drawn PNG with the same anchors.",
+  "sprites": {
+    "table_clean": {
+      "id": "table_clean",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/furniture/tables/table_clean.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "furniture",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "table_dirty": {
+      "id": "table_dirty",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/furniture/tables/table_dirty.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "furniture",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "stove_idle": {
+      "id": "stove_idle",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/stoves/stove_idle.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "pass_counter": {
+      "id": "pass_counter",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/counters/pass_counter.png",
+      "frameWidth": 420,
+      "frameHeight": 380,
+      "anchorX": 210,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        2,
+        1
+      ]
+    },
+    "prep_counter": {
+      "id": "prep_counter",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/counters/prep_counter.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "sink": {
+      "id": "sink",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/sink/sink.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "fridge": {
+      "id": "fridge",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/fridge/fridge.png",
+      "frameWidth": 320,
+      "frameHeight": 440,
+      "anchorX": 160,
+      "anchorY": 360,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "chair": {
+      "id": "chair",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/furniture/chairs/chair.png",
+      "frameWidth": 320,
+      "frameHeight": 320,
+      "anchorX": 160,
+      "anchorY": 250,
+      "bakeS": 150,
+      "category": "furniture",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "plant": {
+      "id": "plant",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/decor/plant.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "decor",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "lamp": {
+      "id": "lamp",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/decor/lamp.png",
+      "frameWidth": 320,
+      "frameHeight": 420,
+      "anchorX": 160,
+      "anchorY": 340,
+      "bakeS": 150,
+      "category": "decor",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_chef_D": {
+      "id": "zombie_chef_D",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/chef_D.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "D",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_chef_L": {
+      "id": "zombie_chef_L",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/chef_L.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "L",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_chef_R": {
+      "id": "zombie_chef_R",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/chef_R.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "R",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_chef_U": {
+      "id": "zombie_chef_U",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/chef_U.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "U",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_server_D": {
+      "id": "zombie_server_D",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/server_D.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "D",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_server_L": {
+      "id": "zombie_server_L",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/server_L.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "L",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_server_R": {
+      "id": "zombie_server_R",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/server_R.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "R",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "zombie_server_U": {
+      "id": "zombie_server_U",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/zombies/server_U.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "U",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_civilian_D": {
+      "id": "customer_civilian_D",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/civilian_D.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "D",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_civilian_L": {
+      "id": "customer_civilian_L",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/civilian_L.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "L",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_civilian_R": {
+      "id": "customer_civilian_R",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/civilian_R.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "R",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_civilian_U": {
+      "id": "customer_civilian_U",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/civilian_U.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "U",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_worker_D": {
+      "id": "customer_worker_D",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/worker_D.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "D",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_worker_L": {
+      "id": "customer_worker_L",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/worker_L.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "L",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_worker_R": {
+      "id": "customer_worker_R",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/worker_R.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "R",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_worker_U": {
+      "id": "customer_worker_U",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/worker_U.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "U",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_punk_D": {
+      "id": "customer_punk_D",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/punk_D.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "D",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_punk_L": {
+      "id": "customer_punk_L",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/punk_L.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "L",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_punk_R": {
+      "id": "customer_punk_R",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/punk_R.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "R",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "customer_punk_U": {
+      "id": "customer_punk_U",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/characters/customers/punk_U.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "character",
+      "facing": "U",
+      "footprint": [
+        1,
+        1
+      ]
+    }
+  }
+}

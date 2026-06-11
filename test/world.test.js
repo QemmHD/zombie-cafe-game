@@ -589,6 +589,25 @@ test('object models carry render/occlusion metadata (4.9)', () => {
   assert.strictEqual(w.objModel('fridge').canBeOccluded, false, 'fridge is too tall to be hidden by a character');
 });
 
+test('sprite asset pipeline: manifest + priority-1 baked assets exist (4.10)', () => {
+  const mf = JSON.parse(fs.readFileSync(path.join(WWW, 'assets', 'sprites', 'manifest.json'), 'utf8'));
+  const need = ['table_clean', 'table_dirty', 'chair', 'stove_idle', 'pass_counter', 'prep_counter', 'sink', 'fridge', 'plant', 'lamp'];
+  need.forEach((id) => {
+    const e = mf.sprites[id];
+    assert.ok(e, 'manifest has ' + id);
+    assert.ok(e.anchorX != null && e.anchorY != null && e.frameWidth > 0, id + ' has anchors + frame');
+    assert.ok(fs.existsSync(path.join(WWW, e.file)), id + ' file exists: ' + e.file);
+  });
+  // characters: chef + server zombies and 3 customer types, 4 facings each
+  ['zombie_chef', 'zombie_server', 'customer_civilian', 'customer_worker', 'customer_punk'].forEach((ch) => {
+    ['D', 'L', 'R', 'U'].forEach((f) => {
+      const e = mf.sprites[ch + '_' + f];
+      assert.ok(e && fs.existsSync(path.join(WWW, e.file)), ch + '_' + f + ' baked');
+    });
+  });
+  assert.ok(Object.values(mf.sprites).every((e) => e.procedureFallback), 'every asset declares a procedural fallback (replaceable layer)');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

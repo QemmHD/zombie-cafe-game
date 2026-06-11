@@ -139,15 +139,21 @@
   Renderer.prototype._ground = function (c) {
     var self = this, W = Wld.W, H = Wld.H, cvW = this.cv.width, cvH = this.cv.height, T = Wld.TILE, S = this.S;
     c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = C.grassD; c.fillRect(0, 0, cvW, cvH);   // grass base (no dark corners)
-    // outer grass
+    // outer grass: uneven patches, blade tufts and dirt — not just flat dots
     c.fillStyle = C.grass; this._planeRect(c, -T * 30, -T * 30, W + T * 30, H + T * 30); c.fill();
     this._tex(c, function () { this._planeRect(c, -T * 12, -T * 12, W + T * 12, H + T * 12); }, function (bb) {
-      scatter(c, bb, 140, 7, function (x, y, r, i) { speck(c, x, y, S * (0.025 + r * 0.04), i % 3 ? C.grassD : C.grassL); });
+      scatter(c, bb, 50, 5, function (x, y, r) { stainBlob(c, x, y, S * (0.2 + r * 0.5), r > 0.6 ? 'rgba(70,100,50,.5)' : 'rgba(50,72,36,.5)'); });
+      scatter(c, bb, 130, 7, function (x, y, r, i) { speck(c, x, y, S * (0.025 + r * 0.04), i % 3 ? C.grassD : C.grassL); });
+      c.strokeStyle = C.grassL; c.lineWidth = Math.max(1, S * 0.014); c.lineCap = 'round';
+      scatter(c, bb, 90, 13, function (x, y, r) { line(c, x, y, x - S * 0.02, y - S * 0.05 - r * S * 0.03); line(c, x + S * 0.025, y, x + S * 0.035, y - S * 0.055); });
+      scatter(c, bb, 26, 17, function (x, y) { speck(c, x, y, S * 0.045, 'rgba(110,90,50,.4)'); });
     });
-    // road ring (asphalt) + speckle
+    // road ring (asphalt): grain, cracks, oil patches — less perfect gray
     c.fillStyle = C.road; this._planeRect(c, -T * 3.2, -T * 3.2, W + T * 3.2, H + T * 3.2); c.fill();
     this._tex(c, function () { this._planeRect(c, -T * 3.2, -T * 3.2, W + T * 3.2, H + T * 3.2); }, function (bb) {
-      scatter(c, bb, 90, 21, function (x, y, r) { speck(c, x, y, S * 0.025, r > 0.5 ? C.roadD : '#6c6f68'); });
+      scatter(c, bb, 110, 21, function (x, y, r) { speck(c, x, y, S * 0.025, r > 0.5 ? C.roadD : '#6c6f68'); });
+      scatter(c, bb, 14, 41, function (x, y, r) { crackLine(c, x, y, S * 0.7, r * 6.28, S * 0.016, 'rgba(30,32,28,.55)'); });
+      scatter(c, bb, 10, 47, function (x, y, r) { stainBlob(c, x, y, S * (0.12 + r * 0.18), 'rgba(25,27,24,.3)'); });
     });
     // dashed centre line around the block
     c.save(); c.strokeStyle = C.roadLine; c.lineWidth = Math.max(2, S * 0.05); c.setLineDash([S * 0.32, S * 0.34]);
@@ -261,8 +267,17 @@
       else if (i % 4 === 2) crackLine(c, x, y, S * 0.6, r * 6.28, S * 0.012, 'rgba(20,22,18,.4)'); // crack
       else speck(c, x, y, S * 0.03, 'rgba(20,20,16,.5)');                                          // debris
     });
-    // dirty trails near the kitchen wall + door
-    c.fillStyle = 'rgba(45,40,30,.22)'; stainBlob(c, this.project(W * 0.5, T * 1.2).x, this.project(W * 0.5, T * 1.2).y, S * 0.6, 'rgba(45,40,30,.22)');
+    // worn walking lanes: kitchen aisle + door-to-dining trail (cross-tile wear)
+    var lane = function (x0, y0, x1, y1, wdt, col) {
+      var P0 = self.project(x0, y0), P1 = self.project(x1, y1);
+      c.strokeStyle = col; c.lineWidth = wdt; c.lineCap = 'round'; line(c, P0.x, P0.y, P1.x, P1.y);
+    };
+    lane(T * 1.2, T * 2.4, W - T * 1.2, T * 2.4, S * 0.34, 'rgba(40,42,36,.16)');     // kitchen aisle
+    lane(T * 0.8, T * 5, W * 0.55, T * 5.4, S * 0.3, 'rgba(40,42,36,.12)');           // door trail
+    // grease cloud by the stoves + splatter
+    var gk = this.project(W * 0.45, T * 1.1); stainBlob(c, gk.x, gk.y, S * 0.55, 'rgba(50,40,22,.25)');
+    var bbF2 = { x: this.project(0, H).x, y: this.project(W, 0).y, w: (this.project(W, H).x - this.project(0, H).x), h: this.project(0, H).y - this.project(W, 0).y };
+    scatter(c, bbF2, 10, 77, function (x, y, r) { stainBlob(c, x, y, S * (0.16 + r * 0.3), 'rgba(48,52,40,.14)'); });   // big faded stains crossing tiles
     c.restore();
   };
   // dev grid overlay — proves the tile-state model:
@@ -357,12 +372,12 @@
     var S = this.S, T = Wld.TILE;
     // a real 2-tile service counter: centred between its two footprint tiles
     var p = this.project(Wld.PASS.x + T * (Wld.PASS_W - 1) / 2, Wld.PASS.y);
-    var b = isoBox(c, p.x, p.y + S * 0.16, S * 1.05, S * 0.42, S * 0.36, C.steel, C.steelD);
+    var b = isoBox(c, p.x, p.y + S * 0.1, S * 0.86, S * 0.3, S * 0.3, C.steel, C.steelD);
     c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.35, b.topY + b.fh * 0.2, b.fw * 0.35); c.restore();
     // ready dishes spread along the long top plane
-    var n = world.ready.length, show = Math.min(n, 6);
+    var n = world.ready.length, show = Math.min(n, 4);
     for (var i = 0; i < show; i++) {
-      var dx = b.x - (show - 1) * S * 0.16 + i * S * 0.32, dy = b.topY + S * 0.02;
+      var dx = b.x - (show - 1) * S * 0.13 + i * S * 0.26, dy = b.topY + S * 0.02;
       c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(dx, dy + S * 0.03, S * 0.13, S * 0.05, 0, 0, 7); c.fill();
       c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(dx, dy, S * 0.13, S * 0.06, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
       c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -660,8 +675,23 @@
     // sunken sockets for zombies
     if (cfg.zombie) { c.fillStyle = shade(cfg.skin, 0.72); circle(c, hx - hr * 0.34 + ex, ey - hr * 0.05, hr * 0.26); circle(c, hx + hr * 0.34 + ex, ey - hr * 0.05, hr * 0.26); }
     // eye whites + pupils (pupils drift toward facing)
-    c.fillStyle = '#fff'; circle(c, hx - hr * 0.34 + ex, ey, hr * 0.2); circle(c, hx + hr * 0.34 + ex, ey, hr * 0.2);
-    c.fillStyle = C.out; circle(c, hx - hr * 0.34 + ex + lx * hr * 0.07, ey + hr * 0.02, hr * 0.1); circle(c, hx + hr * 0.34 + ex + lx * hr * 0.07, ey + hr * 0.02, hr * 0.1);
+    var ew = cfg.zombie ? '#e9e3c0' : '#fff';
+    c.fillStyle = ew; circle(c, hx - hr * 0.34 + ex, ey, hr * 0.2); circle(c, hx + hr * 0.34 + ex, ey, hr * 0.2);
+    c.fillStyle = cfg.zombie ? '#5a4a10' : C.out; circle(c, hx - hr * 0.34 + ex + lx * hr * 0.07, ey + hr * 0.02, hr * 0.1); circle(c, hx + hr * 0.34 + ex + lx * hr * 0.07, ey + hr * 0.02, hr * 0.1);
+    // droopy eyelids (heavy for zombies, subtle for tired humans)
+    var lid = cfg.zombie ? 0.55 : (cfg.expr === 'angry' ? 0.35 : 0.18);
+    c.fillStyle = cfg.zombie ? shade(cfg.skin, 0.9) : cfg.skin;
+    c.beginPath(); c.ellipse(hx - hr * 0.34 + ex, ey - hr * 0.2 + hr * 0.2 * lid, hr * 0.21, hr * 0.21 * lid, 0, Math.PI, 2 * Math.PI); c.fill();
+    c.beginPath(); c.ellipse(hx + hr * 0.34 + ex, ey - hr * 0.2 + hr * 0.2 * lid, hr * 0.21, hr * 0.21 * lid, 0, Math.PI, 2 * Math.PI); c.fill();
+    c.strokeStyle = C.out; c.lineWidth = hr * 0.045; c.lineCap = 'round';
+    line(c, hx - hr * 0.52 + ex, ey - hr * 0.2 + hr * 0.2 * lid, hx - hr * 0.16 + ex, ey - hr * 0.2 + hr * 0.2 * lid);
+    line(c, hx + hr * 0.16 + ex, ey - hr * 0.2 + hr * 0.2 * lid, hx + hr * 0.52 + ex, ey - hr * 0.2 + hr * 0.2 * lid);
+    // head stitches for zombies
+    if (cfg.zombie) {
+      c.strokeStyle = '#3a5a2a'; c.lineWidth = hr * 0.05;
+      line(c, hx - hr * 0.55, hy - hr * 0.55, hx - hr * 0.15, hy - hr * 0.75);
+      c.lineWidth = hr * 0.035; for (var st = 0; st < 3; st++) { var fx2 = hx - hr * 0.5 + st * hr * 0.14, fy2 = hy - hr * 0.58 - st * hr * 0.065; line(c, fx2, fy2 - hr * 0.06, fx2 + hr * 0.05, fy2 + hr * 0.06); }
+    }
     // nose pointing sideways
     c.fillStyle = shade(cfg.skin, 0.84); c.beginPath(); c.moveTo(hx + ex + lx * hr * 0.05, ey + hr * 0.1); c.lineTo(hx + ex + lx * hr * 0.28, ey + hr * 0.22); c.lineTo(hx + ex + lx * hr * 0.05, ey + hr * 0.26); c.closePath(); c.fill();
     // brows / expression
@@ -832,6 +862,93 @@
     c.fillStyle = '#fff'; circle(c, x - S * 0.16, y + S * 0.16, S * 0.03); circle(c, x - S * 0.22, y + S * 0.22, S * 0.02);
   }
   function badge(c, x, y, txt, col, S) { c.fillStyle = col; circle(c, x, y, S * 0.13); c.strokeStyle = '#fff'; c.lineWidth = S * 0.02; c.beginPath(); c.arc(x, y, S * 0.13, 0, 7); c.stroke(); c.fillStyle = '#fff'; c.font = 'bold ' + (S * 0.16) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, x, y + 1); }
+
+  // standalone chair painter (for the sprite baker / build ghost previews)
+  Renderer.prototype._chairSprite = function (c, x, y, dir) { isoChair(c, x, y, this.S, dir == null ? 1 : dir); };
+
+  // ===== canvas-painted UI shell (Stage 4.10) ==========================
+  // The live game uses the DOM HUD, but proofs/captures need the full mobile
+  // identity IN the frame. drawUI paints the maroon scalloped HUD, left sticker
+  // rail and bottom blackboard toolbar straight onto the canvas.
+  Renderer.prototype.drawUI = function (world) {
+    var c = this.ctx, W = this.cv.width, H = this.cv.height, u = Math.max(44, H * 0.135);
+    c.textBaseline = 'middle';
+    // ---- top maroon scalloped bar ----
+    var g = c.createLinearGradient(0, 0, 0, u); g.addColorStop(0, '#8a2a30'); g.addColorStop(0.55, '#7a2128'); g.addColorStop(1, '#561218');
+    c.fillStyle = g; c.fillRect(0, 0, W, u);
+    c.fillStyle = '#561218';
+    var sw = u * 0.42;
+    for (var sx = sw / 2; sx < W + sw; sx += sw) { c.beginPath(); c.arc(sx, u, sw * 0.52, 0, Math.PI); c.fill(); }
+    c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, u); c.lineTo(W, u); c.stroke();
+    // level coin
+    var lcx = u * 0.62, lcy = u * 0.5, lr = u * 0.3;
+    var lg = c.createRadialGradient(lcx - lr * 0.3, lcy - lr * 0.3, lr * 0.2, lcx, lcy, lr); lg.addColorStop(0, '#b06bff'); lg.addColorStop(1, '#6a2fb0');
+    c.fillStyle = lg; c.beginPath(); c.arc(lcx, lcy, lr, 0, 7); c.fill();
+    c.strokeStyle = '#2a1140'; c.lineWidth = lr * 0.18; c.stroke();
+    c.fillStyle = '#fff'; c.font = '900 ' + (lr * 1.05) + 'px system-ui'; c.textAlign = 'center'; c.fillText('' + world.level, lcx, lcy + 1);
+    // name + stars + XP
+    var nx = lcx + lr + u * 0.18;
+    c.fillStyle = '#f4e9cf'; c.font = '900 ' + (u * 0.3) + 'px system-ui'; c.textAlign = 'left';
+    c.fillText(world.cafeName || 'The Rotten Spoon', nx, u * 0.3);
+    var stars = world.ratingStars ? world.ratingStars() : 3, full = Math.floor(stars + 0.001);
+    c.font = (u * 0.24) + 'px system-ui';
+    for (var si = 0; si < 5; si++) { c.fillStyle = si < full ? '#ffcf4d' : 'rgba(0,0,0,.35)'; c.fillText('★', nx + si * u * 0.26, u * 0.62); }
+    var need = world.xpNeed ? world.xpNeed(world.level) : 100, pct = Math.min(1, world.xp / need);
+    var xbX = nx + 5 * u * 0.26 + u * 0.2, xbW = Math.min(W * 0.2, u * 2.6);
+    c.fillStyle = '#3a0f13'; rr(c, xbX, u * 0.5, xbW, u * 0.2, u * 0.1); c.fill();
+    c.fillStyle = '#7cff5a'; rr(c, xbX, u * 0.5, Math.max(u * 0.12, xbW * pct), u * 0.2, u * 0.1); c.fill();
+    c.fillStyle = '#fff'; c.font = '800 ' + (u * 0.14) + 'px system-ui'; c.textAlign = 'center';
+    c.fillText(Math.floor(world.xp) + '/' + need + ' XP', xbX + xbW / 2, u * 0.61);
+    // currency chips + logo coin (right side)
+    var chip = function (cx2, ico, val) {
+      var cw = u * 1.5, chh = u * 0.5;
+      var cg = c.createLinearGradient(0, u * 0.25, 0, u * 0.75); cg.addColorStop(0, '#fff8e6'); cg.addColorStop(1, '#f4e9cf');
+      c.fillStyle = cg; rr(c, cx2 - cw, u * 0.25, cw, chh, chh / 2); c.fill();
+      c.strokeStyle = '#561218'; c.lineWidth = 2.5; c.stroke();
+      c.fillStyle = '#2a5c1a'; c.font = '900 ' + (u * 0.26) + 'px system-ui'; c.textAlign = 'left'; c.fillText(ico, cx2 - cw + u * 0.1, u * 0.51);
+      c.fillStyle = '#3a1e10'; c.textAlign = 'right'; c.fillText(val, cx2 - u * 0.14, u * 0.51);
+      return cx2 - cw - u * 0.14;
+    };
+    var fmtN = function (n) { n = Math.floor(n); return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : '' + n; };
+    var right = W - u * 0.2;
+    // logo coin
+    var locx = right - u * 0.32, locy = u * 0.5, lor = u * 0.3;
+    var og = c.createRadialGradient(locx - lor * 0.3, locy - lor * 0.3, lor * 0.2, locx, locy, lor); og.addColorStop(0, '#8fe06a'); og.addColorStop(1, '#3f7a2c');
+    c.fillStyle = og; c.beginPath(); c.arc(locx, locy, lor, 0, 7); c.fill();
+    c.strokeStyle = '#21401a'; c.lineWidth = lor * 0.2; c.stroke();
+    c.fillStyle = '#0f2a0a'; c.font = '900 ' + (lor * 0.9) + 'px system-ui'; c.textAlign = 'center'; c.fillText('RS', locx, locy + 1);
+    right = locx - lor - u * 0.16;
+    right = chip(right, '☣', fmtN(world.toxin));
+    chip(right, '$', fmtN(world.coins));
+    // ---- left sticker rail ----
+    var rails = [['🛒', 'STORE'], ['📖', 'MENU'], ['🧟', 'STAFF'], ['🧊', 'FRIDGE'], ['⚔️', 'RAID']];
+    var rs = Math.max(40, H * 0.115), ry0 = u + H * 0.03;
+    for (var ri = 0; ri < rails.length; ri++) {
+      var ryy = ry0 + ri * (rs + H * 0.018);
+      c.save(); c.translate(u * 0.18 + rs / 2, ryy + rs / 2); c.rotate(ri % 2 ? 0.035 : -0.035);
+      var bg2 = c.createLinearGradient(0, -rs / 2, 0, rs / 2); bg2.addColorStop(0, '#2a3a2e'); bg2.addColorStop(1, '#1a261d');
+      c.fillStyle = bg2; rr(c, -rs / 2, -rs / 2, rs, rs, rs * 0.26); c.fill();
+      c.strokeStyle = '#0e160f'; c.lineWidth = 2.5; c.stroke();
+      c.fillStyle = '#fff'; c.font = (rs * 0.44) + 'px system-ui'; c.textAlign = 'center'; c.fillText(rails[ri][0], 0, -rs * 0.1);
+      c.fillStyle = '#ffcf4d'; c.font = '900 ' + (rs * 0.17) + 'px system-ui'; c.fillText(rails[ri][1], 0, rs * 0.3);
+      c.restore();
+    }
+    // ---- bottom blackboard toolbar ----
+    var tb = Math.max(40, H * 0.125), ty0 = H - tb;
+    var wg = c.createLinearGradient(0, ty0, 0, H); wg.addColorStop(0, '#6b4a2a'); wg.addColorStop(1, '#4a3018');
+    c.fillStyle = wg; c.fillRect(0, ty0, W, tb);
+    c.strokeStyle = '#2c1c0e'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, ty0); c.lineTo(W, ty0); c.stroke();
+    var tools = [['🔨', 'BUILD'], ['🤖', 'AUTO ON'], ['⚔️', 'RAID'], ['❓', 'HELP']];
+    var twW = Math.min(W * 0.18, tb * 2.6), gap = (W - tools.length * twW) / (tools.length + 1);
+    for (var ti = 0; ti < tools.length; ti++) {
+      var tx0 = gap + ti * (twW + gap), tyy = ty0 + tb * 0.12, thh = tb * 0.76;
+      var tg = c.createLinearGradient(0, tyy, 0, tyy + thh); tg.addColorStop(0, '#242a22'); tg.addColorStop(1, '#171c16');
+      c.fillStyle = tg; rr(c, tx0, tyy, twW, thh, thh * 0.24); c.fill();
+      c.strokeStyle = '#0e160f'; c.lineWidth = 2.5; c.stroke();
+      c.fillStyle = '#fff'; c.font = (thh * 0.42) + 'px system-ui'; c.textAlign = 'center'; c.fillText(tools[ti][0], tx0 + twW / 2, tyy + thh * 0.32);
+      c.fillStyle = '#ffcf4d'; c.font = '900 ' + (thh * 0.22) + 'px system-ui'; c.fillText(tools[ti][1], tx0 + twW / 2, tyy + thh * 0.74);
+    }
+  };
 
   window.Renderer = Renderer;
 })();

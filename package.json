@@ -5,11 +5,12 @@
   "scripts": {
     "build": "echo 'static'",
     "test": "node --test test/world.test.js",
-    "shoot": "node tools/shoot.js"
+    "shoot": "node tools/shoot.js",
+    "bake": "node tools/bake.js"
   },
   "dependencies": {
+    "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0",
-    "@capacitor/ios": "^6.0.0",
-    "@capacitor/cli": "^6.0.0"
+    "@capacitor/ios": "^6.0.0"
   }
 }
