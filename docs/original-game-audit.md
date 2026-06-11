@@ -222,6 +222,12 @@ ground truth where they conflict with wiki text.
   (not a ring). The remaining sides are **grass — that grass is the
   expansion land** the player buys square-by-square. *(Adopted: corner-street
   ground in our renderer; expansion tiers stay P2.)*
+- ROUND-5 CORRECTION (owner gameplay screenshot): the streets wrap the
+  **BACK corner** — one road behind each back wall, sidewalks between road
+  and building — and the **door is in the right-back wall** near its far
+  end. The whole open/front side is grass. Walls are bright yellow; the
+  serving counters are worn blue. *(Adopted: ground, doorway, queue and
+  palette all re-sided to match.)*
 
 ### Customer identity & info cards
 - Every customer **type** has its own info card with: a **health bar shown as

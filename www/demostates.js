@@ -30,7 +30,7 @@
     return c;
   }
   function queue(world, n, typeIdx) {
-    var qx = 420 - 120 + (n % 4) * 80, qy = 930 + 6 - Math.floor(n / 4) * 60;
+    var qx = 760 + (n % 2) * 36, qy = 220 + n * 64;
     var ty = TYPES[(typeIdx + 3) % TYPES.length];
     world.customers.push({ id: 'q-' + n, x: qx, y: qy, tx: qx, ty: qy, fx: qx, fy: qy, path: [], table: null,
       state: 'queued', wait: world.t - 4, annoyed: n === 0, type: ty.id, rarity: ty.rarity, infectable: false,
@@ -48,7 +48,7 @@
       var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._placed; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._placed = 1; } };
       // kitchen line flush along the back wall (row 0, tile centers) — keep the
       // tiles directly BEHIND the 2x1 pass empty so the silhouette stays clean
-      put('counter', 300, 60); put('sink', 660, 60); put('fridge', 780, 60);
+      put('counter', 300, 60); put('sink', 660, 60); put('fridge', 540, 60);
       // decor against the side walls, away from the service area
       put('plant', 60, 300); put('lamp', 660, 660);
       // dining sets on tile centers, with full-tile walking aisles between
@@ -145,7 +145,7 @@
     artReview_kitchenZone: function (w) {
       w.coins = 9999; w.buy('counter'); w.buy('sink'); w.buy('fridge');
       var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._p; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._p = 1; } };
-      put('counter', 300, 60); put('sink', 660, 60); put('fridge', 780, 60);
+      put('counter', 300, 60); put('sink', 660, 60); put('fridge', 540, 60);
       w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 20;
       w.zombies[0].stored = true; return {};
     },

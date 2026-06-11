@@ -22,7 +22,7 @@
   var C = {
     out: '#15160f', floorL: '#8b9088', floorD: '#7c827a', grout: '#4f554c',
     // grimy warm walls (left lighter / right darker) like a dingy diner
-    wallL: '#b89a3e', wallR: '#917529', wallTop: '#caa94a', skirt: '#2c3a2f',
+    wallL: '#d9c041', wallR: '#b69a2f', wallTop: '#e8d35c', skirt: '#2c3a2f',
     // exterior block
     grass: '#46622f', grassD: '#3a5328', grassL: '#577a39',
     road: '#5f625b', roadD: '#4d504a', roadLine: '#e3c14a',
@@ -30,7 +30,7 @@
     slime: '#8fd13a', stain: '#6a4a26',
     zSkin: '#7fcf57', zSkinD: '#5aa83f', apron: '#d8d2c0', hat: '#f4f1e8',
     cloth1: '#c44', cloth2: '#eee', wood: '#7a5436', woodD: '#5d3f28',
-    steel: '#9aa0a6', steelD: '#6c7176', gold: '#ffcf4d', toxic: '#7cff5a', blood: '#d8413a',
+    steel: '#9aa0a6', steelD: '#6c7176', cntr: '#5d87a3', cntrD: '#3f607a', gold: '#ffcf4d', toxic: '#7cff5a', blood: '#d8413a',
   };
   // deterministic value-noise rng (stable demo screenshots)
   function rnd(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -307,10 +307,10 @@
       scatter(c, bb, 90, 13, function (x, y, r) { line(c, x, y, x - S * 0.02, y - S * 0.05 - r * S * 0.03); line(c, x + S * 0.025, y, x + S * 0.035, y - S * 0.055); });
       scatter(c, bb, 26, 17, function (x, y) { speck(c, x, y, S * 0.045, 'rgba(110,90,50,.4)'); });
     });
-    // CORNER STREET (per reference): roads run along TWO adjacent sides only —
-    // past the door wall (west) and along the front (south) — with sidewalk
-    // strips between the building and each road. The other sides stay grass:
-    // that's the open land the café expands into later.
+    // CORNER STREET (per reference): the streets run BEHIND the café, wrapping
+    // the BACK corner — one road behind each back wall (west + north) — with
+    // sidewalk strips between road and building. The whole FRONT/open side is
+    // grass: that's the land the café expands into later.
     var roadTex = function (x0, y0, x1, y1) {
       c.fillStyle = C.road; self._planeRect(c, x0, y0, x1, y1); c.fill();
       self._tex(c, function () { this._planeRect(c, x0, y0, x1, y1); }, function (bb) {
@@ -319,13 +319,13 @@
         scatter(c, bb, 6, 47, function (x, y, r) { stainBlob(c, x, y, S * (0.12 + r * 0.18), 'rgba(25,27,24,.3)'); });
       });
     };
-    roadTex(-T * 3.4, -T * 2.5, -T * 0.9, H + T * 3.4);            // west road (past the door wall)
-    roadTex(-T * 0.9, H + T * 0.9, W + T * 2.5, H + T * 3.4);      // south road (along the front)
+    roadTex(-T * 3.4, -T * 3.4, -T * 0.9, H + T * 2.5);            // west road (behind the left wall)
+    roadTex(-T * 0.9, -T * 3.4, W + T * 2.5, -T * 0.9);            // north road (behind the right wall)
     // dashed centre line along each road
     c.save(); c.strokeStyle = C.roadLine; c.lineWidth = Math.max(2, S * 0.05); c.setLineDash([S * 0.32, S * 0.34]);
-    var l1a = this.project(-T * 2.15, -T * 2.5), l1b = this.project(-T * 2.15, H + T * 3.4);
+    var l1a = this.project(-T * 2.15, -T * 3.4), l1b = this.project(-T * 2.15, H + T * 2.5);
     c.beginPath(); c.moveTo(l1a.x, l1a.y); c.lineTo(l1b.x, l1b.y); c.stroke();
-    var l2a = this.project(-T * 0.9, H + T * 2.15), l2b = this.project(W + T * 2.5, H + T * 2.15);
+    var l2a = this.project(-T * 0.9, -T * 2.15), l2b = this.project(W + T * 2.5, -T * 2.15);
     c.beginPath(); c.moveTo(l2a.x, l2a.y); c.lineTo(l2b.x, l2b.y); c.stroke();
     c.setLineDash([]); c.restore();
     // sidewalk strips between the building and the two roads
@@ -339,7 +339,7 @@
       });
     };
     walkTex(-T * 0.9, -T * 0.9, 0, H + T * 0.9, true);             // west sidewalk
-    walkTex(0, H, W + T * 0.9, H + T * 0.9, false);                // south sidewalk
+    walkTex(0, -T * 0.9, W + T * 0.9, 0, false);                   // north sidewalk
     // a contact drop-shadow just inside the building edges so it sits down
     c.fillStyle = 'rgba(0,0,0,.18)'; this._planeRect(c, -T * 0.18, -T * 0.18, W + T * 0.18, H + T * 0.18); c.fill();
   };
@@ -510,12 +510,14 @@
   // The entrance is an OPENING cut into the LEFT wall (with daylight + a mat),
   // not a slab on the floor. Drawn as part of _walls so sprites pass in front.
   Renderer.prototype._doorway = function (c) {
+    // entrance cut into the RIGHT-BACK wall (edge A->B along y=0), positioned
+    // by the door's x fraction — customers come off the north sidewalk
     var S = this.S, wall = this.wall;
-    var A = this.project(0, 0), D = this.project(0, Wld.H), f = Wld.DOOR.y / Wld.H;
+    var A = this.project(0, 0), D = this.project(Wld.W, 0), f = Wld.DOOR.x / Wld.W;
     var Pb = { x: A.x + (D.x - A.x) * f, y: A.y + (D.y - A.y) * f };
     var ux = D.x - A.x, uy = D.y - A.y, ul = Math.hypot(ux, uy); ux /= ul; uy /= ul;
     // floor mat just inside the door
-    var dp = this.project(Wld.DOOR.x + 30, Wld.DOOR.y);
+    var dp = this.project(Wld.DOOR.x, Wld.DOOR.y + 30);
     c.fillStyle = '#5a3a2a'; iso(c, dp.x, dp.y, S * 0.7, S * 0.36); c.fill();
     c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
     c.fillStyle = 'rgba(255,255,255,.08)'; iso(c, dp.x, dp.y, S * 0.5, S * 0.26); c.fill();
@@ -547,7 +549,7 @@
     var S = this.S, T = Wld.TILE;
     var x0 = (wx - T / 2) + 14, x1 = (wx + T / 2) - 14, y0 = (wy - T / 2) + 16, y1 = (wy + T / 2) - 16;
     var bh = S * 0.32;
-    if (!this._blit(c, 'pass_body', wx, wy)) this._isoBoxW(c, x0, y0, x1, y1, bh, C.steel, C.steelD);
+    if (!this._blit(c, 'pass_body', wx, wy)) this._isoBoxW(c, x0, y0, x1, y1, bh, C.cntr, C.cntrD);
     var p = this.project(wx, wy), topY = p.y - bh;
     if (stack) {
       // a PILE of plates (stack height grows with servings) + dish + count
@@ -687,10 +689,10 @@
         c.fillStyle = '#9a9d92'; rr(c, p.x - S * 0.06, y - S * 0.32, S * 0.12, S * 0.4, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.025; c.stroke();   // pillar
         c.fillStyle = C.blood; circle(c, p.x, y - S * 0.34, S * 0.1); c.fillStyle = '#e06b6b'; for (var wi = 0; wi < 4; wi++) { var wa = wi / 4 * 6.28; circle(c, p.x + Math.cos(wa) * S * 0.16, y - S * 0.2 + Math.sin(wa) * S * 0.06, S * 0.02); } break;
       case 'counter': {
-        var cb = isoBox(c, p.x, y, S * 0.4, S * 0.2, S * 0.34, C.steel, C.steelD, true);
+        var cb = isoBox(c, p.x, y, S * 0.4, S * 0.2, S * 0.34, C.cntr, C.cntrD, true);
         c.save(); topClip(c, cb); c.fillStyle = '#7a5a2a'; circle(c, cb.x - cb.fw * 0.2, cb.topY, S * 0.045); c.fillStyle = '#9bbf4a'; circle(c, cb.x + cb.fw * 0.25, cb.topY + cb.fh * 0.2, S * 0.03); stainBlob(c, cb.x + cb.fw * 0.1, cb.topY - cb.fh * 0.2, S * 0.08, 'rgba(40,30,16,.28)'); c.restore(); break; }
       case 'sink': {
-        var sb = isoBox(c, p.x, y, S * 0.38, S * 0.19, S * 0.32, C.steel, C.steelD, true);
+        var sb = isoBox(c, p.x, y, S * 0.38, S * 0.19, S * 0.32, C.cntr, C.cntrD, true);
         c.save(); topClip(c, sb);                                  // basin + dirty water on the top
         c.fillStyle = '#26323a'; c.beginPath(); c.ellipse(sb.x, sb.topY, sb.fw * 0.62, sb.fh * 0.62, 0, 0, 7); c.fill();
         c.fillStyle = 'rgba(120,200,90,.7)'; c.beginPath(); c.ellipse(sb.x, sb.topY, sb.fw * 0.5, sb.fh * 0.5, 0, 0, 7); c.fill();

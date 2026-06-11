@@ -62,7 +62,8 @@
 
   // ---- layout: everything aligned to TILE CENTERS (square grid) -------
   // Kitchen appliances line the back wall on row 0 (slot = a tile center).
-  var STOVE_SLOTS = [ {x:60,y:60}, {x:180,y:60}, {x:300,y:60}, {x:540,y:60}, {x:660,y:60}, {x:780,y:60},
+  // (col 6 of row 0 is the DOORWAY, so it is not a stove slot)
+  var STOVE_SLOTS = [ {x:60,y:60}, {x:180,y:60}, {x:300,y:60}, {x:540,y:60}, {x:660,y:60},
                       {x:900,y:60}, {x:1020,y:60}, {x:1140,y:60}, {x:1260,y:60} ];   // cols 7-10 open with expansions
   // The dining floor: cols 1-5 x rows 2-6 of exact tile centers. Tables AND
   // decor occupy cells (decorating trades off seating); col 0/6 stay as aisles.
@@ -85,11 +86,11 @@
   var PASS_SPOTS = [ { x: 420, y: 180 }, { x: 540, y: 180 }, { x: 300, y: 180 }, { x: 660, y: 180 } ];
   // Entrance: a doorway in the LEFT wall (plane x≈0), down toward the dining
   // area (kitchen runs along the top). Customers spawn/leave just inside it.
-  // Entrance at the FRONT-LEFT of the west wall — right where the west+south
-  // street corner meets (faithful to the original: open front, street at the
-  // front). Customers come in from the sidewalk and walk up into the dining
-  // room; the kitchen lines the back wall.
-  var DOOR = { x: 60, y: 840 };
+  // Entrance: a doorway in the RIGHT-BACK wall (row 0), toward its far end —
+  // exactly like the original: streets wrap the BACK corner, customers come
+  // off the north sidewalk through the back-right door and walk down into
+  // the dining room. The open front side is all grass (expansion land).
+  var DOOR = { x: 780, y: 60 };
   // idle staff wait along the LEFT wall (col 0), clear of the serving
   // counters (row 1, cols 2-5), the dining cells and the door row
   var HOME_YS = [180, 290, 400, 510, 760, 870];
@@ -583,7 +584,7 @@
     return !this.battle && this.level >= rv.level && ready.length >= 1;
   };
   // sidewalk line-up spot i: on the pavement out front, single file
-  World.prototype._lineupSpot = function (i) { return { x: 220 + i * 130, y: ROWS * TILE + 64 }; };   // base-size arena's south pavement
+  World.prototype._lineupSpot = function (i) { return { x: 220 + i * 130, y: ROWS * TILE + 64 }; };   // on the front lawn of the base-size arena
   World.prototype.startRaid = function (rivalId) {
     var rv = RIVAL[rivalId]; if (!this.canRaid(rivalId)) return false;
     var self = this, lineup = [];
@@ -854,9 +855,9 @@
     this.customers.push(c);
     if (!this._trySeat(c)) routeTo(this, c, qpos.x, qpos.y);   // no seat: wait in line by the door
   };
-  // Queue forms a readable single-file line UP the left aisle from the front
-  // door, with a gentle stagger so bodies + thought bubbles don't overlap.
-  World.prototype._queueSpot = function (n) { return { x: 60 + (n % 2) * 34, y: DOOR.y - 70 - n * 64 }; };
+  // Queue forms a readable single-file line DOWN the right aisle from the
+  // back-right door, with a gentle stagger so bubbles don't overlap.
+  World.prototype._queueSpot = function (n) { return { x: 760 + (n % 2) * 36, y: 220 + n * 64 }; };
 
   function moveTo(e, dt, spd) {
     spd = spd || SPEED;

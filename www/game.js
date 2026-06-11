@@ -5,7 +5,7 @@
  * ===================================================================== */
 (function () {
   'use strict';
-  var SAVE_KEY = 'zombiecafe.save.v4';
+  var SAVE_KEY = 'zombiecafe.save.v5';   // v5: door/streets re-sided, stove slots renumbered
   var world, renderer, canvas, lastFrame = 0, lastSave = 0;
   var editMode = false, selected = null;   // build mode + currently lifted furniture
   var ghost = null;                        // live placement preview {cell, ok, reason, stove}
