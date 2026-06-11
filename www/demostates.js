@@ -46,10 +46,11 @@
       w.coins = 5000; w.toxin = 20;
       w.buy('counter'); w.buy('fridge'); w.buy('sink'); w.buy('plant'); w.buy('lamp');
       var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._placed; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._placed = 1; } };
-      // kitchen line flush along the back wall (row 0, tile centers)
-      put('counter', 300, 60); put('sink', 540, 60); put('fridge', 660, 60);
-      // decor in the corners / by seating (tile centers)
-      put('plant', 780, 300); put('lamp', 660, 420);
+      // kitchen line flush along the back wall (row 0, tile centers) — keep the
+      // tiles directly BEHIND the 2x1 pass empty so the silhouette stays clean
+      put('counter', 300, 60); put('sink', 660, 60); put('fridge', 780, 60);
+      // decor against the side walls, away from the service area
+      put('plant', 60, 300); put('lamp', 660, 660);
       // dining sets on tile centers, with full-tile walking aisles between
       var moveTbl = function (tb, x, y) { tb.x = x; tb.y = y; tb.cell = -1; }; var T = w.tables;
       if (T[0]) moveTbl(T[0], 180, 540); if (T[1]) moveTbl(T[1], 540, 540); if (T[2]) moveTbl(T[2], 300, 780);
@@ -116,7 +117,7 @@
     artReview_kitchenZone: function (w) {
       w.coins = 9999; w.buy('counter'); w.buy('sink'); w.buy('fridge');
       var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._p; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._p = 1; } };
-      put('counter', 300, 60); put('sink', 540, 60); put('fridge', 660, 60);
+      put('counter', 300, 60); put('sink', 660, 60); put('fridge', 780, 60);
       w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 20;
       w.zombies[0].stored = true; return {};
     },

@@ -118,7 +118,9 @@
     this._custs = world.customers;
     var dvof = function (id) { var o = vof(id); return o.x + o.y; };
     function add(d, fn) { items.push({ d: d, fn: fn }); }
-    add(Wld.PASS.x + Wld.PASS.y, function () { self._pass(c, world); });
+    // pass spans 2 tiles: depth keys off its visual CENTER + front half so
+    // row-0 appliances behind it can never tie/draw over it
+    add(Wld.PASS.x + Wld.TILE * (Wld.PASS_W - 1) / 2 + Wld.PASS.y + 30, function () { self._pass(c, world); });
     world.decors.forEach(function (d) { add(d.x + d.y + dvof(d.id), function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
     world.tables.forEach(function (tb) {
       var selT = ui.selected && ui.selected.id === tb.id;
@@ -461,10 +463,13 @@
       b = isoBox(c, p.x, p.y + S * 0.1, S * 0.86, S * 0.3, S * 0.3, C.steel, C.steelD);
       c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.35, b.topY + b.fh * 0.2, b.fw * 0.35); c.restore();
     }
-    // ready dishes spread along the long top plane
+    // ready dishes spread ALONG the counter's long axis (world-x), so the row
+    // follows the iso top plane instead of floating in a flat screen line
     var n = world.ready.length, show = Math.min(n, 4);
+    var topLift = (p.y + S * 0.1) - b.topY;               // height of the top plane above the base
     for (var i = 0; i < show; i++) {
-      var dx = b.x - (show - 1) * S * 0.13 + i * S * 0.26, dy = b.topY + S * 0.02;
+      var dw = this.project(px0 - (show - 1) * 27 + i * 54, Wld.PASS.y);
+      var dx = dw.x, dy = dw.y + S * 0.1 - topLift + S * 0.02;
       c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(dx, dy + S * 0.03, S * 0.13, S * 0.05, 0, 0, 7); c.fill();
       c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(dx, dy, S * 0.13, S * 0.06, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
       c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -552,7 +557,7 @@
     var it = shop(d.deco) || {};
     var wallFlush = WALL_ARTS[it.art] === 1;
     var vo = wallFlush ? { x: 0, y: 0 } : vof(d.id);                 // wall items sit exactly flush
-    var wallBias = wallFlush ? -18 : 0;                              // pulled back against the wall base
+    var wallBias = wallFlush ? -34 : 0;                              // back edge hugs the wall base
     var p = this.project(d.x + vo.x, d.y + vo.y + wallBias), S = this.S, lift = sel ? S * 0.18 : 0, y = p.y - lift;
     // runtime sprite path (selection keeps procedural for the lift + ring)
     var sid = DECOR_SPRITE[it.art];
@@ -619,14 +624,14 @@
   };
 
   Renderer.prototype._stove = function (c, st, world, t, sel) {
-    // wall-flush appliance: no random offset, pulled slightly toward the wall
-    var p = this.project(st.x, st.y - 14), S = this.S, x = p.x, y = p.y;
+    // wall-flush appliance: no random offset, back edge hugs the wall base
+    var p = this.project(st.x, st.y - 34), S = this.S, x = p.x, y = p.y;
     if (this._selZ && (st.ready || st.burned)) this._hl(c, x, y + S * 0.2, S * 1.05, t);
     if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     // ===== a real iso BOX: bottom diamond on the floor, extruded up =====
     var fw = S * 0.42, fh = S * 0.2, bh = S * 0.52, topY = y - bh;
-    if (!sel && this._blit(c, 'stove_body', st.x, st.y - 14)) { this._stoveState(c, st, world, t, x, y, S, fw, fh, topY); return; }
+    if (!sel && this._blit(c, 'stove_body', st.x, st.y - 34)) { this._stoveState(c, st, world, t, x, y, S, fw, fh, topY); return; }
     this._shadow(c, x, y + fh * 0.3, S * 0.52);
     c.fillStyle = '#15160f'; rr(c, x - fw * 0.78, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill(); rr(c, x + fw * 0.6, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill();   // feet
     var face = function (pts, col) { c.fillStyle = col; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke(); };
