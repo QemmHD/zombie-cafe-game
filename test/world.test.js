@@ -898,3 +898,28 @@ test('Rustplate Knight: knight-tier cash elite matches the recovered archetype',
   assert.ok(kn.z.maxEnergy >= 200, 'tank-tier energy pool');
   assert.strictEqual(kn.levelReq, 8, 'unlocks at level 8 like the original');
 });
+
+test('feeding respects the real energy cap and refuses dead zombies', () => {
+  const w = boot();
+  const z = w.zombies[0]; z.maxEnergy = 250; z.energy = 200; w.toxin = 5;
+  assert.ok(w.feedZombie(z.id), 'a 200/250 zombie is NOT full — feeding works');
+  assert.strictEqual(z.energy, 250, 'refilled to its real max');
+  assert.ok(!w.feedZombie(z.id), 'now full at 250 — refused');
+  // a reanimating zombie cannot be fed
+  z.energy = 10; z.reanimateUntil = w.t + 100;
+  assert.ok(!w.feedZombie(z.id), 'cannot feed a reanimating zombie');
+});
+
+test('the home café is paused while you are away on a raid', () => {
+  const w = boot();
+  w.zombies[0].attack = 1;                               // weak so the fight lingers
+  w.coins = 999; w.startCook(w.stoves[0].id, 'coffee');
+  w.stoves[0].ready = true; w.stoves[0].readyAt = w.t;   // a finished dish sitting out
+  w.startRaid('diner');                                  // squad lined up, none deployed yet
+  const custs0 = w.customers.length;
+  for (let i = 0; i < 150 && w.battle; i++) w.tick(0.2); // tick only while the battle is live
+  assert.ok(w.battle, 'battle still ongoing (nobody deployed, so it cannot end)');
+  assert.ok(!w.stoves[0].burned, 'food did NOT burn while the café was paused');
+  assert.strictEqual(w.customers.length, custs0, 'no new customers arrived during the raid');
+  assert.strictEqual(w.served, 0, 'café made no progress while paused');
+});

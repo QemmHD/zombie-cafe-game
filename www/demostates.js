@@ -120,7 +120,7 @@
       w.expandCafe(false); w.expandCafe(false);            // 7x8 -> 9x10
       w.buy('table'); w.buy('table');
       var band = [];
-      for (var i = 25; i < 200 && band.length < 2; i++) if (w.cellUsable(i) && !w.cellFree(i) === false && w.cellFree(i)) band.push(i);
+      for (var i = 25; i < 200 && band.length < 2; i++) if (w.cellUsable(i) && w.cellFree(i)) band.push(i);
       var extra = w.tables.slice(3);
       extra.forEach(function (tb, k) { if (band[k] != null) w.moveTable(tb.id, band[k]); });
       w._syncChairs();

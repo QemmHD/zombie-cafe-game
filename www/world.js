@@ -448,9 +448,11 @@
   World.prototype.setZombieRole = function (zid, role) { var z = byId(this.zombies, zid); if (!z) return false; z.role = role; if (role !== 'rest' && z.state === 'resting' && z.energy >= TIRED) z.state = 'idle'; return true; };
   World.prototype.feedZombie = function (zid) {
     var z = byId(this.zombies, zid); if (!z) return false;
-    if (z.energy >= 99) { this.events.push({ type: 'warn', msg: z.name + ' is already full of energy' }); return false; }
+    if (z.reanimateUntil > this.t) { this.events.push({ type: 'warn', msg: z.name + ' is still reanimating' }); return false; }
+    var emax = z.maxEnergy || 100;
+    if (z.energy >= emax - 1) { this.events.push({ type: 'warn', msg: z.name + ' is already full of energy' }); return false; }
     if (this.toxin < 1) { this.events.push({ type: 'warn', msg: 'Need 1 toxin to feed a zombie' }); return false; }
-    this.toxin -= 1; z.energy = z.maxEnergy || 100; if (z.state === 'resting' && z.role !== 'rest') z.state = 'idle';
+    this.toxin -= 1; z.energy = emax; if (z.state === 'resting' && z.role !== 'rest') z.state = 'idle';
     this.events.push({ type: 'fed', x: z.x, y: z.y }); return true;
   };
   // ---- zombie XP / levels (faithful: staff grow from doing the work) ---
@@ -750,6 +752,10 @@
   World.prototype.tick = function (dt) {
     if (dt > 0.25) dt = 0.25;                          // clamp big frame gaps
     this.t += dt;
+    // during a raid you're at the rival café — your own café is PAUSED (the
+    // original raids on a separate screen), so no customers leave angry and
+    // no food burns unattended while your squad is away fighting.
+    if (this.battle) { this._battleTick(dt); return; }
     this._spawn();
     // Stove FSM (Phase 4): cooking -> finished -> burnWarning -> burned.
     // Finished food MUST be carried off (by a commanded or auto zombie) before
@@ -771,7 +777,6 @@
     this._seatQueued();
     this._stepZombies(dt);
     this._stepCustomers(dt);
-    if (this.battle) this._battleTick(dt);
     // review board: opens at level 6; purple bonus stars decay with time
     if (!this.review && this.reviewUnlocked()) this.review = this._mkReview();
     if (this.review && this.review.stars > 0 && this.t >= this.review.decayAt) {
