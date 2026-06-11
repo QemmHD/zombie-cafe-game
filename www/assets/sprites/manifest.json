@@ -119,14 +119,14 @@
       "renderLayer": 1,
       "procedureFallback": true,
       "file": "assets/sprites/kitchen/counters/pass_body.png",
-      "frameWidth": 480,
+      "frameWidth": 340,
       "frameHeight": 400,
-      "anchorX": 240,
+      "anchorX": 170,
       "anchorY": 310,
       "bakeS": 150,
       "category": "kitchen",
       "footprint": [
-        2,
+        1,
         1
       ]
     },
@@ -135,14 +135,14 @@
       "renderLayer": 1,
       "procedureFallback": true,
       "file": "assets/sprites/kitchen/counters/pass_counter.png",
-      "frameWidth": 480,
+      "frameWidth": 340,
       "frameHeight": 400,
-      "anchorX": 240,
+      "anchorX": 170,
       "anchorY": 310,
       "bakeS": 150,
       "category": "kitchen",
       "footprint": [
-        2,
+        1,
         1
       ]
     },

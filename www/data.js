@@ -40,6 +40,7 @@ window.SHOP = [
 
   // --- Kitchen ---
   { id: 'stove',   cat: 'Kitchen',   kind: 'stove',  name: 'Cursed Stove',  emoji: '🔥', cur: 'coin',  base: 150,  grow: 1.8, sell: 60, store: true, desc: 'Another station to cook on.' },
+  { id: 'servcounter', cat: 'Kitchen', kind: 'pass', name: 'Serving Counter', emoji: '🍽️', cur: 'coin', base: 300, grow: 1.5, sell: 0, desc: 'One more counter square — each holds ONE food stack.' },
   { id: 'counter', cat: 'Kitchen',   kind: 'decor',  name: 'Prep Counter',  emoji: '🍴', art: 'counter', cur: 'coin', base: 220, grow: 1.3, ambiance: 7, sell: 80, store: true, desc: '+7 ambiance. Grimy prep station.' },
   { id: 'sink',    cat: 'Kitchen',   kind: 'decor',  name: 'Rusty Sink',    emoji: '🚰', art: 'sink',    cur: 'coin', base: 260, grow: 1.3, ambiance: 8, sell: 90, store: true, desc: '+8 ambiance.' },
   { id: 'fridge',  cat: 'Kitchen',   kind: 'decor',  name: 'Grimy Fridge',  emoji: '🧊', art: 'fridge',  cur: 'coin', base: 340, grow: 1.3, ambiance: 6, sell: 120, store: true, desc: '+6 ambiance. Stained cold storage.' },
@@ -165,7 +166,7 @@ window.OBJ_MODELS = {
   chair:   { anchor: 'CHAIR_SEAT_POINT',   footprint: [1, 1], height: 0.26, occlusionHeight: 0.30, renderLayer: 1, bounds: [0.40, 0.55], canOcclude: false, canBeOccluded: true },
   stove:   { anchor: 'WALL_BACK_FLUSH',    footprint: [1, 1], height: 0.52, occlusionHeight: 0.62, renderLayer: 1, bounds: [0.90, 1.00], canOcclude: true, canBeOccluded: true },
   counter: { anchor: 'COUNTER_FRONT_EDGE', footprint: [1, 1], height: 0.36, occlusionHeight: 0.45, renderLayer: 1, bounds: [0.90, 0.70], canOcclude: true, canBeOccluded: true },
-  pass:    { anchor: 'COUNTER_FRONT_EDGE', footprint: [2, 1], height: 0.36, occlusionHeight: 0.45, renderLayer: 1, bounds: [1.60, 0.80], canOcclude: true, canBeOccluded: true },
+  pass:    { anchor: 'COUNTER_FRONT_EDGE', footprint: [1, 1], height: 0.36, occlusionHeight: 0.45, renderLayer: 1, bounds: [0.85, 0.78], canOcclude: true, canBeOccluded: true },
   sink:    { anchor: 'SINK_WALL_EDGE',     footprint: [1, 1], height: 0.34, occlusionHeight: 0.45, renderLayer: 1, bounds: [0.90, 0.70], canOcclude: true, canBeOccluded: true },
   fridge:  { anchor: 'FRIDGE_WALL_EDGE',   footprint: [1, 1], height: 0.92, occlusionHeight: 1.00, renderLayer: 2, bounds: [0.70, 1.15], canOcclude: true, canBeOccluded: false },
 };

@@ -58,7 +58,8 @@
       // cooking + a full pass
       w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 25;
       w.startCook(w.stoves[1].id, 'coffee'); w.stoves[1].ready = true; w.stoves[1].readyAt = w.t;
-      w.ready = ['coffee', 'coffee', 'burger', 'soup'];
+      w.passUnits = 3;                                            // one bought counter
+      w.ready = ['coffee', 'coffee', 'coffee', 'burger', 'soup'];  // 3 stacks on 3 squares
       // seat diners at their chairs (varied types/states)
       var states = ['waiting', 'eating', 'paying'];
       T.forEach(function (tb, i) { if (i < 3) seat(w, tb, states[i], i + 1, 'U'); });

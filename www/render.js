@@ -118,9 +118,11 @@
     this._custs = world.customers;
     var dvof = function (id) { var o = vof(id); return o.x + o.y; };
     function add(d, fn) { items.push({ d: d, fn: fn }); }
-    // pass spans 2 tiles: depth keys off its visual CENTER + front half so
-    // row-0 appliances behind it can never tie/draw over it
-    add(Wld.PASS.x + Wld.TILE * (Wld.PASS_W - 1) / 2 + Wld.PASS.y + 30, function () { self._pass(c, world); });
+    // 1x1 serving counters: each square renders its own stack (stack i -> unit i)
+    var passStacks = world.stacks ? world.stacks() : [];
+    (world.passTiles ? world.passTiles() : [Wld.PASS]).forEach(function (pt, pi) {
+      add(pt.x + pt.y + 30, function () { self._passUnit(c, pt.x, pt.y, passStacks[pi] || null, pi === 0); });
+    });
     world.decors.forEach(function (d) { add(d.x + d.y + dvof(d.id), function () { self._decor(c, d, ui.selected && ui.selected.id === d.id); }); });
     world.tables.forEach(function (tb) {
       var selT = ui.selected && ui.selected.id === tb.id;
@@ -183,7 +185,7 @@
     };
     world.tables.forEach(function (t) { box('table', t); });
     world.stoves.forEach(function (s) { box('stove', s); });
-    box('pass', { id: 'pass', x: Wld.PASS.x + 60, y: Wld.PASS.y });
+    (world.passTiles ? world.passTiles() : []).forEach(function (pt, i) { box('pass', { id: 'pass' + i, x: pt.x, y: pt.y }); });
     world.decors.forEach(function (d) { box({ counter: 'counter', sink: 'sink', fridge: 'fridge' }[(shop(d.deco) || {}).art] || 'chair', d); });
     // wall base line + front arrows for wall-anchored objects
     var A = this.project(0, 0), B = this.project(Wld.W, 0);
@@ -452,27 +454,30 @@
   // ---- furniture ------------------------------------------------------
   Renderer.prototype._shadow = function (c, x, y, w) { c.fillStyle = 'rgba(0,0,0,.36)'; c.beginPath(); c.ellipse(x, y, w, w * 0.42, 0, 0, 7); c.fill(); };
 
-  Renderer.prototype._pass = function (c, world) {
+  // ONE 1x1 serving counter square holding ONE food stack (like the original:
+  // a counter takes one space; the same dish piles up with a count badge).
+  Renderer.prototype._passUnit = function (c, wx, wy, stack, first) {
     var S = this.S, T = Wld.TILE;
-    // TRUE 2x1 service counter: the base follows the exact 2-tile footprint
-    // (tiles (3,1)+(4,1)), so the visual fits its blocks — no 2x2 sprawl.
-    var x0 = (Wld.PASS.x - T / 2) + 14, x1 = (Wld.PASS.x - T / 2) + T * Wld.PASS_W - 14;
-    var y0 = (Wld.PASS.y - T / 2) + 16, y1 = (Wld.PASS.y + T / 2) - 16;
-    var bh = S * 0.32, cxw = Wld.PASS.x + T * (Wld.PASS_W - 1) / 2;
-    if (!this._blit(c, 'pass_body', cxw, Wld.PASS.y)) this._isoBoxW(c, x0, y0, x1, y1, bh, C.steel, C.steelD);
-    // ready dishes along the counter's long axis, sitting ON the top plane
-    var n = world.ready.length, show = Math.min(n, 5);
-    for (var i = 0; i < show; i++) {
-      var dw = this.project(cxw - (show - 1) * 27 + i * 54, Wld.PASS.y);
-      var dx = dw.x, dy = dw.y - bh + S * 0.01;
-      c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(dx, dy + S * 0.03, S * 0.13, S * 0.05, 0, 0, 7); c.fill();
-      c.fillStyle = '#f1f1ec'; c.beginPath(); c.ellipse(dx, dy, S * 0.13, S * 0.06, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.018; c.stroke();
-      c.font = (S * 0.2) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText((recipe(world.ready[world.ready.length - 1 - i]) || {}).emoji || '🍽️', dx, dy - S * 0.08);
+    var x0 = (wx - T / 2) + 14, x1 = (wx + T / 2) - 14, y0 = (wy - T / 2) + 16, y1 = (wy + T / 2) - 16;
+    var bh = S * 0.32;
+    if (!this._blit(c, 'pass_body', wx, wy)) this._isoBoxW(c, x0, y0, x1, y1, bh, C.steel, C.steelD);
+    var p = this.project(wx, wy), topY = p.y - bh;
+    if (stack) {
+      // a PILE of plates (stack height grows with servings) + dish + count
+      var pile = Math.min(stack.n, 5);
+      for (var k = 0; k < pile; k++) {
+        var py2 = topY - k * S * 0.045;
+        c.fillStyle = k === pile - 1 ? '#f1f1ec' : '#ddd9cd';
+        c.beginPath(); c.ellipse(p.x, py2, S * 0.16, S * 0.075, 0, 0, 7); c.fill();
+        c.strokeStyle = C.out; c.lineWidth = S * 0.016; c.stroke();
+      }
+      var fy = topY - pile * S * 0.045 - S * 0.06;
+      c.font = (S * 0.22) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText((recipe(stack.id) || {}).emoji || '🍽️', p.x, fy);
+      badge(c, p.x + S * 0.26, fy - S * 0.1, '' + stack.n, C.blood, S);   // servings in this stack
+    } else if (first) {
+      c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.11) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PASS', p.x, topY);
     }
-    var pc = this.project(cxw, Wld.PASS.y);
-    if (n > 0) badge(c, pc.x + S * 0.72, pc.y - bh - S * 0.14, '' + n, C.blood, S);   // total servings on the pass
-    if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.12) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PASS', pc.x, pc.y - bh); }
   };
 
   Renderer.prototype._custDish = function (cid) { for (var i = 0; i < this._custs.length; i++) if (this._custs[i].id === cid) return this._custs[i].dish; return null; };

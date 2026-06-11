@@ -584,8 +584,8 @@ test('object models carry render/occlusion metadata (4.9)', () => {
     assert.ok(m.anchor && m.footprint && typeof m.height === 'number' && typeof m.occlusionHeight === 'number', 'metadata for ' + k);
   });
   assert.ok(w.objModel('fridge').occlusionHeight > w.objModel('table').occlusionHeight, 'tall fridge occludes more than a table');
-  const pf = w.objModel('pass').footprint;
-  assert.strictEqual(pf[0], 2); assert.strictEqual(pf[1], 1);
+  const pf = w.objModel('pass').footprint;     // serving counters are 1x1 each (one stack per square)
+  assert.strictEqual(pf[0], 1); assert.strictEqual(pf[1], 1);
   assert.strictEqual(w.objModel('fridge').canBeOccluded, false, 'fridge is too tall to be hidden by a character');
 });
 
@@ -657,6 +657,32 @@ test('runtime sprite plumbing: split assets exist; loader + blit are wired (4.10
   assert.ok(render.includes('useSprites') && render.includes('_blit(') && render.includes('spriteReport'), 'renderer has sprite layer');
   assert.ok(render.includes('_spriteOverlay') && render.includes('_boundsOverlay'), 'debug overlays exist');
   assert.ok(game.includes('loadSprites') && game.includes("manifest.json"), 'game loads the manifest at runtime');
+});
+
+test('serving counters: one stack per square, same dish piles up (faithful)', () => {
+  const w = boot();
+  assert.strictEqual(w.passTiles().length, 2, 'starts with 2 counter squares');
+  w.ready = ['coffee', 'coffee'];                      // stack 1
+  assert.ok(w.canAccept('coffee'), 'same dish stacks onto its pile');
+  assert.ok(w.canAccept('burger'), 'second counter square is free');
+  w.ready.push('burger');                              // stack 2
+  assert.ok(!w.canAccept('soup'), 'no free square for a third dish type');
+  // plating a third dish type is refused (stove keeps the food)
+  w.coins = 999; w.startCook(w.stoves[0].id, 'soup');
+  w.stoves[0].ready = true; w.stoves[0].readyAt = w.t;
+  assert.ok(!w.plateStove(w.stoves[0].id), 'plate refused with no free counter');
+  assert.ok(w.stoves[0].ready, 'food stays on the stove');
+  // buying another counter square frees a slot
+  assert.ok(w.buyPassUnit(), 'bought a third counter');
+  assert.strictEqual(w.passTiles().length, 3);
+  assert.ok(w.canAccept('soup'), 'third stack fits now');
+  assert.ok(w.plateStove(w.stoves[0].id), 'plates onto the new square');
+  // each counter square blocks its own tile
+  const blocked = w._blockedTiles();
+  w.passTiles().forEach((pt) => {
+    const t = w.tileOf(pt.x, pt.y);
+    assert.ok(blocked[t[0] + ',' + t[1]], 'counter square blocked: ' + t);
+  });
 });
 
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {

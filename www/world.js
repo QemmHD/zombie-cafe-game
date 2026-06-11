@@ -66,7 +66,10 @@
     return out;
   })();
   var TABLE_SLOTS = CELLS;
-  var PASS = { x: 420, y: 180 };       // 2x1 counter on tiles (3,1)+(4,1)
+  // Serving counters are 1x1 each: ONE food stack per square (same dish piles
+  // up with a count). Start with 2; buyable up to 4. PASS = the first counter.
+  var PASS = { x: 420, y: 180 };
+  var PASS_SPOTS = [ { x: 420, y: 180 }, { x: 540, y: 180 }, { x: 300, y: 180 }, { x: 660, y: 180 } ];
   // Entrance: a doorway in the LEFT wall (plane x≈0), down toward the dining
   // area (kitchen runs along the top). Customers spawn/leave just inside it.
   var DOOR = { x: 60, y: 600 };
@@ -79,7 +82,7 @@
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
     this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true;
-    this.rep = REP_START; this.fridge = []; this.storage = []; this.extraSlots = 0;   // rep, raid-loot fridge, stored furniture, bonus staff slots
+    this.rep = REP_START; this.fridge = []; this.storage = []; this.extraSlots = 0; this.passUnits = 2;   // rep, raid-loot fridge, stored furniture, bonus staff slots
     this.cafeName = 'The Rotten Spoon';
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
     this.decors = [];
@@ -165,7 +168,7 @@
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
       spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
-      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, cafeName: this.cafeName,
+      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, passUnits: this.passUnits, cafeName: this.cafeName,
       stoves: this.stoves, tables: this.tables, chairs: this.chairs, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
@@ -176,6 +179,7 @@
     if (this.auto == null) this.auto = true;
     if (this.rep == null) this.rep = REP_START;
     if (this.extraSlots == null) this.extraSlots = 0;
+    if (this.passUnits == null) this.passUnits = 2;
     if (!this.cafeName) this.cafeName = 'The Rotten Spoon';
     // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
@@ -215,8 +219,9 @@
   World.prototype.priceFor = function (item) {
     var owned;
     if (item.kind === 'decor') owned = this.decors.filter(function (d) { return d.deco === item.id; }).length;
+    else if (item.kind === 'pass') owned = this.passUnits || 2;
     else owned = item.kind === 'stove' ? this.stoves.length : item.kind === 'table' ? this.tables.length : this.zombies.length + (this.raid ? this.raid.squad : 0);
-    var freeStart = item.kind === 'stove' ? 2 : item.kind === 'table' ? 3 : item.kind === 'decor' ? 0 : 1;
+    var freeStart = item.kind === 'stove' ? 2 : item.kind === 'table' ? 3 : item.kind === 'decor' ? 0 : item.kind === 'pass' ? 2 : 1;
     return Math.round(item.base * Math.pow(item.grow, owned - freeStart));
   };
   World.prototype.totalZombies = function () { return this.zombies.length + (this.raid ? this.raid.squad : 0); };
@@ -259,6 +264,8 @@
   World.prototype.plateStove = function (stoveId) {
     var st = typeof stoveId === 'object' ? stoveId : byId(this.stoves, stoveId);
     if (!st || !st.recipe || !st.ready) return false;
+    // one stack per counter square: a new dish type needs a free counter
+    if (!this.canAccept(st.recipe)) { this.events.push({ type: 'warn', msg: 'No free serving counter — serve food or buy another counter' }); return false; }
     var r = RECIPES[st.recipe], added = 0;
     for (var i = 0; i < r.batch && this.ready.length < COUNTER_CAP; i++) { this.ready.push(r.id); added++; }
     this.events.push({ type: 'plated', x: st.x, y: st.y, emoji: r.emoji, n: added });
@@ -300,6 +307,7 @@
   // if the recipe is new to you — unlock it (which consumes the batch).
   World.prototype.serveFromFridge = function (idx) {
     var b = this.fridge[idx]; if (!b) return false;
+    if (!this.canAccept(b.recipeId)) { this.events.push({ type: 'warn', msg: 'No free serving counter for that dish' }); return false; }
     var added = 0;
     while (b.servings > 0 && this.ready.length < COUNTER_CAP) { this.ready.push(b.recipeId); b.servings--; added++; }
     if (!added) { this.events.push({ type: 'warn', msg: 'The pass is full' }); return false; }
@@ -330,6 +338,7 @@
     else if (it.kind === 'table') this.tables.push(this._mkTable(this.firstFreeCell()));
     if (it.kind === 'table') this._syncChairs();
     else if (it.kind === 'zombie') this._addZombie(this._mkZombie(this.zombies.length));
+    else if (it.kind === 'pass') { if (!this.buyPassUnit()) { if (bag === 'coin') this.coins += cost; else this.toxin += cost; return false; } }
     else if (it.kind === 'decor') this.decors.push(this._mkDecor(it.id, this.firstFreeCell()));
     this.events.push({ type: 'bought', item: it });
     return true;
@@ -580,8 +589,7 @@
     var block = function (obj) { self.footprintTiles(obj).forEach(function (t) { set[tkey(t[0], t[1])] = 1; }); };
     this.tables.forEach(block);
     this.stoves.forEach(block);
-    var pc = Math.floor(PASS.x / TILE), pr = Math.floor(PASS.y / TILE);
-    set[tkey(pc, pr)] = 1; set[tkey(pc + 1, pr)] = 1;                        // pass = a 2x1 counter
+    this.passTiles().forEach(function (pt) { set[tkey(Math.floor(pt.x / TILE), Math.floor(pt.y / TILE))] = 1; });   // each 1x1 counter blocks its square
     for (i = 0; i < this.decors.length; i++) {
       var d = this.decors[i], it = shopById(d.deco);
       if (it && it.blocks === false) continue;
@@ -633,6 +641,25 @@
   World.prototype.isWallAnchor = function (a) { return ('' + a).indexOf('WALL_') === 0 || a === 'FRIDGE_WALL_EDGE' || a === 'SINK_WALL_EDGE' || a === 'STOVE_FRONT_EDGE' || a === 'COUNTER_FRONT_EDGE'; };
   // toon-volume MODEL metadata (anchor/footprint/height/occlusion/renderLayer)
   World.prototype.objModel = function (k) { return (window.OBJ_MODELS || {})[k] || null; };
+  // ---- 1x1 serving counters: ONE food stack per square -----------------
+  World.prototype.passTiles = function () { return PASS_SPOTS.slice(0, this.passUnits || 2); };
+  // group the pass pool into per-recipe stacks (insertion order); counter i
+  // displays stack i — same dish piles up, a new dish needs a free counter.
+  World.prototype.stacks = function () {
+    var out = [], idx = {};
+    for (var i = 0; i < this.ready.length; i++) { var id = this.ready[i]; if (idx[id] == null) { idx[id] = out.length; out.push({ id: id, n: 0 }); } out[idx[id]].n++; }
+    return out;
+  };
+  World.prototype.canAccept = function (recipeId) {
+    if (this.ready.length >= COUNTER_CAP) return false;
+    var s = this.stacks();
+    for (var i = 0; i < s.length; i++) if (s[i].id === recipeId) return true;   // stacks onto its pile
+    return s.length < (this.passUnits || 2);                                    // needs a free counter square
+  };
+  World.prototype.buyPassUnit = function () {
+    if ((this.passUnits || 2) >= PASS_SPOTS.length) { this.events.push({ type: 'warn', msg: 'No room for more serving counters' }); return false; }
+    this.passUnits = (this.passUnits || 2) + 1; this.events.push({ type: 'rosterChanged' }); return true;
+  };
   // ---- visual layout validator (Stage 4.10B) --------------------------
   // Uses each object's VISUAL bounds (OBJ_MODELS, in tile units) to flag
   // furniture whose sprites would collide on screen. Intentional overlaps
@@ -647,7 +674,7 @@
     var boxes = [], self = this;
     this.tables.forEach(function (t) { boxes.push(self.visualBoundsOf('table', t)); });
     this.stoves.forEach(function (s) { boxes.push(self.visualBoundsOf('stove', s)); });
-    boxes.push(this.visualBoundsOf('pass', { id: 'pass', x: PASS.x + TILE * 0.5, y: PASS.y }));
+    this.passTiles().forEach(function (pt, i) { boxes.push(self.visualBoundsOf('pass', { id: 'pass' + i, x: pt.x, y: pt.y })); });
     this.decors.forEach(function (d) {
       var art = (shopById(d.deco) || {}).art;
       if (art === 'rug') return;                          // walkable mat may sit under things
@@ -883,7 +910,7 @@
     if (canServe && this.ready.length < COUNTER_CAP) {
       for (i = 0; i < this.stoves.length; i++) {
         var fs = this.stoves[i];
-        if (fs.ready && fs.recipe && !fs.collecting) { fs.collecting = true; z.stoveId = fs.id; z.state = 'toStove'; this._goToObject(z, fs.x, fs.y); return; }
+        if (fs.ready && fs.recipe && !fs.collecting && this.canAccept(fs.recipe)) { fs.collecting = true; z.stoveId = fs.id; z.state = 'toStove'; this._goToObject(z, fs.x, fs.y); return; }
       }
     }
     // 2. serve the most impatient hungry customer we have food for
@@ -918,6 +945,7 @@
       var st = byId(this.stoves, hit.id); if (!st) return { ok: false, msg: '' };
       if (st.burned) { this._releaseJob(z); st.collecting = true; z.state = 'toStove'; z.stoveId = st.id; this._goToObject(z, st.x, st.y); return { ok: true, msg: z.name + ' is scraping off the burnt food' }; }
       if (!st.ready) return { ok: false, msg: st.recipe ? 'Still cooking' : 'Nothing to pick up — start a cook first' };
+      if (!this.canAccept(st.recipe)) return { ok: false, msg: 'No free serving counter for that dish' };
       this._releaseJob(z);
       st.collecting = true; z.state = 'toStove'; z.stoveId = st.id; this._goToObject(z, st.x, st.y);
       return { ok: true, msg: z.name + ' is collecting the food' };

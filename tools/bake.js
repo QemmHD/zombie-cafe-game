@@ -78,8 +78,8 @@ function main() {
   // stove body WITHOUT the state overlay (runtime draws pot/tags/progress live)
   add('stove_body', bake('kitchen/stoves/stove_body.png', (r, c, ctx) => { const w = ctx.window.createWorld(); r._stoveState = function () {}; r._stove(c, { id: 'bake-s', x: 0, y: 0, recipe: null, ready: false }, w, 1, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
   add('stove_idle', bake('kitchen/stoves/stove_idle.png', (r, c, ctx) => { const w = ctx.window.createWorld(); r._stove(c, { id: 'bake-s', x: 0, y: 0, recipe: null, ready: false }, w, 1, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
-  add('pass_body', bake('kitchen/counters/pass_body.png', (r, c, ctx) => { const w = ctx.window.createWorld(); w.ready = []; r._pass(c, w); }, { S, w: 480, h: 400, ay: 310, world: [480, 180] }), { category: 'kitchen', footprint: [2, 1] });
-  add('pass_counter', bake('kitchen/counters/pass_counter.png', (r, c, ctx) => { const w = ctx.window.createWorld(); w.ready = []; r._pass(c, w); }, { S, w: 480, h: 400, ay: 310, world: [480, 180] }), { category: 'kitchen', footprint: [2, 1] });
+  add('pass_body', bake('kitchen/counters/pass_body.png', (r, c) => { r._passUnit(c, 420, 180, null, false); }, { S, w: 340, h: 400, ay: 310, world: [420, 180] }), { category: 'kitchen', footprint: [1, 1] });
+  add('pass_counter', bake('kitchen/counters/pass_counter.png', (r, c) => { r._passUnit(c, 420, 180, null, false); }, { S, w: 340, h: 400, ay: 310, world: [420, 180] }), { category: 'kitchen', footprint: [1, 1] });
   add('prep_counter', bake('kitchen/counters/prep_counter.png', (r, c) => { r._decor(c, { id: 'bake-c', deco: 'counter', x: 0, y: 0 }, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
   add('sink', bake('kitchen/sink/sink.png', (r, c) => { r._decor(c, { id: 'bake-sk', deco: 'sink', x: 0, y: 0 }, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
   add('fridge', bake('kitchen/fridge/fridge.png', (r, c) => { r._decor(c, { id: 'bake-f', deco: 'fridge', x: 0, y: 0 }, false); }, { S, h: 440, ay: 360 }), { category: 'kitchen', footprint: [1, 1] });
