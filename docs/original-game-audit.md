@@ -212,6 +212,56 @@ earnings/hr**, Fancy second for cash. This created real build-choice depth.
   stat bonuses; money-generator props (ATM-style); expansion tiers toward a
   large max grid.
 
+## 6. Round 3 — reference-screenshot findings (verified from owner-supplied refs)
+
+These came from direct observation of original-game screenshots; treat them as
+ground truth where they conflict with wiki text.
+
+### Map / exterior
+- The café sits on a **street corner**: road runs along **two sides only**
+  (not a ring). The remaining sides are **grass — that grass is the
+  expansion land** the player buys square-by-square. *(Adopted: corner-street
+  ground in our renderer; expansion tiers stay P2.)*
+
+### Customer identity & info cards
+- Every customer **type** has its own info card with: a **health bar shown as
+  cur/max** (e.g. a common at 85/85, an armored elite at 350/350), **Tip
+  Rating**, **Attack Speed**, **Attack Strength**, one line of flavor text,
+  and an **infect cost in CASH** that scales hugely with rarity — roughly
+  **$500** for a tough common (the Boxer) up to **$95,000** for the Knight in
+  Armor. Health on the card doubles as the zombie's energy pool when
+  infected.
+- **Rare customers are visually unmistakable** — the Boxer wears gloves, the
+  Knight wears full plate. They are not palette swaps of the base walker.
+  *(Adopted: Brawler elite with unique gloves/mohawk/build + cash infect cost;
+  more uniques to follow.)*
+
+### Tables & chairs
+- **One chair per table** — one dish on the table, one diner. The chair
+  **attaches to a specific table across a small gap**, sitting on its own
+  square adjacent to the table, so ownership is visually obvious.
+- Tables **can pack side-by-side**, but each table must keep **one open side
+  for its chair** to connect. *(Adopted: chair-as-attachment on the south
+  square + 'blocked' chairState + layout warning.)*
+
+### Raid deployment & mid-raid recharge
+- Your raid squad **lines up outside on the sidewalk** of the target café.
+  You deploy zombies **one at a time** by selecting them — not as a blob.
+- The raid UI on a selected zombie offers **ATTACK**, **INFO**, and
+  **ENERGIZE**: Energize spends toxin to **recharge that zombie's energy
+  mid-raid** (energy is HP, so this is a mid-fight heal). *(P1: drives the
+  raid battle-scene design — sidewalk line-up, one-by-one send-in, Energize
+  button.)*
+
+### Updated adoption list (delta from §5)
+- **Done now**: corner-street exterior; chair-gap attachment + one-open-side
+  rule; first visually-unique elite customer (Brawler) with cash infect.
+- **P1 (raid scene spec is now concrete)**: sidewalk line-up → one-by-one
+  deployment → ATTACK / ENERGIZE (toxin → energy) / INFO per zombie.
+- **P1 add**: per-type customer stat cards (health cur/max, tip rating, atk
+  speed/strength, flavor text, cash infect cost) surfaced in the infect
+  panel and Zombiepedia.
+
 ## Sources
 - [Zombie Cafe — Wikipedia](https://en.wikipedia.org/wiki/Zombie_Cafe)
 - [Zombie Cafe Wiki (Fandom) — main](https://zombiecafe.fandom.com/wiki/Zombie_Cafe), [Energy level](https://zombiecafe.fandom.com/wiki/Energy_level), [Toxin](https://zombiecafe.fandom.com/wiki/Toxin), [Recipe](https://zombiecafe.fandom.com/wiki/Recipe), [Raid](https://zombiecafe.fandom.com/wiki/Raid), [Rating](https://zombiecafe.fandom.com/wiki/Rating), [Customers](https://zombiecafe.fandom.com/wiki/Customers), [Zombie](https://zombiecafe.fandom.com/wiki/Zombie), [Gacha](https://zombiecafe.fandom.com/wiki/Gacha), [Couch Potato](https://zombiecafe.fandom.com/wiki/Couch_Potato), [Astronaut](https://zombiecafe.fandom.com/wiki/Astronaut), [Composer](https://zombiecafe.fandom.com/wiki/Composer)

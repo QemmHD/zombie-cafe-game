@@ -16,7 +16,7 @@
 
   function seat(world, tb, state, typeIdx, face) {
     var ty = TYPES[typeIdx % TYPES.length];
-    var cx = tb.x, cy = tb.y + 20;
+    var cx = tb.x, cy = tb.y + 88;          // on the chair square south of the table
     var c = {
       id: 'demo-' + tb.id, x: cx, y: cy, tx: cx, ty: cy, fx: cx, fy: cy, path: [], table: tb.id,
       state: state, wait: world.t - 3, eat: world.t - 2, payAt: world.t - 1, pay: 14, xp: 6, dish: 'burger',

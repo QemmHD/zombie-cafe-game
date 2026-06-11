@@ -109,6 +109,11 @@ window.CUSTOMER_TYPES = [
   { id: 'oddball',  name: 'Oddball',      rarity: 'elite',  weight: 2,  levelReq: 5, ratingReq: 3.5,
     pay: 1.5, tip: 0.50, patience: 1.2, infect: { toxin: 6 }, shirt: '#5fae8f', hat: 'wizard',
     z: { role: 'Cryptid', speed: 1.35, serve: 1.35, clean: 1.35, cook: 1.35, attack: 25, maxEnergy: 140, patience: 1.4, rarity: 'elite', trait: 'Eldritch' } },
+  // Rare fighters are VISUALLY unique (gloves, mohawk crest, heavier build) and
+  // read as raid material at a glance: terrible tipper, monster in a fight.
+  { id: 'brawler',  name: 'Brawler',      rarity: 'elite',  weight: 3,  levelReq: 3, ratingReq: 2.5,
+    pay: 1.0, tip: 0.05, patience: 0.8, infect: { cash: 500 }, shirt: '#8a2f2f', hat: 'mohawk', gloves: '#c43a2e',
+    z: { role: 'Slugger', speed: 1.3, serve: 1.0, clean: 0.9, cook: 0.9, attack: 28, maxEnergy: 150, patience: 0.7, rarity: 'elite', trait: 'Knockout' } },
 ];
 
 /*

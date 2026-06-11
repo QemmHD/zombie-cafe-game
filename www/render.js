@@ -130,10 +130,10 @@
     });
     world.stoves.forEach(function (st) { add(st.x + st.y + dvof(st.id), function () { self._stove(c, st, world, t, ui.selected && ui.selected.id === st.id); }); });
     if (!ui.edit) {
+      // diners now sit on the SOUTH chair square (in front of the table), so
+      // natural feet-position sorting handles them — no special-case depth
       world.customers.forEach(function (cu) {
-        var d = cu.x + cu.y, tb = (cu.table && (cu.state === 'waiting' || cu.state === 'eating' || cu.state === 'paying')) ? byTbId(world, cu.table) : null;
-        if (tb) d = tb.x + tb.y + dvof(tb.id) - 1;        // sit just behind our table
-        add(d, function () { self._customer(c, cu, world, t); });
+        add(cu.x + cu.y, function () { self._customer(c, cu, world, t); });
       });
       world.zombies.forEach(function (z) { if (!z.stored) add(z.x + z.y, function () { self._zombie(c, z, t); }); });
     }
@@ -234,26 +234,40 @@
       scatter(c, bb, 90, 13, function (x, y, r) { line(c, x, y, x - S * 0.02, y - S * 0.05 - r * S * 0.03); line(c, x + S * 0.025, y, x + S * 0.035, y - S * 0.055); });
       scatter(c, bb, 26, 17, function (x, y) { speck(c, x, y, S * 0.045, 'rgba(110,90,50,.4)'); });
     });
-    // road ring (asphalt): grain, cracks, oil patches — less perfect gray
-    c.fillStyle = C.road; this._planeRect(c, -T * 3.2, -T * 3.2, W + T * 3.2, H + T * 3.2); c.fill();
-    this._tex(c, function () { this._planeRect(c, -T * 3.2, -T * 3.2, W + T * 3.2, H + T * 3.2); }, function (bb) {
-      scatter(c, bb, 110, 21, function (x, y, r) { speck(c, x, y, S * 0.025, r > 0.5 ? C.roadD : '#6c6f68'); });
-      scatter(c, bb, 14, 41, function (x, y, r) { crackLine(c, x, y, S * 0.7, r * 6.28, S * 0.016, 'rgba(30,32,28,.55)'); });
-      scatter(c, bb, 10, 47, function (x, y, r) { stainBlob(c, x, y, S * (0.12 + r * 0.18), 'rgba(25,27,24,.3)'); });
-    });
-    // dashed centre line around the block
+    // CORNER STREET (per reference): roads run along TWO adjacent sides only —
+    // past the door wall (west) and along the front (south) — with sidewalk
+    // strips between the building and each road. The other sides stay grass:
+    // that's the open land the café expands into later.
+    var roadTex = function (x0, y0, x1, y1) {
+      c.fillStyle = C.road; self._planeRect(c, x0, y0, x1, y1); c.fill();
+      self._tex(c, function () { this._planeRect(c, x0, y0, x1, y1); }, function (bb) {
+        scatter(c, bb, 60, 21, function (x, y, r) { speck(c, x, y, S * 0.025, r > 0.5 ? C.roadD : '#6c6f68'); });
+        scatter(c, bb, 8, 41, function (x, y, r) { crackLine(c, x, y, S * 0.7, r * 6.28, S * 0.016, 'rgba(30,32,28,.55)'); });
+        scatter(c, bb, 6, 47, function (x, y, r) { stainBlob(c, x, y, S * (0.12 + r * 0.18), 'rgba(25,27,24,.3)'); });
+      });
+    };
+    roadTex(-T * 3.4, -T * 2.5, -T * 0.9, H + T * 3.4);            // west road (past the door wall)
+    roadTex(-T * 0.9, H + T * 0.9, W + T * 2.5, H + T * 3.4);      // south road (along the front)
+    // dashed centre line along each road
     c.save(); c.strokeStyle = C.roadLine; c.lineWidth = Math.max(2, S * 0.05); c.setLineDash([S * 0.32, S * 0.34]);
-    this._planeRect(c, -T * 2.0, -T * 2.0, W + T * 2.0, H + T * 2.0); c.stroke(); c.setLineDash([]); c.restore();
-    // grass verge
-    c.fillStyle = C.grassD; this._planeRect(c, -T * 1.1, -T * 1.1, W + T * 1.1, H + T * 1.1); c.fill();
-    // sidewalk ring with slab seams + cracks
-    c.fillStyle = C.walk; this._planeRect(c, -T * 0.55, -T * 0.55, W + T * 0.55, H + T * 0.55); c.fill();
-    this._tex(c, function () { this._planeRect(c, -T * 0.55, -T * 0.55, W + T * 0.55, H + T * 0.55); }, function (bb) {
-      c.strokeStyle = C.walkSeam; c.lineWidth = Math.max(1.2, S * 0.02);
-      for (var s = -1; s <= Math.ceil((W + T) / T) + 1; s++) { var p = self.project(s * T, -T); var q = self.project(s * T, H + T); line(c, p.x, p.y, q.x, q.y); var p2 = self.project(-T, s * T); var q2 = self.project(W + T, s * T); line(c, p2.x, p2.y, q2.x, q2.y); }
-      scatter(c, bb, 16, 33, function (x, y, r) { crackLine(c, x, y, S * 0.5, r * 6.28, S * 0.015, C.walkD); });
-    });
-    // a contact drop-shadow just inside the sidewalk so the building sits down
+    var l1a = this.project(-T * 2.15, -T * 2.5), l1b = this.project(-T * 2.15, H + T * 3.4);
+    c.beginPath(); c.moveTo(l1a.x, l1a.y); c.lineTo(l1b.x, l1b.y); c.stroke();
+    var l2a = this.project(-T * 0.9, H + T * 2.15), l2b = this.project(W + T * 2.5, H + T * 2.15);
+    c.beginPath(); c.moveTo(l2a.x, l2a.y); c.lineTo(l2b.x, l2b.y); c.stroke();
+    c.setLineDash([]); c.restore();
+    // sidewalk strips between the building and the two roads
+    var walkTex = function (x0, y0, x1, y1, vertical) {
+      c.fillStyle = C.walk; self._planeRect(c, x0, y0, x1, y1); c.fill();
+      self._tex(c, function () { this._planeRect(c, x0, y0, x1, y1); }, function (bb) {
+        c.strokeStyle = C.walkSeam; c.lineWidth = Math.max(1.2, S * 0.02);
+        if (vertical) { for (var s2 = Math.floor(y0 / T); s2 <= Math.ceil(y1 / T); s2++) { var pa = self.project(x0, s2 * T), pb = self.project(x1, s2 * T); line(c, pa.x, pa.y, pb.x, pb.y); } }
+        else { for (var s3 = Math.floor(x0 / T); s3 <= Math.ceil(x1 / T); s3++) { var pc2 = self.project(s3 * T, y0), pd = self.project(s3 * T, y1); line(c, pc2.x, pc2.y, pd.x, pd.y); } }
+        scatter(c, bb, 8, 33, function (x, y, r) { crackLine(c, x, y, S * 0.5, r * 6.28, S * 0.015, C.walkD); });
+      });
+    };
+    walkTex(-T * 0.9, -T * 0.9, 0, H + T * 0.9, true);             // west sidewalk
+    walkTex(0, H, W + T * 0.9, H + T * 0.9, false);                // south sidewalk
+    // a contact drop-shadow just inside the building edges so it sits down
     c.fillStyle = 'rgba(0,0,0,.18)'; this._planeRect(c, -T * 0.18, -T * 0.18, W + T * 0.18, H + T * 0.18); c.fill();
   };
   Renderer.prototype._walls = function (c) {
@@ -498,9 +512,10 @@
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
     if (!sel && this._blit(c, 'table_base', tb.x + vo.x, tb.y + vo.y)) return;   // sprite base (legs+chair+pedestal)
     c.fillStyle = 'rgba(0,0,0,.34)'; c.beginPath(); c.ellipse(p.x, y + S * 0.05, D.rx, D.ry * 0.85, 0, 0, 7); c.fill();   // contact shadow
-    // ONE chair per table (one dish = one diner): at the real SOUTH seat slot,
-    // exactly where the seated customer sits — visual capacity matches logic.
-    var q = this.project(tb.x + vo.x, tb.y + vo.y + 40);
+    // ONE chair per table, ATTACHED across a small gap on its own south square
+    // (like the reference) — you can always tell which chair belongs to which
+    // table, and side-by-side tables must keep this side open.
+    var q = this.project(tb.x + vo.x, tb.y + vo.y + 88);
     isoChair(c, q.x, q.y - lift, S, 0);
     // round pedestal base + column (lit left / dark right)
     c.fillStyle = shade(C.woodD, 0.7); c.beginPath(); c.ellipse(p.x, y + S * 0.02, S * 0.17, S * 0.075, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
@@ -750,7 +765,8 @@
     // 3. back arm (behind torso) + hand
     var armSwing = walk ? Math.sin(ph + Math.PI) * S * 0.06 : (cfg.hunch ? S * 0.03 : 0);
     limb(c, x + lean + S * 0.12, chestY + S * 0.03, x + lean + S * 0.2, chestY + S * 0.2 + armSwing, skin, skinD, S * 0.09);
-    hand(c, x + lean + S * 0.2, chestY + S * 0.21 + armSwing, S * 0.055, skin, skinD);
+    var gw = cfg.gloves ? S * 0.085 : S * 0.055, gc = cfg.gloves || skin, gd = cfg.gloves ? shade(cfg.gloves, 0.7) : skinD;
+    hand(c, x + lean + S * 0.2, chestY + S * 0.21 + armSwing, gw, gc, gd);
 
     // 4. torso (with apron for zombies)
     var tw = S * 0.34, th = S * 0.42, tx = x + lean - tw / 2, ty = chestY - th * 0.35;
@@ -771,7 +787,7 @@
     } else {
       var fa = walk ? Math.sin(ph) * S * 0.06 : 0;
       limb(c, x + lean - S * 0.12, chestY + S * 0.03, x + lean - S * 0.2, chestY + S * 0.2 + fa, skin, skinD, S * 0.09);
-      hand(c, x + lean - S * 0.2, chestY + S * 0.21 + fa, S * 0.055, skin, skinD);
+      hand(c, x + lean - S * 0.2, chestY + S * 0.21 + fa, gw, gc, gd);
     }
 
     // 6. neck + ears + head (a shaded ball, hunched slightly forward)
@@ -859,8 +875,9 @@
     var angry = (cu.state === 'waiting' && (world.t - cu.wait) > (world.custPatience ? world.custPatience(cu) : world.patience()) * 0.6) || (cu.state === 'queued' && cu.annoyed);
     if (this._selZ && cu.state === 'waiting' && !cu.assigned && this._foodReady) this._hl(c, p.x, p.y + S * 0.06, S * 0.8, t);
     var expr = (cu.state === 'paying' || cu.state === 'eating') ? 'happy' : angry ? 'angry' : 'neutral';
-    var BUILD = { worker: 1.14, elder: 0.84, athlete: 1.0, punk: 1.04, oddball: 1.2, rich: 1.02, business: 1.04, tourist: 1.0, cook: 1.06, civilian: 0.96 };
-    this._char(c, cu, t, { skin: cu.skin, skinD: shade(cu.skin, 0.74), clothes: cu.color, hunch: false, zombie: false, expr: expr, hair: cu.hair || '#2b2b2b', hat: cu.hat, walk: walk, build: BUILD[cu.type] || 1 });
+    var BUILD = { worker: 1.14, elder: 0.84, athlete: 1.0, punk: 1.04, oddball: 1.2, rich: 1.02, business: 1.04, tourist: 1.0, cook: 1.06, civilian: 0.96, brawler: 1.16 };
+    var TY2 = (window.CUSTOMER_TYPES || []).filter(function (t2) { return t2.id === cu.type; })[0] || {};
+    this._char(c, cu, t, { skin: cu.skin, skinD: shade(cu.skin, 0.74), clothes: cu.color, hunch: false, zombie: false, expr: expr, hair: cu.hair || '#2b2b2b', hat: cu.hat, walk: walk, build: BUILD[cu.type] || 1, gloves: TY2.gloves });
     // thought bubbles — deferred to the icon layer so the world never covers them
     var by = p.y - S * 0.82, bx = p.x + S * 0.26, df = this._defer || [];
     if (cu.state === 'waiting') {

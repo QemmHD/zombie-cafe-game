@@ -89,7 +89,7 @@
     this.cafeName = 'The Rotten Spoon';
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
     this.decors = [];
-    this.tables = [ this._mkTable(0), this._mkTable(5), this._mkTable(2) ];
+    this.tables = [ this._mkTable(0), this._mkTable(2), this._mkTable(4) ];   // row 2, spaced — each keeps its south chair square open
     this.chairs = [];
     this.customers = [];
     this.zombies = [ this._mkZombie(0) ];
@@ -99,15 +99,15 @@
   // Each table is linked to one chair (the seat at its front edge). Chairs are
   // authoritative: a customer reserves then occupies a specific chair, never
   // just a table. Dirty/unreachable tables block their chairs.
-  // A chair snaps to a SEAT SLOT on the south edge of its table: the customer
-  // sits at (sitX,sitY) facing the table, the plate appears on the tabletop, and
-  // workers serve/clean from the interaction tile beside it. sitPoint is offset
-  // from the tile centre so the chair reads as tucked at the table, not centred.
+  // A chair ATTACHES to its table across a small gap on the ADJACENT SOUTH
+  // square (its own tile, like the reference): the diner walks onto that square
+  // and sits facing the table. Tables may pack side-by-side as long as this
+  // chair square stays free — that's the "one open side per table" rule.
   World.prototype._mkChair = function (tb) {
     return { id: uid(), table: tb.id, side: 'S', facing: 'U',
-      c: Math.floor(tb.x / TILE), r: Math.floor(tb.y / TILE),
-      x: tb.x, y: tb.y + 22,                    // sit point (south seat)
-      plateX: tb.x, plateY: tb.y - 4,           // plate on the tabletop
+      c: Math.floor(tb.x / TILE), r: Math.floor(tb.y / TILE) + 1,   // the square SOUTH of the table
+      x: tb.x, y: tb.y + 88,                    // sit point: on that square, gap from the table edge
+      plateX: tb.x, plateY: tb.y - 4,           // plate stays on the tabletop
       by: null, reserved: null };
   };
   World.prototype.chairSitPoint = function (ch) { return { x: ch.x, y: ch.y }; };
@@ -118,8 +118,8 @@
     this.tables.forEach(function (tb) { tids[tb.id] = tb; });
     // drop chairs whose table is gone
     this.chairs = this.chairs.filter(function (ch) { return tids[ch.table]; });
-    // keep chair tile/sitPoint in sync with its (possibly moved) table
-    this.chairs.forEach(function (ch) { var tb = tids[ch.table]; ch.c = Math.floor(tb.x / TILE); ch.r = Math.floor(tb.y / TILE); ch.x = tb.x; ch.y = tb.y + 20; });
+    // keep the chair on the adjacent SOUTH square of its (possibly moved) table
+    this.chairs.forEach(function (ch) { var tb = tids[ch.table]; ch.c = Math.floor(tb.x / TILE); ch.r = Math.floor(tb.y / TILE) + 1; ch.x = tb.x; ch.y = tb.y + 88; });
     // ensure each table that should have a chair has exactly one
     this.tables.forEach(function (tb) {
       if (tb.noChair) return;
@@ -131,6 +131,10 @@
     var tb = byId(this.tables, ch.table);
     if (!tb) return 'invalidNoTable';
     if (tb.dirty || tb.cleaning) return 'blocked';
+    // the chair square itself must stay free for the chair to CONNECT — tables
+    // may pack side-by-side only while one side remains open for the seat
+    if (this._blockedTiles()[ch.c + ',' + ch.r]) return 'blocked';
+    if (!this.inBounds(ch.c, ch.r)) return 'blocked';
     if (!this.reachableTable(tb)) return 'unreachable';
     if (ch.by) return 'occupied';
     if (ch.reserved) return 'reserved';
@@ -789,8 +793,10 @@
   // Build validation (Phase 12): flag tables a customer can no longer walk to,
   // or a door whose front is walled off. Returns human-readable problems.
   World.prototype.layoutWarnings = function () {
-    var out = [], i;
+    var out = [], i, self = this;
     for (i = 0; i < this.tables.length; i++) if (!this.reachableTable(this.tables[i])) out.push('A table is blocked off — customers can\'t reach it.');
+    // every table needs its chair square free (one open side per table)
+    this.chairs.forEach(function (ch) { if (self.chairState(ch) === 'blocked' && !byId(self.tables, ch.table).dirty) out.push('A table has no room for its chair — keep one side open.'); });
     // door reachable to at least one table?
     var blocked = this._blockedTiles(), dc = Math.floor(DOOR.x / TILE), dr = Math.floor(DOOR.y / TILE);
     if (blocked[dc + ',' + dr]) out.push('The entrance is blocked!');
