@@ -491,10 +491,12 @@
   Renderer.prototype._table = function (c, tb, sel, t) {
     var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, y = p.y - lift, D = tableDims(S);
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
-    if (!sel && this._blit(c, 'table_base', tb.x + vo.x, tb.y + vo.y)) return;   // sprite base (legs+chairs+pedestal)
+    if (!sel && this._blit(c, 'table_base', tb.x + vo.x, tb.y + vo.y)) return;   // sprite base (legs+chair+pedestal)
     c.fillStyle = 'rgba(0,0,0,.34)'; c.beginPath(); c.ellipse(p.x, y + S * 0.05, D.rx, D.ry * 0.85, 0, 0, 7); c.fill();   // contact shadow
-    isoChair(c, p.x - D.rx * 1.02, y + S * 0.03, S, 1);     // chairs tucked at the front sides
-    isoChair(c, p.x + D.rx * 1.02, y + S * 0.03, S, -1);
+    // ONE chair per table (one dish = one diner): at the real SOUTH seat slot,
+    // exactly where the seated customer sits — visual capacity matches logic.
+    var q = this.project(tb.x + vo.x, tb.y + vo.y + 40);
+    isoChair(c, q.x, q.y - lift, S, 0);
     // round pedestal base + column (lit left / dark right)
     c.fillStyle = shade(C.woodD, 0.7); c.beginPath(); c.ellipse(p.x, y + S * 0.02, S * 0.17, S * 0.075, 0, 0, 7); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
     c.fillStyle = shade(C.wood, 0.55); rr(c, p.x - S * 0.005, y - D.lh, S * 0.1, D.lh + S * 0.04, 3); c.fill();
@@ -975,22 +977,32 @@
   function body(c, x, y, w, h, col) { c.fillStyle = col; rr(c, x - w / 2, y - h / 2, w, h, w * 0.4); c.fill(); c.strokeStyle = C.out; c.lineWidth = w * 0.09; c.stroke(); }
   function chair(c, x, y, S, back) { c.fillStyle = C.woodD; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.fill(); if (back) { c.fillStyle = C.wood; rr(c, x - S * 0.13, y - S * 0.32, S * 0.26, S * 0.12, 4); c.fill(); } c.strokeStyle = C.out; c.lineWidth = S * 0.02; rr(c, x - S * 0.13, y - S * 0.1, S * 0.26, S * 0.18, 4); c.stroke(); }
   // a small dimensional stool/chair: legs, a seat with a side face, a backrest
-  // a directional iso chair: seat faces the table, BACKREST on the outside
-  // (dir = +1 left of table -> back on the left; dir = -1 right -> back on right)
+  // a directional iso chair. dir = +1/-1: side chair with the backrest on the
+  // outside; dir = 0: SOUTH chair (seat faces the table, backrest toward the
+  // viewer — the seated customer sits on it facing up/away).
   function isoChair(c, x, y, S, dir) {
     c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(x, y + S * 0.16, S * 0.15, S * 0.06, 0, 0, 7); c.fill();   // shadow
     c.strokeStyle = shade(C.woodD, 0.55); c.lineWidth = S * 0.04; c.lineCap = 'round';                                  // legs
     line(c, x - S * 0.11, y + S * 0.04, x - S * 0.12, y + S * 0.18); line(c, x + S * 0.11, y + S * 0.04, x + S * 0.12, y + S * 0.18);
     line(c, x, y + S * 0.06, x, y + S * 0.2);
-    // backrest on the OUTSIDE edge (away from the table), with vertical slats
-    var bx = x - dir * S * 0.12;
-    c.fillStyle = shade(C.wood, 0.7); rr(c, bx - S * 0.05, y - S * 0.26, S * 0.1, S * 0.3, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
-    c.strokeStyle = shade(C.woodD, 0.7); c.lineWidth = S * 0.016; line(c, bx, y - S * 0.24, bx, y + S * 0.02);
+    if (dir !== 0) {
+      // backrest on the OUTSIDE edge (away from the table), with vertical slats
+      var bx = x - dir * S * 0.12;
+      c.fillStyle = shade(C.wood, 0.7); rr(c, bx - S * 0.05, y - S * 0.26, S * 0.1, S * 0.3, 3); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.stroke();
+      c.strokeStyle = shade(C.woodD, 0.7); c.lineWidth = S * 0.016; line(c, bx, y - S * 0.24, bx, y + S * 0.02);
+    }
     // seat: rim then top (slightly toward the table)
     c.fillStyle = shade(C.wood, 0.6); c.beginPath(); c.ellipse(x, y + S * 0.05, S * 0.15, S * 0.075, 0, 0, 7); c.fill();
     c.fillStyle = C.wood; c.beginPath(); c.ellipse(x, y, S * 0.15, S * 0.08, 0, 0, 7); c.fill();
     c.fillStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.ellipse(x - S * 0.04, y - S * 0.02, S * 0.08, S * 0.04, 0, 0, 7); c.fill();
     c.strokeStyle = C.out; c.lineWidth = S * 0.022; c.beginPath(); c.ellipse(x, y, S * 0.15, S * 0.08, 0, 0, 7); c.stroke();
+    if (dir === 0) {
+      // south backrest: a low slatted back on the viewer side of the seat
+      c.fillStyle = shade(C.wood, 0.78); rr(c, x - S * 0.13, y + S * 0.05, S * 0.26, S * 0.1, 3); c.fill();
+      c.strokeStyle = C.out; c.lineWidth = S * 0.02; c.stroke();
+      c.strokeStyle = shade(C.woodD, 0.7); c.lineWidth = S * 0.016;
+      line(c, x - S * 0.06, y + S * 0.06, x - S * 0.06, y + S * 0.13); line(c, x + S * 0.06, y + S * 0.06, x + S * 0.06, y + S * 0.13);
+    }
   }
   function selRing(c, x, y, r) { c.strokeStyle = C.toxic; c.lineWidth = 3; c.setLineDash([7, 5]); c.beginPath(); c.arc(x, y, r + 6, 0, 7); c.stroke(); c.setLineDash([]); }
   function ring(c, x, y, r, frac, col, S) { c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = S * 0.04; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); c.strokeStyle = col; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + frac * 2 * Math.PI); c.stroke(); }
