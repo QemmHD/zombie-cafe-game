@@ -41,7 +41,7 @@
   }
   function renderHUD() {
     var need = world.xpNeed(world.level), pct = Math.min(100, world.xp / need * 100);
-    var raidNote = world.raid ? '<span class="raidpill">⚔️ ' + clock(world.raid.returnsAt - world.t) + '</span>' : '';
+    var raidNote = world.battle ? '<span class="raidpill">⚔️ RAID!</span>' : '';
     var flashCls = repFlash > 0 ? (repFlashDir > 0 ? ' up' : ' down') : '';
     if (repFlash > 0) repFlash--;
     var act = world.activeZombies().length, slots = world.activeSlots(), stored = world.storedZombies().length;
@@ -108,8 +108,14 @@
       else if (e.type === 'bought') toast(e.item.emoji + ' ' + e.item.name + ' added!');
       else if (e.type === 'CustomerInfected') { transformFx(e.x, e.y); setTimeout(function () { zombiePopup(e.zombie, e.stored); }, 650); }
       else if (e.type === 'plated') { floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox'); }
-      else if (e.type === 'raidStart') toast('⚔️ Squad sent to raid ' + e.rival.name);
-      else if (e.type === 'raidEnd') raidResult(e);
+      else if (e.type === 'raidStart') toast('⚔️ Your squad lines up outside ' + e.rival.name + ' — tap a zombie to send it in!');
+      else if (e.type === 'raidEnd') { raidResult(e); battleBar(); deselect(); }
+      else if (e.type === 'hit') floatText(e.x, e.y - 36, '-' + e.n, e.enemy ? 'coin' : 'bad');
+      else if (e.type === 'battleKill') floatText(e.x, e.y - 30, '+🪙' + e.coins, 'coin');
+      else if (e.type === 'zombieDown') toast('💀 ' + e.name + ' was knocked out — reanimating in the Meat Locker');
+      else if (e.type === 'deployed') toast('🧟 ' + e.name + ' charges in!');
+      else if (e.type === 'energized') floatText(e.x, e.y - 40, '☣⚡', 'tox');
+      else if (e.type === 'stole') { floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox'); toast('🧊 Stole the food — it\'s in your fridge!'); }
       else if (e.type === 'sold') toast('💰 Sold for 🪙' + e.coins);
       else if (e.type === 'fridge') floatText(e.x, e.y - 30, '+' + e.n + ' ' + e.emoji, 'tox');
       else if (e.type === 'FoodBurned') { floatText(e.x, e.y - 30, '🔥 burnt!', 'bad'); toast('🔥 A dish burned — move finished food to the pass faster!'); }
@@ -129,6 +135,7 @@
     var dt = lastFrame ? (ts - lastFrame) / 1000 : 0; lastFrame = ts;
     if (!editMode) world.tick(dt);        // freeze the sim while rearranging
     drainEvents();
+    if (world.battle || el('battlebar')) battleBar();   // live battle status
     renderer.draw(world, ts / 1000, { edit: editMode, selected: selected, selZ: selZ, ghost: ghost, debugGrid: !!window.__GRID__ });
     renderHUD();
     save(false);
@@ -140,6 +147,7 @@
   // deselect. With nothing selected, taps fall through to context actions.
   function onTap(clientX, clientY) {
     var w = renderer.toWorld(clientX, clientY);
+    if (world.battle) return onTapBattle(w);
     if (editMode) return onTapEdit(w);
     var z = world.pickZombieAt(w.x, w.y);
 
@@ -330,27 +338,60 @@
   }
 
   function openMap() {
-    var active = '';
-    if (world.raid) { var rv = (window.RIVALS || []).filter(function (r) { return r.id === world.raid.rival; })[0]; active = '<div class="raidbar">⚔️ Raiding <b>' + rv.name + '</b> — squad returns in ' + clock(world.raid.returnsAt - world.t) + '</div>'; }
+    var ready = world.activeZombies().filter(function (z) { return z.reanimateUntil <= world.t; }).length;
     var rows = (window.RIVALS || []).map(function (rv) {
-      var locked = world.level < rv.level, enough = world.zombies.length >= rv.squad, can = world.canRaid(rv.id);
-      var sub = locked ? 'Unlocks at level ' + rv.level : 'Defense ' + rv.defense + ' · needs ' + rv.squad + '🧟 · ' + clock(rv.time) + ' · loot 🪙' + fmt(rv.reward) + (rv.toxin ? ' +' + rv.toxin + '☣' : '');
+      var locked = world.level < rv.level, can = world.canRaid(rv.id);
+      var sub = locked ? 'Unlocks at level ' + rv.level : 'Chef HP ' + rv.defense + ' · best with ' + rv.squad + '+🧟 · loot 🪙' + fmt(rv.reward) + (rv.toxin ? ' +' + rv.toxin + '☣' : '');
       var btn = locked ? '<button class="buy" disabled>🔒</button>'
-        : world.raid ? '<button class="buy" disabled>Busy</button>'
-        : '<button class="buy ' + (can ? 'coin' : '') + '" data-act="raid" data-id="' + rv.id + '"' + (can ? '' : ' disabled') + '>' + (enough ? 'Raid' : 'Need ' + rv.squad + '🧟') + '</button>';
+        : world.battle ? '<button class="buy" disabled>Busy</button>'
+        : '<button class="buy ' + (can ? 'coin' : '') + '" data-act="raid" data-id="' + rv.id + '"' + (can ? '' : ' disabled') + '>' + (ready ? 'Raid' : 'No squad') + '</button>';
       return '<div class="row' + (locked ? ' locked' : '') + '"><div class="r-ico">' + rv.emoji + '</div><div class="r-body"><div class="r-name">' + rv.name + '</div><div class="r-meta">' + sub + '</div></div>' + btn + '</div>';
     }).join('');
-    openSheet('<div class="sheet">' + head('⚔️ Raid Map') + '<p class="hint">Send a squad of zombies to take over rival cafes. Win to loot coins & toxin. Power = squad size + your level.</p>' + active + '<div class="list">' + rows + '</div></div>');
+    openSheet('<div class="sheet">' + head('⚔️ Raid Map') + '<p class="hint">Your squad lines up on the sidewalk — tap a zombie to send it in <b>one at a time</b>. Waiters are weak; the Head Chef is the boss. Tap the counter to steal food, ☣ Energize to heal mid-fight, 🏳️ to retreat.</p><div class="list">' + rows + '</div></div>');
   }
   function raidResult(e) {
     var w = e.win;
-    openSheet('<div class="sheet"><div class="result ' + (w ? 'win' : 'lose') + '"><div class="r-big">' + (w ? '🏆' : '💀') + '</div>' +
-      '<div class="r-t">' + (w ? 'Raid successful!' : 'Raid repelled') + '</div>' +
+    openSheet('<div class="sheet"><div class="result ' + (w ? 'win' : 'lose') + '"><div class="r-big">' + (w ? '🏆' : e.retreated ? '🏳️' : '💀') + '</div>' +
+      '<div class="r-t">' + (w ? 'Café conquered!' : e.retreated ? 'Retreated' : 'Squad wiped out') + '</div>' +
       '<div class="r-s">' + e.rival.emoji + ' ' + e.rival.name + '</div>' +
       '<div class="loot">+🪙' + fmt(e.loot) + (e.toxin ? ' +☣' + e.toxin : '') + '</div>' +
       (e.recipe ? '<div class="r-s" style="color:var(--toxic);margin-top:8px;">📖 Stole recipe: ' + e.recipe.emoji + ' ' + e.recipe.name + '!</div>' : '') +
-      '<div class="r-s">Your squad returns to work.</div>' +
-      '<button class="buy coin" data-act="close" style="margin-top:14px;justify-content:center;width:100%;">Nice</button></div></div>');
+      '<div class="r-s">' + (w ? 'Your squad returns to work.' : 'Downed zombies reanimate in the Meat Locker.') + '</div>' +
+      '<button class="buy coin" data-act="close" style="margin-top:14px;justify-content:center;width:100%;">' + (w ? 'Nice' : 'Ugh') + '</button></div></div>');
+  }
+  // ---- battle mode: bar + tap grammar ---------------------------------
+  function battleBar() {
+    var b = el('battlebar'); if (!world.battle) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('div'); b.id = 'battlebar'; b.className = 'buildbar'; document.body.appendChild(b); }
+    var B = world.battle, rv = (window.RIVALS || []).filter(function (r) { return r.id === B.rival; })[0] || {};
+    var staff = B.enemies.filter(function (e) { return e.kind !== 'patron' && e.hp > 0; }).length;
+    b.innerHTML = '⚔️ <b>' + (rv.name || 'Raid') + '</b> · ' + B.lineup.length + '🧟 waiting · ' + B.inside.length + ' inside · ' + staff + ' defenders · 🪙' + B.loot.coins +
+      ' <button class="mini coin" data-act="deploy-all">Send all</button>' +
+      '<button class="mini" data-act="retreat">🏳️ Retreat</button>';
+  }
+  function battleSelBar(z) {
+    var b = el('selbar'); if (b) b.remove();
+    b = document.createElement('div'); b.id = 'selbar'; b.className = 'buildbar selbar';
+    b.innerHTML = '🧟 <b>' + z.name + '</b> ' + Math.round(z.energy) + '/' + (z.maxEnergy || 100) + '⚡ — tap an enemy to ATTACK it' +
+      '<button class="buy toxin" data-act="energize" data-id="' + z.id + '">☣ Energize</button>' +
+      '<button class="buy coin" data-act="sel-info">Info</button>' +
+      '<button class="buy" data-act="sel-off" style="background:#2a3a2e;color:#cfe;">✕</button>';
+    document.body.appendChild(b);
+  }
+  function onTapBattle(w) {
+    var B = world.battle;
+    var z = world.pickZombieAt(w.x, w.y);
+    if (z && B.lineup.indexOf(z.id) >= 0) {              // sidewalk: tap = send THIS one in
+      world.deployZombie(z.id); selZ = z.id; battleSelBar(z); return;
+    }
+    if (z && B.inside.indexOf(z.id) >= 0) { selZ = z.id; battleSelBar(z); return; }
+    var ct = world.pickCounterAt(w.x, w.y);
+    if (ct) { world.lootCounter(ct.id); return; }
+    if (selZ) {
+      var en = world.pickEnemyAt(w.x, w.y);
+      if (en) { world.setBattleTarget(selZ, en.id); toast('⚔️ Attacking the ' + en.name.toLowerCase()); return; }
+    }
+    deselect();
   }
 
   // ---- Review Board (level 6): 4 tasks -> purple bonus star ----------
@@ -502,7 +543,10 @@
     if (act === 'close') closeSheet();
     else if (act === 'cook') { world.startCook(a.dataset.stove, a.dataset.id); closeSheet(); }
     else if (act === 'buy') { world.buy(a.dataset.id); openShop(); }
-    else if (act === 'raid') { world.startRaid(a.dataset.id); closeSheet(); }
+    else if (act === 'raid') { world.startRaid(a.dataset.id); closeSheet(); battleBar(); }
+    else if (act === 'deploy-all') { world.deployAll(); battleBar(); }
+    else if (act === 'retreat') { world.retreat(); deselect(); }
+    else if (act === 'energize') { world.energizeZombie(a.dataset.id); var bz = world.zombies.filter(function (s) { return s.id === a.dataset.id; })[0]; if (bz) battleSelBar(bz); }
     else if (act === 'yes') { var cb = confirmCb; confirmCb = null; closeSheet(); if (cb) cb(); }
     else if (act === 'open-shop') openShop();
     else if (act === 'shop-tab') openShop(a.dataset.id);

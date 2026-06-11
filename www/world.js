@@ -84,7 +84,7 @@
   World.prototype._fresh = function () {
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
-    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true; this.review = null;
+    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.battle = null; this.extraRecipes = []; this.auto = true; this.review = null;
     this.rep = REP_START; this.fridge = []; this.storage = []; this.extraSlots = 0; this.passUnits = 2;   // rep, raid-loot fridge, stored furniture, bonus staff slots
     this.cafeName = 'The Rotten Spoon';
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
@@ -191,7 +191,7 @@
     if (this.review === undefined) this.review = null;
     // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
-    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } });
+    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } z.inBattle = false; z.battleTarget = null; });
     (this.tables || []).forEach(function (tb) { if (tb.reserved === undefined) tb.reserved = null; });
     (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } if (!c.type) c.type = 'civilian'; });
     this.tileClaim = {}; this.chairs = this.chairs || []; this._syncChairs();
@@ -213,7 +213,6 @@
     for (var i = 0; i < this.stoves.length; i++) {
       var st = this.stoves[i]; if (st.recipe && this.t >= st.start + RECIPES[st.recipe].time) { st.ready = true; st.readyAt = this.t; this.plateStove(st); }
     }
-    if (this.raid && this.t >= this.raid.returnsAt) this._resolveRaid();
   };
 
   // ---- derived --------------------------------------------------------
@@ -228,11 +227,11 @@
     var owned;
     if (item.kind === 'decor') owned = this.decors.filter(function (d) { return d.deco === item.id; }).length;
     else if (item.kind === 'pass') owned = this.passUnits || 2;
-    else owned = item.kind === 'stove' ? this.stoves.length : item.kind === 'table' ? this.tables.length : this.zombies.length + (this.raid ? this.raid.squad : 0);
+    else owned = item.kind === 'stove' ? this.stoves.length : item.kind === 'table' ? this.tables.length : this.zombies.length;
     var freeStart = item.kind === 'stove' ? 2 : item.kind === 'table' ? 3 : item.kind === 'decor' ? 0 : item.kind === 'pass' ? 2 : 1;
     return Math.round(item.base * Math.pow(item.grow, owned - freeStart));
   };
-  World.prototype.totalZombies = function () { return this.zombies.length + (this.raid ? this.raid.squad : 0); };
+  World.prototype.totalZombies = function () { return this.zombies.length; };
 
   // ---- progression ----------------------------------------------------
   World.prototype._gainXp = function (n) {
@@ -506,40 +505,193 @@
   };
   World.prototype.bonusStars = function () { return this.review ? this.review.stars : 0; };
 
-  // ---- raids (take over other cafes) ---------------------------------
+  // ---- raid battles (live, faithful) ----------------------------------
+  // Your squad LINES UP ON THE SIDEWALK outside the rival café and you send
+  // them in ONE BY ONE (tap a lined-up zombie to deploy it); a deployed
+  // zombie auto-melees its nearest enemy, or tap an enemy to retarget it.
+  // Waiters are weak; the cooking HEAD CHEF is the boss. Energy doubles as
+  // HP on both sides and Atk Strength is flat energy damage per hit (the
+  // original's combat model). ENERGIZE spends toxin for a mid-raid refill;
+  // tap the white truce flag to retreat anytime — you keep the cash from
+  // anyone already eaten. Downed zombies reanimate in the Meat Locker.
+  var REANIMATE = 600;          // scaled from the original's 8h (later 1h)
+  var ATK_RANGE = 72, ENERGIZE_COST = 1;
   World.prototype.canRaid = function (rivalId) {
     var rv = RIVAL[rivalId]; if (!rv) return false;
-    return !this.raid && this.level >= rv.level && this.zombies.length >= rv.squad;
+    var ready = this.activeZombies().filter(function (z) { return z.reanimateUntil <= this.t; }, this);
+    return !this.battle && this.level >= rv.level && ready.length >= 1;
   };
+  // sidewalk line-up spot i: on the pavement outside the door, single file
+  World.prototype._lineupSpot = function (i) { return { x: -64, y: 640 + i * 105 }; };
   World.prototype.startRaid = function (rivalId) {
     var rv = RIVAL[rivalId]; if (!this.canRaid(rivalId)) return false;
-    for (var sq = 0; sq < rv.squad; sq++) this.releaseTiles(this.zombies[sq].id);
-    this.zombies.splice(0, rv.squad);                 // they march off
-    this.raid = { rival: rivalId, squad: rv.squad, returnsAt: this.t + rv.time };
+    var self = this, lineup = [];
+    this.activeZombies().forEach(function (z) {
+      if (z.reanimateUntil > self.t) return;
+      self._releaseJob(z); self.releaseTiles(z.id);
+      z.inBattle = true; z.battleTarget = null; z.atkAt = 0;
+      var sp = self._lineupSpot(lineup.length);
+      z.x = sp.x; z.y = sp.y; z.tx = sp.x; z.ty = sp.y; z.fx = sp.x; z.fy = sp.y; z.path = []; z.face = 'R'; z.state = 'idle';
+      lineup.push(z.id);
+    });
+    // the rival crew: weak waiters on the floor, seated patrons (eatable),
+    // and the head-chef boss holding the kitchen line
+    var enemies = [], i;
+    var mkE = function (kind, name, x, y, hp, atk, spd, cfg) {
+      return { id: uid(), kind: kind, name: name, x: x, y: y, tx: x, ty: y, fx: x, fy: y, path: [],
+        hp: hp, maxHp: hp, atk: atk, speed: spd, atkAt: 0, face: 'D', step: Math.random() * 6,
+        skin: pick(SKINS), hair: pick(HAIRS), color: (cfg && cfg.color) || pick(COLORS), hat: (cfg && cfg.hat) || null };
+    };
+    for (i = 0; i < rv.squad + 1; i++) {
+      var wx = [180, 420, 300, 540, 660][i % 5], wy = [420, 540, 660, 420, 540][i % 5];
+      enemies.push(mkE('waiter', 'Waiter', wx, wy, 26 + rv.level * 7, 3 + rv.level, 0.62, { color: '#7a8696' }));
+    }
+    enemies.push(mkE('patron', 'Patron', 180, 780, 20, 0, 0, {}));
+    enemies.push(mkE('patron', 'Patron', 540, 780, 20, 0, 0, {}));
+    enemies.push(mkE('chef', 'Head Chef', 420, 300, rv.defense, 7 + rv.level * 2, 0.5, { hat: 'chef', color: '#e8e4da' }));
+    // the rival's counters hold their signature dish — tap to STEAL it
+    var counters = [];
+    if (rv.recipe) counters.push({ id: uid(), x: PASS_SPOTS[0].x, y: PASS_SPOTS[0].y, recipe: rv.recipe, n: (RECIPES[rv.recipe] || {}).batch || 4, looted: false });
+    this.battle = { rival: rivalId, lineup: lineup, inside: [], enemies: enemies, counters: counters, loot: { coins: 0 }, stoleRecipe: false };
     this.events.push({ type: 'raidStart', rival: rv });
     return true;
   };
-  World.prototype._resolveRaid = function () {
-    var rv = RIVAL[this.raid.rival], squad = this.raid.squad;
-    var power = squad * 22 + this.level * 6;
-    var win = power >= rv.defense;
-    var loot = win ? rv.reward : Math.floor(rv.reward * 0.15);
-    this.coins += loot; if (win) this.toxin += rv.toxin || 0;
+  World.prototype.deployZombie = function (zid) {
+    var B = this.battle; if (!B) return false;
+    var qi = B.lineup.indexOf(zid); if (qi < 0) return false;
+    var z = byId(this.zombies, zid); if (!z) return false;
+    B.lineup.splice(qi, 1); B.inside.push(zid);
+    z.x = DOOR.x; z.y = DOOR.y; z.tx = z.x; z.ty = z.y; z.battleTarget = null;
+    var self = this;
+    B.lineup.forEach(function (id, i) { var lz = byId(self.zombies, id); if (lz) { var sp = self._lineupSpot(i); lz.x = sp.x; lz.y = sp.y; lz.tx = sp.x; lz.ty = sp.y; } });
+    this.events.push({ type: 'deployed', name: z.name, x: z.x, y: z.y });
+    return true;
+  };
+  World.prototype.deployAll = function () { var B = this.battle; if (!B) return false; while (B.lineup.length) this.deployZombie(B.lineup[0]); return true; };
+  World.prototype.setBattleTarget = function (zid, enemyId) {
+    var B = this.battle; if (!B || B.inside.indexOf(zid) < 0) return false;
+    var z = byId(this.zombies, zid), e = byId(B.enemies, enemyId);
+    if (!z || !e || e.hp <= 0) return false;
+    z.battleTarget = enemyId; this.events.push({ type: 'retarget', x: e.x, y: e.y });
+    return true;
+  };
+  // ENERGIZE: toxin -> instant full energy on one raiding zombie (mid-fight heal)
+  World.prototype.energizeZombie = function (zid) {
+    var B = this.battle; if (!B) return false;
+    var z = byId(this.zombies, zid); if (!z || !z.inBattle) return false;
+    if (z.energy >= (z.maxEnergy || 100) - 1) { this.events.push({ type: 'warn', msg: z.name + ' is already full of energy' }); return false; }
+    if (this.toxin < ENERGIZE_COST) { this.events.push({ type: 'warn', msg: 'Need ' + ENERGIZE_COST + ' toxin to energize' }); return false; }
+    this.toxin -= ENERGIZE_COST; z.energy = z.maxEnergy || 100;
+    this.events.push({ type: 'energized', x: z.x, y: z.y, name: z.name });
+    return true;
+  };
+  // steal the food off a rival counter (tap it) — goes straight to your fridge
+  World.prototype.lootCounter = function (counterId) {
+    var B = this.battle; if (!B) return false;
+    var ct = byId(B.counters, counterId); if (!ct || ct.looted) return false;
+    if (!B.inside.length) { this.events.push({ type: 'warn', msg: 'Send a zombie in first' }); return false; }
+    ct.looted = true;
+    var known = (RECIPES[ct.recipe] || {}).level <= this.level || (this.extraRecipes || []).indexOf(ct.recipe) >= 0;
+    this.fridge.push({ recipeId: ct.recipe, servings: ct.n, source: RIVAL[B.rival].name, canUnlock: !known });
+    if (!known) B.stoleRecipe = true;
+    this.events.push({ type: 'stole', x: ct.x, y: ct.y, emoji: (RECIPES[ct.recipe] || {}).emoji || '🍽️', n: ct.n });
+    return true;
+  };
+  World.prototype.retreat = function () { if (!this.battle) return false; this._endBattle(false, true); return true; };
+  World.prototype._battleKill = function (z, e) {
+    var B = this.battle;
+    // each kill pays cash + 2 XP to the killer + a bite of energy (faithful)
+    B.loot.coins += e.kind === 'chef' ? 40 : e.kind === 'waiter' ? 20 : 15;
+    z.energy = Math.min(z.maxEnergy || 100, z.energy + Math.max(8, e.maxHp * 0.2));
+    this._zGainXp(z, e.kind === 'chef' ? 10 : 2);
+    this.events.push({ type: 'battleKill', x: e.x, y: e.y, kind: e.kind, coins: e.kind === 'chef' ? 40 : e.kind === 'waiter' ? 20 : 15 });
+  };
+  World.prototype._battleDown = function (z) {
+    var B = this.battle, qi = B.inside.indexOf(z.id);
+    if (qi >= 0) B.inside.splice(qi, 1);
+    z.inBattle = false; z.stored = true; z.energy = 0;
+    z.reanimateUntil = this.t + REANIMATE;
+    z.x = z.hx; z.y = z.hy; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy; z.state = 'idle';
+    this.events.push({ type: 'zombieDown', name: z.name, until: z.reanimateUntil });
+  };
+  World.prototype._endBattle = function (win, retreated) {
+    var B = this.battle, rv = RIVAL[B.rival], self = this;
+    this.coins += B.loot.coins;                          // eaten cash is kept either way
     var gotRecipe = null, fridgeFood = null;
     if (win) {
+      this.coins += rv.reward; this.toxin += rv.toxin || 0;
       this._gainXp(Math.round(rv.defense)); this._reviewProg('raid', 1);
-      // Food loot goes into the FRIDGE (Phase 4) — serve it, or unlock the
-      // rival's signature recipe from there if it's new to you.
-      if (rv.recipe) {
-        var known = (RECIPES[rv.recipe] || {}).level <= this.level || (this.extraRecipes || []).indexOf(rv.recipe) >= 0;
-        var batch = { recipeId: rv.recipe, servings: (RECIPES[rv.recipe] || {}).batch || 4, source: rv.name, canUnlock: !known };
-        this.fridge.push(batch); fridgeFood = batch;
-        if (!known) gotRecipe = RECIPES[rv.recipe];
-      }
+      // any un-stolen counter food comes home with the victors
+      B.counters.forEach(function (ct) {
+        if (ct.looted) return;
+        var known = (RECIPES[ct.recipe] || {}).level <= self.level || (self.extraRecipes || []).indexOf(ct.recipe) >= 0;
+        var batch = { recipeId: ct.recipe, servings: ct.n, source: rv.name, canUnlock: !known };
+        self.fridge.push(batch); fridgeFood = batch;
+        if (!known) gotRecipe = RECIPES[ct.recipe];
+      });
     }
-    for (var i = 0; i < squad; i++) this._addZombie(this._mkZombie(this.zombies.length));
-    this.events.push({ type: 'raidEnd', rival: rv, win: win, loot: loot, toxin: win ? (rv.toxin || 0) : 0, recipe: gotRecipe, food: fridgeFood });
-    this.raid = null;
+    // survivors walk home
+    B.lineup.concat(B.inside).forEach(function (id) {
+      var z = byId(self.zombies, id); if (!z) return;
+      z.inBattle = false; z.battleTarget = null;
+      z.x = z.hx; z.y = z.hy; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy; z.path = []; z.state = 'idle';
+    });
+    this.events.push({ type: 'raidEnd', rival: rv, win: win, retreated: !!retreated, loot: B.loot.coins + (win ? rv.reward : 0), toxin: win ? (rv.toxin || 0) : 0, recipe: gotRecipe, food: fridgeFood });
+    this.battle = null;
+  };
+  World.prototype._battleTick = function (dt) {
+    var B = this.battle, self = this; if (!B) return;
+    var living = B.enemies.filter(function (e) { return e.hp > 0; });
+    var staff = living.filter(function (e) { return e.kind !== 'patron'; });
+    // deployed zombies: close on the target and melee it
+    B.inside.slice().forEach(function (zid) {
+      var z = byId(self.zombies, zid); if (!z) return;
+      var tgt = byId(B.enemies, z.battleTarget);
+      if (!tgt || tgt.hp <= 0) {                          // auto-pick the nearest living enemy
+        tgt = null; var bd = 1e9;
+        living.forEach(function (e) { if (e.hp <= 0) return; var d = dist(z.x, z.y, e.x, e.y); if (d < bd) { bd = d; tgt = e; } });
+        z.battleTarget = tgt ? tgt.id : null;
+      }
+      if (!tgt) return;
+      var d = dist(z.x, z.y, tgt.x, tgt.y);
+      if (d > ATK_RANGE) { z.tx = tgt.x; z.ty = tgt.y; moveTo(z, dt, zspeed(z)); }
+      else if (self.t >= (z.atkAt || 0)) {
+        z.atkAt = self.t + 1.2 / (z.speed || 1);          // speed = attack cadence too
+        tgt.hp -= z.attack;                               // Atk Strength = flat energy damage
+        self.events.push({ type: 'hit', x: tgt.x, y: tgt.y, n: z.attack, enemy: true });
+        if (tgt.hp <= 0) self._battleKill(z, tgt);
+      }
+    });
+    // rival staff fight back (energy = your zombies' HP)
+    staff.forEach(function (e) {
+      var tz = null, bd = 1e9;
+      B.inside.forEach(function (zid) { var z = byId(self.zombies, zid); if (!z) return; var d = dist(e.x, e.y, z.x, z.y); if (d < bd) { bd = d; tz = z; } });
+      if (!tz) return;
+      // the chef holds the kitchen line until you get close; waiters chase
+      if (e.kind === 'chef' && bd > 240) return;
+      if (bd > ATK_RANGE) { e.tx = tz.x; e.ty = tz.y; moveTo(e, dt, SPEED * e.speed); }
+      else if (self.t >= (e.atkAt || 0)) {
+        e.atkAt = self.t + 1.4;
+        tz.energy = Math.max(0, tz.energy - e.atk);
+        self.events.push({ type: 'hit', x: tz.x, y: tz.y, n: e.atk, enemy: false });
+        if (tz.energy <= 0) self._battleDown(tz);
+      }
+    });
+    if (!staff.length) this._endBattle(true);
+    else if (!B.inside.length && !B.lineup.length) this._endBattle(false);
+  };
+  // battle hit-testing for the UI
+  World.prototype.pickEnemyAt = function (x, y) {
+    var B = this.battle; if (!B) return null;
+    var best = null, bd = 55;
+    B.enemies.forEach(function (e) { if (e.hp <= 0) return; var d = dist(x, y, e.x, e.y - 16); if (d < bd) { bd = d; best = e; } });
+    return best;
+  };
+  World.prototype.pickCounterAt = function (x, y) {
+    var B = this.battle; if (!B) return null;
+    var best = null, bd = 70;
+    B.counters.forEach(function (ct) { if (ct.looted) return; var d = dist(x, y, ct.x, ct.y); if (d < bd) { bd = d; best = ct; } });
+    return best;
   };
 
   // ---- simulation -----------------------------------------------------
@@ -567,7 +719,7 @@
     this._seatQueued();
     this._stepZombies(dt);
     this._stepCustomers(dt);
-    if (this.raid && this.t >= this.raid.returnsAt) this._resolveRaid();
+    if (this.battle) this._battleTick(dt);
     // review board: opens at level 6; purple bonus stars decay with time
     if (!this.review && this.reviewUnlocked()) this.review = this._mkReview();
     if (this.review && this.review.stars > 0 && this.t >= this.review.decayAt) {
@@ -887,6 +1039,7 @@
     for (var i = 0; i < this.zombies.length; i++) {
       var z = this.zombies[i];
       if (z.stored) continue;                          // in the Meat Locker, off the floor
+      if (z.inBattle) continue;                        // fighting at the rival café (battle tick owns them)
       if (z.reanimateUntil > this.t) { z.energy = Math.min(z.maxEnergy || 100, z.energy + REGEN_REST * dt); continue; }
       var working = z.state === 'toPass' || z.state === 'toCustomer' || z.state === 'toClean' || z.state === 'cleaning' || z.state === 'toStove' || z.state === 'toDeposit';
       var emax = z.maxEnergy || 100;

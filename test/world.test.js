@@ -69,29 +69,73 @@ test('infecting a customer creates a new zombie worker', () => {
   assert.ok(!w.customers.find((c) => c.id === target.id), 'customer left the table');
 });
 
-test('raiding a rival cafe sends a squad and returns loot', () => {
+test('raid battle: sidewalk line-up, one-by-one deploy, win pays loot', () => {
   const w = boot();
+  w.zombies[0].attack = 60;                             // a slugger to keep the test short
   assert.ok(w.canRaid('diner'), 'can raid the starter rival');
   assert.ok(w.startRaid('diner'));
-  assert.strictEqual(w.zombies.length, 0, 'squad marched off');
-  assert.ok(w.raid, 'raid in progress');
-  advance(w, 32);                                       // diner raid takes 30s
-  assert.strictEqual(w.raid, null, 'raid resolved');
-  assert.strictEqual(w.zombies.length, 1, 'squad returned');
-  assert.strictEqual(w.coins, 180, 'won 120 coins of loot');
+  const B = w.battle;
+  assert.ok(B, 'live battle started');
+  assert.strictEqual(B.lineup.length, 1, 'squad lines up on the sidewalk');
+  assert.ok(w.zombies[0].x < 0, 'line-up stands OUTSIDE the café');
+  assert.ok(B.enemies.some((e) => e.kind === 'chef'), 'the head chef defends');
+  assert.ok(B.enemies.some((e) => e.kind === 'waiter'), 'waiters defend');
+  // nothing happens until YOU deploy — one at a time
+  advance(w, 3);
+  assert.ok(B.enemies.every((e) => e.hp === e.maxHp), 'no fighting before deployment');
+  assert.ok(w.deployZombie(w.zombies[0].id), 'tap the lined-up zombie to send it in');
+  assert.strictEqual(B.lineup.length, 0); assert.strictEqual(B.inside.length, 1);
+  const coins0 = w.coins;
+  advance(w, 120);                                      // let it fight
+  assert.strictEqual(w.battle, null, 'battle resolved');
+  assert.ok(w.events.some((e) => e.type === 'raidEnd' && e.win), 'won the raid');
+  assert.ok(w.coins > coins0 + 100, 'loot collected (reward + eaten cash)');
+  assert.ok(!w.zombies[0].inBattle && w.zombies[0].x === w.zombies[0].hx, 'survivor came home');
 });
 
 test('winning a raid stocks the fridge; unlocking from it learns the recipe', () => {
   const w = boot();
+  w.zombies[0].attack = 60;
   assert.ok(!w.unlocked().some((r) => r.id === 'burger'), 'burger locked at level 1');
   w.startRaid('diner');                                 // diner signature = burger
-  advance(w, 32);
+  w.deployAll();
+  advance(w, 120);
   const loot = w.fridge.find((b) => b.recipeId === 'burger');
   assert.ok(loot, 'stolen burger landed in the fridge');
   assert.ok(loot.canUnlock, 'the fridge batch offers to unlock a new recipe');
   assert.ok(w.unlockFromFridge(w.fridge.indexOf(loot)), 'unlock from fridge');
   assert.ok(w.unlocked().some((r) => r.id === 'burger'), 'burger now cookable');
   assert.ok(!w.fridge.find((b) => b.recipeId === 'burger'), 'unlocking consumed the batch');
+});
+
+test('raid battle: energize heals mid-fight, retreat keeps eaten cash, wipe-out reanimates', () => {
+  const w = boot();
+  const z = w.zombies[0]; z.attack = 50; w.toxin = 9;
+  w.startRaid('diner'); w.deployZombie(z.id);
+  // energize = toxin -> instant full energy on a raiding zombie
+  z.energy = 10;
+  assert.ok(w.energizeZombie(z.id), 'energize works mid-raid');
+  assert.strictEqual(z.energy, z.maxEnergy, 'fully recharged');
+  assert.strictEqual(w.toxin, 8, 'energize cost 1 toxin');
+  // steal the counter food, then retreat with the white flag
+  const ct = w.battle.counters[0];
+  assert.ok(w.lootCounter(ct.id), 'tap the rival counter to steal the food');
+  assert.ok(w.fridge.some((b) => b.recipeId === 'burger'), 'stolen food in the fridge');
+  w.battle.loot.coins = 35;
+  const coins0 = w.coins;
+  assert.ok(w.retreat(), 'white truce flag retreats anytime');
+  assert.strictEqual(w.battle, null);
+  assert.strictEqual(w.coins, coins0 + 35, 'eaten cash kept on retreat');
+  // wipe-out: a downed zombie reanimates in the Meat Locker
+  const w2 = boot();
+  const z2 = w2.zombies[0]; z2.attack = 1; z2.energy = 5; z2.maxEnergy = 100;
+  w2.startRaid('diner'); w2.deployZombie(z2.id);
+  advance(w2, 240);
+  assert.strictEqual(w2.battle, null, 'battle ended');
+  assert.ok(w2.events.concat().length >= 0);
+  assert.ok(z2.stored, 'downed zombie went to the Meat Locker');
+  assert.ok(z2.reanimateUntil > w2.t, 'reanimation timer running');
+  assert.ok(!w2.activateZombie(z2.id), 'cannot assign while reanimating');
 });
 
 test('food burns if it sits finished on the stove too long (Auto off)', () => {

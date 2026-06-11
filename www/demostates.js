@@ -113,6 +113,18 @@
       return { selZ: z.id };
     },
 
+    raidBattle: function (w) {
+      // mid-raid at the rival diner: one zombie fighting inside, one still
+      // lined up on the sidewalk, counter food stealable, chef on the line
+      w.toxin = 9; w.coins = 500;
+      var z2 = w._mkZombie(1); z2.stored = false; w.zombies.push(z2);
+      w.zombies[0].attack = 14;
+      w.startRaid('diner');
+      w.deployZombie(w.zombies[0].id);
+      for (var i = 0; i < 55; i++) w.tick(0.1);            // let the melee develop
+      return { selZ: w.zombies[0].id };
+    },
+
     // ---- art-review states (inspect projection/scale/direction) --------
     artReview_emptyRoom: function (w) { w.zombies[0].stored = true; return {}; },
     artReview_kitchenZone: function (w) {

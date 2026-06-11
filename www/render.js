@@ -102,6 +102,7 @@
     this._selZ = ui.selZ || null;                       // tap-command selection
     this._foodReady = world.ready.length > 0;
     this._t = t;
+    if (world.battle) { this._drawBattle(world, t, ui); return; }
     var c = this.ctx, cvW = this.cv.width, cvH = this.cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0);
     this._ground(c);            // exterior: grass + road + sidewalk (textured)
@@ -144,6 +145,71 @@
     if (ui.debugGrid) this._gridOverlay(c, world);
     if (ui.debugSprites) this._spriteOverlay(c, world);
     if (ui.debugBounds) this._boundsOverlay(c, world);
+  };
+
+  // ---- raid battle scene ----------------------------------------------
+  // The RIVAL café: same room shell, their crew inside (weak waiters, scared
+  // patrons, the head-chef boss on the kitchen line), their counter with
+  // stealable food, and YOUR squad lined up outside on the sidewalk. HP bars
+  // float over enemies; energy bars over your zombies (energy = HP).
+  Renderer.prototype._drawBattle = function (world, t, ui) {
+    var c = this.ctx, self = this, S = this.S, B = world.battle;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    this._ground(c); this._floor(c); this._walls(c);
+    var items = []; this._defer = [];
+    function add(d, fn) { items.push({ d: d, fn: fn }); }
+    // rival serving counter(s) — gold pulse while the food is stealable
+    B.counters.forEach(function (ct) {
+      add(ct.x + ct.y + 30, function () {
+        self._passUnit(c, ct.x, ct.y, ct.looted ? null : { id: ct.recipe, n: ct.n }, false);
+        if (!ct.looted && B.inside.length) {
+          var p = self.project(ct.x, ct.y), pulse = 0.55 + Math.sin(t * 5) * 0.25;
+          c.strokeStyle = 'rgba(244,196,72,' + pulse + ')'; c.lineWidth = S * 0.05;
+          c.beginPath(); c.ellipse(p.x, p.y + S * 0.12, S * 0.62, S * 0.3, 0, 0, 7); c.stroke();
+        }
+      });
+    });
+    // rival crew
+    B.enemies.forEach(function (e) {
+      if (e.hp <= 0) return;
+      add(e.x + e.y, function () {
+        var moving = (Math.abs(e.x - e.tx) + Math.abs(e.y - e.ty)) > 2;
+        var cfg = { skin: e.skin, skinD: shade(e.skin, 0.74), clothes: e.color, hair: e.hair, hat: e.hat,
+          expr: e.kind === 'patron' ? 'neutral' : 'angry', walk: moving, build: e.kind === 'chef' ? 1.2 : e.kind === 'patron' ? 0.96 : 1.02 };
+        self._char(c, e, t, cfg);
+        var p = self.project(e.x, e.y), hy = p.y - S * (cfg.build || 1) * 0.79;
+        if (e.kind !== 'patron' || e.hp < e.maxHp) {       // HP bar
+          var bw = S * 0.44; c.fillStyle = 'rgba(0,0,0,.6)'; rr(c, p.x - bw / 2, hy - S * 0.05, bw, S * 0.075, 3); c.fill();
+          c.fillStyle = e.kind === 'chef' ? '#ff6b5d' : '#ff9d5d';
+          rr(c, p.x - bw / 2, hy - S * 0.05, bw * Math.max(0, e.hp) / e.maxHp, S * 0.075, 3); c.fill();
+        }
+        var df = self._defer;
+        if (e.kind === 'chef') df.push(function () { bubble(c, p.x + S * 0.28, hy - S * 0.16, '👨‍🍳', '#ffd9d4', S); });
+        else if (e.kind === 'patron') df.push(function () { bubble(c, p.x + S * 0.26, hy - S * 0.12, '😱', '#fff', S); });
+      });
+    });
+    // your squad: deployed fighters + the sidewalk line-up (tap to send in)
+    world.zombies.forEach(function (z) {
+      if (!z.inBattle) return;
+      add(z.x + z.y, function () {
+        if (B.lineup.indexOf(z.id) >= 0) {                 // tap-me pulse on the sidewalk
+          var p0 = self.project(z.x, z.y), pulse = 0.5 + Math.sin(t * 4 + z.step) * 0.25;
+          c.strokeStyle = 'rgba(124,255,90,' + pulse + ')'; c.lineWidth = S * 0.045;
+          c.beginPath(); c.ellipse(p0.x + S * 0.02, p0.y + S * 0.05, S * 0.32, S * 0.15, 0, 0, 7); c.stroke();
+        }
+        self._zombie(c, z, t);
+      });
+    });
+    items.sort(function (a, b) { return a.d - b.d; });
+    items.forEach(function (it) { it.fn(); });
+    this._defer.forEach(function (fn) { fn(); });
+    // hanging rival sign, top centre
+    var rv = (window.RIVALS || []).filter(function (r) { return r.id === B.rival; })[0] || { name: 'Rival Café', emoji: '🍴' };
+    var cx = this.cv.width / 2, sw = Math.min(this.cv.width * 0.6, S * 4.6);
+    c.fillStyle = 'rgba(34,20,16,.92)'; rr(c, cx - sw / 2, S * 0.1, sw, S * 0.52, S * 0.1); c.fill();
+    c.strokeStyle = '#5a3a28'; c.lineWidth = S * 0.035; rr(c, cx - sw / 2, S * 0.1, sw, S * 0.52, S * 0.1); c.stroke();
+    c.fillStyle = '#f4e9d8'; c.font = 'bold ' + S * 0.26 + 'px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(rv.emoji + ' ' + rv.name + ' ⚔️', cx, S * 0.38);
   };
 
   // sprite-source overlay: green label = blitted asset, red = procedural
