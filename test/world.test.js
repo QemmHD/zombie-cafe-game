@@ -731,3 +731,37 @@ test('every customer type has a full info card (health/tip/atk/flavor)', () => {
     assert.ok(t.z.maxEnergy >= 50, t.id + ' health pool sane');
   }
 });
+
+test('recipe variants: original multipliers generate derived cookbook entries', () => {
+  const ctx = { window: {}, Math, Date };
+  vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);
+  const R = ctx.window.RECIPES;
+  const bases = R.filter((r) => !r.base), vars = R.filter((r) => r.base);
+  assert.strictEqual(vars.length, bases.length * ctx.window.RECIPE_VARIANTS.length, 'every base x variant exists');
+  const b = R.find((r) => r.id === 'burger');
+  const spicy = R.find((r) => r.id === 'burger.spicy');
+  assert.strictEqual(spicy.xp, Math.round(b.xp * 1.1), 'Spicy = +10% XP');
+  assert.ok(spicy.level > b.level, 'variants unlock after the base');
+  const bulk = R.find((r) => r.id === 'burger.bulk');
+  assert.strictEqual(bulk.batch, b.batch * 2, 'Bulk doubles the batch');
+  assert.strictEqual(bulk.time, b.time, '...for the cook time of ONE');
+  assert.strictEqual(bulk.cost, b.cost * 2, '...at double cost');
+  const froz = R.find((r) => r.id === 'pizza.frozen'), pz = R.find((r) => r.id === 'pizza');
+  assert.strictEqual(froz.time, pz.time * 2, 'Frozen doubles cook time');
+  assert.strictEqual(froz.price, Math.round(pz.price * 0.75), 'Frozen sells for -25%');
+  const fresh = R.find((r) => r.id === 'coffee.fresh');
+  assert.ok(fresh.burnGrace >= Math.max(8, fresh.time) * 2, 'Fresh doubles the burn grace');
+});
+
+test('a variant dish cooks, plates and serves end-to-end', () => {
+  const w = boot();
+  w.coins = 999;
+  assert.ok(w.startCook(w.stoves[0].id, 'coffee.fancy'), 'variant cook starts');
+  const st = w.stoves[0];
+  st.start = w.t - 9999; w.tick(0.1);                    // finish it
+  assert.ok(st.ready, 'variant finished');
+  assert.ok(w.plateStove(st.id), 'variant plated');
+  assert.ok(w.ready.indexOf('coffee.fancy') >= 0, 'variant stack on the counter');
+  // it is its own stack, separate from plain coffee
+  assert.ok(w.canAccept('coffee'), 'plain coffee still needs its own square');
+});

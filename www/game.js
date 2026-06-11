@@ -259,15 +259,23 @@
   function head(title) { return '<div class="sheet-head"><h3>' + title + '</h3><button class="close-x" data-act="close">✕</button></div>'; }
 
   function openCook(stoveId) {
-    var rows = world.unlocked().map(function (r) {
+    // grouped by BASE recipe; unlocked variants (Spicy/Fancy/Bulk...) appear as
+    // chips under their base — each variant is its own cookable entry.
+    var all = world.unlocked(), bases = all.filter(function (r) { return !r.base; });
+    var rows = bases.map(function (r) {
       var aff = world.coins >= r.cost;
+      var chips = all.filter(function (v) { return v.base === r.id; }).map(function (v) {
+        var va = world.coins >= v.cost;
+        return '<button class="vchip" data-act="cook" data-stove="' + stoveId + '" data-id="' + v.id + '"' + (va ? '' : ' disabled') + '>' + (v.tag || '✨') + ' ' + v.vname + ' 🪙' + v.cost + '</button>';
+      }).join('');
       return '<div class="row' + (aff ? '' : ' locked') + '"><div class="r-ico">' + r.emoji + '</div>' +
-        '<div class="r-body"><div class="r-name">' + r.name + '</div><div class="r-meta">⏱ ' + clock(r.time) + ' · makes <b>' + r.batch + '</b> · 🪙' + r.price + ' ea</div></div>' +
+        '<div class="r-body"><div class="r-name">' + r.name + '</div><div class="r-meta">⏱ ' + clock(r.time) + ' · makes <b>' + r.batch + '</b> · 🪙' + r.price + ' ea</div>' +
+        (chips ? '<div class="vchips">' + chips + '</div>' : '') + '</div>' +
         '<button class="buy coin" data-act="cook" data-stove="' + stoveId + '" data-id="' + r.id + '"' + (aff ? '' : ' disabled') + '>🪙 ' + r.cost + '</button></div>';
     }).join('');
-    var locked = (window.RECIPES || []).filter(function (r) { return r.level > world.level; });
+    var locked = (window.RECIPES || []).filter(function (r) { return !r.base && r.level > world.level; });
     if (locked.length) rows += '<div class="r-meta" style="margin:12px 2px;">🔒 ' + locked.slice(0, 3).map(function (r) { return r.emoji + ' ' + r.name + ' (Lv ' + r.level + ')'; }).join(' · ') + '</div>';
-    openSheet('<div class="sheet">' + head('🔪 Cook a dish') + '<p class="hint">Pay ingredients now; it cooks in real time, then your zombies serve it.</p><div class="list">' + rows + '</div></div>');
+    openSheet('<div class="sheet">' + head('🔪 Cook a dish') + '<p class="hint">Pay ingredients now; it cooks in real time, then your zombies serve it. Variant dishes cost more but pay off in XP, coins, batch size or speed.</p><div class="list">' + rows + '</div></div>');
   }
 
   var shopTab = 'Furniture';
@@ -301,10 +309,18 @@
   function shopItem(id) { return (window.SHOP || []).filter(function (s) { return s.id === id; })[0]; }
 
   function openRecipes() {
-    var rows = (window.RECIPES || []).map(function (r) {
+    var R = window.RECIPES || [];
+    var rows = R.filter(function (r) { return !r.base; }).map(function (r) {
       var open = r.level <= world.level;
+      var vars = R.filter(function (v) { return v.base === r.id; });
+      var got = vars.filter(function (v) { return v.level <= world.level; });
+      var next = vars.filter(function (v) { return v.level > world.level; }).sort(function (a, b) { return a.level - b.level; })[0];
+      var vline = open ? ('Variants ' + got.length + '/' + vars.length +
+        (got.length ? ' — ' + got.map(function (v) { return (v.tag || '') + v.vname; }).join(' · ') : '') +
+        (next ? ' · 🔒 ' + next.vname + ' Lv' + next.level : '')) : '';
       return '<div class="row' + (open ? '' : ' locked') + '"><div class="r-ico">' + r.emoji + '</div><div class="r-body"><div class="r-name">' + r.name + (open ? '' : ' 🔒') + '</div>' +
-        '<div class="r-meta">' + (open ? 'Lv ' + r.level + ' · 🪙' + r.cost + ' · ⏱ ' + clock(r.time) + ' · x' + r.batch + ' · 🪙' + r.price + ' ea' : 'Unlocks at level ' + r.level) + '</div></div></div>';
+        '<div class="r-meta">' + (open ? 'Lv ' + r.level + ' · 🪙' + r.cost + ' · ⏱ ' + clock(r.time) + ' · x' + r.batch + ' · 🪙' + r.price + ' ea' : 'Unlocks at level ' + r.level) + '</div>' +
+        (vline ? '<div class="r-meta">' + vline + '</div>' : '') + '</div></div>';
     }).join('');
     openSheet('<div class="sheet">' + head('📖 Recipe Book') + '<div class="list">' + rows + '</div></div>');
   }

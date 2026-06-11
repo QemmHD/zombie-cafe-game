@@ -197,3 +197,8 @@ body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkM
 /* infection toxin cloud */
 .toxcloud { position:absolute; transform:translate(-50%,-50%); font-size:30px; z-index:82; animation:toxpop .9s ease-out forwards; }
 @keyframes toxpop { 0%{opacity:0; transform:translate(-50%,-50%) scale(.4)} 25%{opacity:1; transform:translate(-50%,-50%) scale(1.6)} 100%{opacity:0; transform:translate(-50%,-90%) scale(2.4)} }
+
+/* recipe variant chips inside the cook panel (Spicy/Fancy/Bulk/...) */
+.vchips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.vchip { border:1px solid var(--line); border-radius:9px; padding:4px 8px; font-size:11.5px; font-weight:800; color:var(--text); background:var(--panel2); }
+.vchip:disabled { opacity:.45; }

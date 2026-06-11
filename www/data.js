@@ -22,6 +22,51 @@ window.RECIPES = [
 ];
 
 /*
+ * Recipe VARIANTS — the original's cookbook modifiers (Spicy / Fancy / Bulk /
+ * Fresh / Frozen / Quick...). Each variant trades a steeper ingredient cost for
+ * more XP, more earnings, a bigger batch, a longer burn grace or a faster cook.
+ * Every base recipe × variant becomes its OWN cookbook entry (that's how the
+ * original's catalogue grew to ~320 recipes). `dLevel` = levels after the base.
+ */
+// Multipliers follow the original where documented: Spicy +10% XP / Very
+// Spicy +20%; Bulk = double cost, double batch, for the cook time of ONE;
+// Frozen = double cook time, -25% sale price (idle-friendly); Quick -10% /
+// Very Quick -20% cook time. Fancy's exact % and Fresh's grace factor were
+// never documented — ours are estimates in the same spirit.
+window.RECIPE_VARIANTS = [
+  { id: 'spicy',  name: 'Spicy',      tag: '🌶️',  dLevel: 2, xpMult: 1.10, costMult: 1.1 },
+  { id: 'fancy',  name: 'Fancy',      tag: '✨',   dLevel: 2, priceMult: 1.25, costMult: 1.25 },
+  { id: 'quick',  name: 'Quick',      tag: '⏩',   dLevel: 3, timeMult: 0.9, costMult: 1.1 },
+  { id: 'fresh',  name: 'Fresh',      tag: '🌿',   dLevel: 3, graceMult: 2, costMult: 1.15 },
+  { id: 'bulk',   name: 'Bulk',       tag: '📦',   dLevel: 4, batchMult: 2, costMult: 2 },
+  { id: 'frozen', name: 'Frozen',     tag: '🧊',   dLevel: 4, timeMult: 2, priceMult: 0.75 },
+  { id: 'vspicy', name: 'Very Spicy', tag: '🌶️🌶️', dLevel: 6, xpMult: 1.20, costMult: 1.2 },
+  { id: 'vfancy', name: 'Very Fancy', tag: '✨✨',  dLevel: 6, priceMult: 1.5, costMult: 1.55 },
+  { id: 'vquick', name: 'Very Quick', tag: '⏩⏩',  dLevel: 7, timeMult: 0.8, costMult: 1.2 },
+];
+(function () {
+  var out = [];
+  window.RECIPES.forEach(function (r) {
+    window.RECIPE_VARIANTS.forEach(function (v) {
+      var time = Math.max(1, Math.round(r.time * (v.timeMult || 1)));
+      var e = {
+        id: r.id + '.' + v.id, base: r.id, variant: v.id, tag: v.tag, vname: v.name,
+        name: v.name + ' ' + r.name, emoji: r.emoji,
+        cost: Math.max(1, Math.round(r.cost * (v.costMult || 1))),
+        time: time,
+        batch: Math.max(1, Math.round(r.batch * (v.batchMult || 1))),
+        price: Math.max(1, Math.round(r.price * (v.priceMult || 1))),
+        xp: Math.max(1, Math.round(r.xp * (v.xpMult || 1))),
+        level: r.level + v.dLevel,
+      };
+      if (v.graceMult) e.burnGrace = Math.max(8, time) * v.graceMult;   // Fresh: forgiving window
+      out.push(e);
+    });
+  });
+  window.RECIPES = window.RECIPES.concat(out);
+})();
+
+/*
  * SHOP items. `kind` decides what buying does:
  *   - 'stove'  : +1 cooking station
  *   - 'table'  : +1 table (more simultaneous customers)
