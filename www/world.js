@@ -84,7 +84,7 @@
   World.prototype._fresh = function () {
     this.t = 0; this.coins = 60; this.toxin = 2; this.xp = 0; this.level = 1;
     this.served = 0; this.decor = {}; this.lastRecipe = 'coffee';
-    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true;
+    this.ready = []; this.spawnAt = 1.2; this.raid = null; this.extraRecipes = []; this.auto = true; this.review = null;
     this.rep = REP_START; this.fridge = []; this.storage = []; this.extraSlots = 0; this.passUnits = 2;   // rep, raid-loot fridge, stored furniture, bonus staff slots
     this.cafeName = 'The Rotten Spoon';
     this.stoves = [ this._mkStove(0), this._mkStove(1) ];
@@ -175,7 +175,7 @@
       t: this.t, coins: this.coins, toxin: this.toxin, xp: this.xp, level: this.level,
       served: this.served, decor: this.decor, lastRecipe: this.lastRecipe, ready: this.ready,
       spawnAt: this.spawnAt, raid: this.raid, extraRecipes: this.extraRecipes, auto: this.auto,
-      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, passUnits: this.passUnits, cafeName: this.cafeName,
+      rep: this.rep, fridge: this.fridge, storage: this.storage, extraSlots: this.extraSlots, passUnits: this.passUnits, cafeName: this.cafeName, review: this.review,
       stoves: this.stoves, tables: this.tables, chairs: this.chairs, decors: this.decors, zombies: this.zombies, customers: this.customers,
     };
   };
@@ -188,6 +188,7 @@
     if (this.extraSlots == null) this.extraSlots = 0;
     if (this.passUnits == null) this.passUnits = 2;
     if (!this.cafeName) this.cafeName = 'The Rotten Spoon';
+    if (this.review === undefined) this.review = null;
     // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
     (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } });
@@ -217,7 +218,7 @@
 
   // ---- derived --------------------------------------------------------
   World.prototype.ambiance = function () { var a = 0; for (var i = 0; i < this.decors.length; i++) { var it = shopById(this.decors[i].deco); if (it) a += it.ambiance || 0; } return a; };
-  World.prototype.tipMult = function () { return 1 + this.ambiance() / 200 + this.rep / 400; };   // décor + reputation both tip
+  World.prototype.tipMult = function () { return 1 + this.ambiance() / 200 + this.rep / 400 + this.bonusStars() * 0.03; };   // décor + reputation + purple stars all tip
   World.prototype.patience = function () { return 20 + this.ambiance() / 8; };
   // Higher rating = more (and better) customers; a poor rating thins the crowd.
   World.prototype.spawnEvery = function () { var rf = 0.6 + (100 - this.rep) / 100; return Math.max(2.2, 6 / (1 + this.ambiance() / 50) * rf); };
@@ -251,6 +252,7 @@
     if (st.burned) { this.events.push({ type: 'warn', msg: 'Clear the burnt mess off this stove first' }); return false; }
     if (this.coins < r.cost) { this.events.push({ type: 'warn', msg: 'Not enough coins for ' + r.name }); return false; }
     this.coins -= r.cost; st.recipe = recipeId; st.start = this.t; st.ready = false; st.burning = false; st.readyAt = 0; this.lastRecipe = recipeId;
+    this._reviewProg('cook', 1, recipeId);
     this.events.push({ type: 'CookingStarted', x: st.x, y: st.y }); return true;
   };
   // Wipe burnt food off a stove so it can be used again (player tap or zombie).
@@ -286,6 +288,7 @@
   // payment + mood-driven rating swing + happy/neutral/angry thought bubble
   World.prototype._payAndLeave = function (c) {
     this.coins += c.pay; this.served++; this._gainXp(c.xp);
+    this._reviewProg('serve', 1); this._reviewProg('earn', c.pay);
     var mood = c.mood || 'neutral';
     this._nudgeRep(mood === 'happy' ? 1.4 : mood === 'angry' ? -1.2 : 0.2, 'a ' + mood + ' customer');
     this.events.push({ type: 'coin', x: c.x, y: c.y, amount: c.pay, xp: c.xp, mood: mood });
@@ -302,7 +305,7 @@
     this.toxin -= (cost.toxin || 0); this.coins -= (cost.cash || 0);
     var z = this._mkZombieFrom(ct); z.x = c.x; z.y = c.y; z.state = 'returning'; z.tx = z.hx; z.ty = z.hy; z.fx = z.hx; z.fy = z.hy;
     var wentActive = this._addZombie(z);
-    this._gainXp((c.xp || 2) * 2);
+    this._gainXp((c.xp || 2) * 2); this._reviewProg('infect', 1);
     this.events.push({ type: 'CustomerInfected', x: c.x, y: c.y, zombie: z, stored: !wentActive });
     this._freeTable(c); var qi = this.queue ? this.queue.indexOf(c.id) : -1; if (qi >= 0) this.queue.splice(qi, 1);
     this.releaseTiles(c.id);
@@ -340,7 +343,7 @@
     if (have < cost) { this.events.push({ type: 'warn', msg: 'Not enough ' + (bag === 'coin' ? 'coins' : 'toxin') }); return false; }
     if (it.kind === 'stove' && this.freeStoveSlot() < 0) { this.events.push({ type: 'warn', msg: 'Kitchen is full' }); return false; }
     if ((it.kind === 'table' || it.kind === 'decor') && this.firstFreeCell() < 0) { this.events.push({ type: 'warn', msg: 'No floor space — sell or rearrange' }); return false; }
-    if (bag === 'coin') this.coins -= cost; else this.toxin -= cost;
+    if (bag === 'coin') { this.coins -= cost; this._reviewProg('spend', cost); } else this.toxin -= cost;
     if (it.kind === 'stove') this.stoves.push(this._mkStove(this.freeStoveSlot()));
     else if (it.kind === 'table') this.tables.push(this._mkTable(this.firstFreeCell()));
     if (it.kind === 'table') this._syncChairs();
@@ -452,6 +455,57 @@
     this.toxin -= cost; this.extraSlots = (this.extraSlots || 0) + 1; this.events.push({ type: 'rosterChanged' }); return true;
   };
 
+  // ---- Review Board (level 6, faithful) -------------------------------
+  // Four randomly selected tasks; completing all four earns a purple BONUS
+  // star (max 3) on top of the rating. Bonus stars decay with time. Any
+  // incomplete task can be bribed away for 2 toxin (the original's rate).
+  var REVIEW_LEVEL = 6, REVIEW_MAX = 3, REVIEW_BRIBE = 2, REVIEW_DECAY = 1800;
+  World.prototype.reviewUnlocked = function () { return this.level >= REVIEW_LEVEL; };
+  World.prototype._mkReview = function () {
+    var L = this.level, self = this;
+    var dishes = this.unlocked().filter(function (r) { return !r.base; });
+    var dish = pick(dishes.length ? dishes : [{ id: 'coffee', name: 'Rotten Coffee', emoji: '☕' }]);
+    var pool = [
+      { type: 'serve', goal: 6 + L * 2, label: 'Serve ' + (6 + L * 2) + ' customers' },
+      { type: 'cook', recipe: dish.id, goal: 3, label: 'Cook 3× ' + dish.emoji + ' ' + dish.name },
+      { type: 'spend', goal: L * 120, label: 'Spend 🪙' + (L * 120) + ' on your café' },
+      { type: 'earn', goal: L * 90, label: 'Earn 🪙' + (L * 90) + ' from diners' },
+      { type: 'raid', goal: 1, label: 'Win a raid' },
+      { type: 'infect', goal: 1, label: 'Infect a customer' },
+    ];
+    var tasks = [];
+    while (tasks.length < 4 && pool.length) { var i = Math.floor(Math.random() * pool.length); var t = pool.splice(i, 1)[0]; t.done = 0; tasks.push(t); }
+    return { tasks: tasks, stars: (this.review && this.review.stars) || 0, decayAt: this.t + REVIEW_DECAY };
+  };
+  World.prototype._reviewProg = function (type, n, key) {
+    if (!this.review) return;
+    var hit = false;
+    for (var i = 0; i < this.review.tasks.length; i++) {
+      var t = this.review.tasks[i];
+      if (t.type !== type || t.done >= t.goal) continue;
+      if (type === 'cook' && key !== t.recipe && (key || '').split('.')[0] !== t.recipe) continue;
+      t.done = Math.min(t.goal, t.done + n); hit = true;
+    }
+    if (hit) this._reviewCheck();
+  };
+  World.prototype._reviewCheck = function () {
+    if (!this.review) return;
+    if (this.review.tasks.every(function (t) { return t.done >= t.goal; })) {
+      this.review.stars = Math.min(REVIEW_MAX, this.review.stars + 1);
+      this.events.push({ type: 'reviewPassed', stars: this.review.stars });
+      var stars = this.review.stars;
+      this.review = this._mkReview(); this.review.stars = stars;
+    }
+  };
+  World.prototype.bribeTask = function (i) {
+    if (!this.review) return false;
+    var t = this.review.tasks[i]; if (!t || t.done >= t.goal) return false;
+    if (this.toxin < REVIEW_BRIBE) { this.events.push({ type: 'warn', msg: 'Need ' + REVIEW_BRIBE + ' toxin to bribe the inspector' }); return false; }
+    this.toxin -= REVIEW_BRIBE; t.done = t.goal; t.bribed = true;
+    this._reviewCheck(); return true;
+  };
+  World.prototype.bonusStars = function () { return this.review ? this.review.stars : 0; };
+
   // ---- raids (take over other cafes) ---------------------------------
   World.prototype.canRaid = function (rivalId) {
     var rv = RIVAL[rivalId]; if (!rv) return false;
@@ -473,7 +527,7 @@
     this.coins += loot; if (win) this.toxin += rv.toxin || 0;
     var gotRecipe = null, fridgeFood = null;
     if (win) {
-      this._gainXp(Math.round(rv.defense));
+      this._gainXp(Math.round(rv.defense)); this._reviewProg('raid', 1);
       // Food loot goes into the FRIDGE (Phase 4) — serve it, or unlock the
       // rival's signature recipe from there if it's new to you.
       if (rv.recipe) {
@@ -514,6 +568,12 @@
     this._stepZombies(dt);
     this._stepCustomers(dt);
     if (this.raid && this.t >= this.raid.returnsAt) this._resolveRaid();
+    // review board: opens at level 6; purple bonus stars decay with time
+    if (!this.review && this.reviewUnlocked()) this.review = this._mkReview();
+    if (this.review && this.review.stars > 0 && this.t >= this.review.decayAt) {
+      this.review.stars--; this.review.decayAt = this.t + 1800;
+      this.events.push({ type: 'reviewDecay', stars: this.review.stars });
+    }
   };
 
   World.prototype.maxCustomers = function () { return this.tables.length + 5; };   // seats + a short queue

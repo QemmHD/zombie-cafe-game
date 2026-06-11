@@ -765,3 +765,51 @@ test('a variant dish cooks, plates and serves end-to-end', () => {
   // it is its own stack, separate from plain coffee
   assert.ok(w.canAccept('coffee'), 'plain coffee still needs its own square');
 });
+
+test('review board: 4 tasks at level 6, purple stars, 2-toxin bribe, decay', () => {
+  const w = boot();
+  assert.strictEqual(w.review, null, 'no review before level 6');
+  w.level = 6; w.tick(0.05);
+  assert.ok(w.review && w.review.tasks.length === 4, 'four tasks at level 6');
+  assert.strictEqual(w.bonusStars(), 0);
+  // bribe every incomplete task at 2 toxin each
+  w.toxin = 99;
+  const toxBefore = w.toxin;
+  let bribes = 0;
+  for (let i = 0; i < 4; i++) if (w.review.tasks[i].done < w.review.tasks[i].goal) { assert.ok(w.bribeTask(i), 'bribe ' + i); bribes++; }
+  assert.strictEqual(w.toxin, toxBefore - bribes * 2, '2 toxin per bribe');
+  assert.strictEqual(w.bonusStars(), 1, 'all 4 done -> 1 purple star');
+  assert.ok(w.review.tasks.every((t) => t.done === 0), 'a fresh task set was issued');
+  assert.ok(w.events.some((e) => e.type === 'reviewPassed'), 'passed event');
+  // stars decay with time
+  w.review.decayAt = w.t - 1; w.tick(0.05);
+  assert.strictEqual(w.bonusStars(), 0, 'purple star faded');
+  assert.ok(w.events.some((e) => e.type === 'reviewDecay'), 'decay event');
+});
+
+test('review tasks track real progress (serve / cook / earn)', () => {
+  const w = boot();
+  w.level = 6; w.tick(0.05);
+  // force a deterministic task set
+  w.review.tasks = [
+    { type: 'serve', goal: 1, done: 0, label: 'Serve 1' },
+    { type: 'cook', recipe: 'coffee', goal: 1, done: 0, label: 'Cook coffee' },
+    { type: 'earn', goal: 5, done: 0, label: 'Earn 5' },
+    { type: 'spend', goal: 5, done: 0, label: 'Spend 5' },
+  ];
+  w.coins = 999;
+  w.startCook(w.stoves[0].id, 'coffee');
+  assert.strictEqual(w.review.tasks[1].done, 1, 'cook progress ticked');
+  // a variant of the same base also counts
+  w.review.tasks[1].done = 0;
+  w.startCook(w.stoves[1].id, 'coffee.fancy');
+  assert.strictEqual(w.review.tasks[1].done, 1, 'variant counts toward its base');
+  const c = { id: 'rv', x: 0, y: 0, state: 'paying', pay: 9, xp: 1, table: null, chair: null, path: [], tx: 0, ty: 0, fx: 0, fy: 0 };
+  w.customers.push(c);
+  w.collectCustomer('rv');
+  assert.strictEqual(w.review.tasks[0].done, 1, 'serve progress ticked');
+  assert.strictEqual(w.review.tasks[2].done, 5, 'earn progress capped at goal');
+  w.buy('table');                                       // completes the last task
+  assert.ok(w.events.some((e) => e.type === 'reviewPassed'), 'spend completed the board');
+  assert.strictEqual(w.bonusStars(), 1, 'board completion earned the star');
+});

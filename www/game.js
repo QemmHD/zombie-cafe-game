@@ -35,6 +35,8 @@
   function stars() {
     var s = world.ratingStars(), full = Math.floor(s + 0.001), half = (s - full) >= 0.5;
     var out = ''; for (var i = 0; i < 5; i++) out += i < full ? '★' : (i === full && half ? '⯨' : '☆');
+    var bonus = world.bonusStars ? world.bonusStars() : 0;   // purple review stars
+    if (bonus) out += '<span style="color:#b06bff">' + new Array(bonus + 1).join('✦') + '</span>';
     return out;
   }
   function renderHUD() {
@@ -115,6 +117,8 @@
       else if (e.type === 'ZombieDaydreaming') floatText(e.x, e.y - 40, '💭');
       else if (e.type === 'recipeUnlocked') toast('📖 New recipe unlocked: ' + e.recipe.emoji + ' ' + e.recipe.name);
       else if (e.type === 'zombieLevel') { floatText(e.x, e.y - 44, '⬆ Lv ' + e.level, 'xp'); toast('⬆ ' + e.name + ' reached level ' + e.level + ' — energy fully restored!'); }
+      else if (e.type === 'reviewPassed') toast('📋 Review passed — ✦ purple bonus star earned! (' + e.stars + '/3)');
+      else if (e.type === 'reviewDecay') toast('📋 A purple bonus star faded (' + e.stars + '/3 left)');
       else if (e.type === 'ratingUp') { repFlash = 30; repFlashDir = 1; }
       else if (e.type === 'ratingDown') { repFlash = 30; repFlashDir = -1; }
     });
@@ -349,6 +353,25 @@
       '<button class="buy coin" data-act="close" style="margin-top:14px;justify-content:center;width:100%;">Nice</button></div></div>');
   }
 
+  // ---- Review Board (level 6): 4 tasks -> purple bonus star ----------
+  function openReview() {
+    if (!world.reviewUnlocked()) { openSheet('<div class="sheet">' + head('📋 Review Board') + '<p class="hint">The food critics arrive at <b>café level 6</b>. Keep growing!</p></div>'); return; }
+    var rv = world.review; if (!rv) { world.tick(0); rv = world.review; }
+    var bonus = world.bonusStars();
+    var rows = rv.tasks.map(function (t, i) {
+      var done = t.done >= t.goal, pct = Math.min(100, t.done / t.goal * 100);
+      return '<div class="row' + (done ? '' : '') + '"><div class="r-ico">' + (done ? '✅' : '📋') + '</div>' +
+        '<div class="r-body"><div class="r-name">' + t.label + (t.bribed ? ' <span style="color:#b06bff">(bribed)</span>' : '') + '</div>' +
+        '<div class="ebar"><i style="width:' + pct + '%;background:' + (done ? 'var(--toxic)' : 'var(--gold)') + '"></i></div>' +
+        '<div class="r-meta">' + Math.min(t.done, t.goal) + ' / ' + t.goal + '</div></div>' +
+        (done ? '' : '<button class="buy toxin" data-act="bribe" data-id="' + i + '"' + (world.toxin >= 2 ? '' : ' disabled') + '>☣ 2 Bribe</button>') + '</div>';
+    }).join('');
+    openSheet('<div class="sheet">' + head('📋 Review Board') +
+      '<p class="hint">Complete all four tasks to earn a <span style="color:#b06bff">✦ purple bonus star</span> (max 3 — they fade over time). Stuck? Bribe the inspector: ☣ 2 per task.</p>' +
+      '<div class="r-meta" style="margin:4px 2px 10px;">Bonus stars: <span style="color:#b06bff;font-size:16px;">' + (bonus ? new Array(bonus + 1).join('✦') : '—') + '</span></div>' +
+      '<div class="list">' + rows + '</div></div>');
+  }
+
   function ctype(id) { return (window.CUSTOMER_TYPES || []).filter(function (t) { return t.id === id; })[0] || (window.CUSTOMER_TYPES || [])[0]; }
   function rarTag(r) { return r === 'elite' ? '<span class="rar elite">★ Elite</span>' : r === 'rare' ? '<span class="rar rare">◆ Rare</span>' : '<span class="rar">Common</span>'; }
   function ebar(z) { var p = Math.max(0, z.energy / (z.maxEnergy || 100) * 100); var col = p > 45 ? 'var(--toxic)' : p > 22 ? 'var(--gold)' : 'var(--blood)'; return '<div class="ebar"><i style="width:' + p + '%;background:' + col + '"></i></div>'; }
@@ -503,7 +526,8 @@
     else if (act === 'build-done') setEdit(false);
     else if (act === 'build-store') { if (selected) { world.storeFurniture(selected.kind, selected.id); selected = null; buildBar(); toast('📦 Stored — find it in Store ▸ Storage'); } }
     else if (act === 'build-sell') { if (selected) { world.sellFurniture(selected.kind, selected.id); selected = null; buildBar(); } }
-    else if (act === 'soon-tasks') toast('📋 Review Tasks arrive in a later update');
+    else if (act === 'open-review') openReview();
+    else if (act === 'bribe') { world.bribeTask(+a.dataset.id); openReview(); }
     else if (act === 'soon-pedia') toast('📚 The Zombiepedia is coming soon');
     else if (act === 'role') { world.setZombieRole(a.dataset.id, a.dataset.role); openZombie(a.dataset.id); }
     else if (act === 'feed') { world.feedZombie(a.dataset.id); openZombie(a.dataset.id); }
