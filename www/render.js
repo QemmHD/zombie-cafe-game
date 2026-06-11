@@ -471,7 +471,7 @@
       c.fillText((recipe(world.ready[world.ready.length - 1 - i]) || {}).emoji || '🍽️', dx, dy - S * 0.08);
     }
     var pc = this.project(cxw, Wld.PASS.y);
-    if (n > 5) badge(c, pc.x + S * 0.7, pc.y - bh - S * 0.1, '+' + (n - 5), C.blood, S);
+    if (n > 0) badge(c, pc.x + S * 0.72, pc.y - bh - S * 0.14, '' + n, C.blood, S);   // total servings on the pass
     if (n === 0) { c.fillStyle = 'rgba(20,30,20,.5)'; c.font = 'bold ' + (S * 0.12) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PASS', pc.x, pc.y - bh); }
   };
 
@@ -672,7 +672,8 @@
       var rdy = st.burning ? C.blood : C.toxic;
       c.fillStyle = rdy; rr(c, x - S * 0.36, tagY, S * 0.72, S * 0.2, 6); c.fill();
       c.fillStyle = st.burning ? '#fff' : '#07210a'; c.font = 'bold ' + (S * 0.13) + 'px system-ui'; c.fillText(st.burning ? '⚠ BURNING' : 'SERVE ▸', x, tagY + S * 0.1);
-      if (r.batch) badge(c, x + S * 0.34, tagY + S * 0.04, '' + r.batch, C.blood, S);
+      // serving COUNT above the finished food (how many dishes this batch holds)
+      if (r.batch) badge(c, x + S * 0.2, topYref - S * 0.34, '' + r.batch, C.blood, S);
     } else if (st.recipe) {
       pot(c, x, topYref, S, C.steel);
       for (var i = -1; i <= 1; i++) { c.fillStyle = i === 0 ? '#ffb43d' : '#ff7a2d'; circle(c, x + i * S * 0.07, topYref - S * 0.04 + Math.sin(t * 9 + i) * 2, S * 0.04); }   // bubbling

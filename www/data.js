@@ -13,10 +13,12 @@ window.RECIPES = [
   { id: 'burger',  name: 'Brain Burger',   emoji: '🍔', cost: 25,   time: 45,   batch: 5,  price: 10,  xp: 6,  level: 2 },
   { id: 'pizza',   name: 'Zombie Pizza',   emoji: '🍕', cost: 60,   time: 120,  batch: 6,  price: 18,  xp: 12, level: 3 },
   { id: 'taco',    name: 'Toxic Taco',     emoji: '🌮', cost: 40,   time: 80,   batch: 5,  price: 14,  xp: 9,  level: 4 },
-  { id: 'sushi',   name: 'Severed Sushi',  emoji: '🍣', cost: 120,  time: 300,  batch: 8,  price: 28,  xp: 25, level: 5 },
-  { id: 'cake',    name: 'Monster Cake',   emoji: '🎂', cost: 250,  time: 600,  batch: 10, price: 45,  xp: 50, level: 7 },
-  { id: 'stew',    name: 'Graveyard Stew', emoji: '🥘', cost: 400,  time: 1800, batch: 12, price: 70,  xp: 90, level: 9 },
-  { id: 'pie',     name: 'Phantom Pie',    emoji: '🥧', cost: 800,  time: 3600, batch: 14, price: 110, xp: 160, level: 11 },
+  // Long dishes pay the best COINS-per-cook (idle play); short dishes stay the
+  // best XP/hr (active play) — the original's core strategic tradeoff.
+  { id: 'sushi',   name: 'Severed Sushi',  emoji: '🍣', cost: 120,  time: 300,  batch: 8,  price: 33,  xp: 25, level: 5 },
+  { id: 'cake',    name: 'Monster Cake',   emoji: '🎂', cost: 250,  time: 600,  batch: 10, price: 54,  xp: 50, level: 7 },
+  { id: 'stew',    name: 'Graveyard Stew', emoji: '🥘', cost: 400,  time: 1800, batch: 12, price: 88,  xp: 90, level: 9 },
+  { id: 'pie',     name: 'Phantom Pie',    emoji: '🥧', cost: 800,  time: 3600, batch: 14, price: 140, xp: 160, level: 11 },
 ];
 
 /*
