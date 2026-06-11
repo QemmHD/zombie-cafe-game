@@ -77,42 +77,57 @@ window.SKIN_TONES = ['#f1c89b', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
  *   z       : the zombie they BECOME — role + stat multipliers + a trait, so
  *             infecting different people yields genuinely different workers.
  *   shirt/hat: drive the procedural sprite so types read at a glance.
+ *   card    : the info-card stats shown on tap (like the original's customer
+ *             cards): tip rating / attack speed / attack strength on a 1-12
+ *             scale + one line of flavor text. Health on the card is the
+ *             zombie energy pool (z.maxEnergy) — energy doubles as HP in raids.
  */
 window.CUSTOMER_TYPES = [
   { id: 'civilian', name: 'Civilian',     rarity: 'common', weight: 30, levelReq: 1, ratingReq: 0,
     pay: 1.0, tip: 0.15, patience: 1.0, infect: { toxin: 2 }, shirt: '#6fa8dc', hat: null,
+    card: { tip: 2, spd: 4, str: 2, flavor: 'Average in every measurable way. Even the bite is mild.' },
     z: { role: 'Server',  speed: 1.0, serve: 1.05, clean: 1.0, cook: 1.0, attack: 8,  maxEnergy: 100, patience: 1.0, rarity: 'common', trait: 'Reliable' } },
   { id: 'worker',   name: 'Dock Worker',  rarity: 'common', weight: 16, levelReq: 1, ratingReq: 0,
     pay: 1.0, tip: 0.10, patience: 1.1, infect: { toxin: 3 }, shirt: '#f6b26b', hat: 'hardhat',
+    card: { tip: 1, spd: 3, str: 6, flavor: 'Carries crates all day, grudges all night.' },
     z: { role: 'Bruiser', speed: 0.85, serve: 0.95, clean: 1.1, cook: 1.0, attack: 18, maxEnergy: 135, patience: 1.2, rarity: 'common', trait: 'Sturdy' } },
   { id: 'cook',     name: 'Line Cook',    rarity: 'rare',   weight: 8,  levelReq: 1, ratingReq: 0,
     pay: 1.1, tip: 0.15, patience: 1.0, infect: { toxin: 4 }, shirt: '#dddddd', hat: 'chef',
+    card: { tip: 2, spd: 4, str: 3, flavor: 'Already smells like the kitchen. Practically pre-seasoned.' },
     z: { role: 'Chef',    speed: 1.0, serve: 1.1, clean: 1.0, cook: 1.6, attack: 10, maxEnergy: 105, patience: 1.0, rarity: 'rare',   trait: 'Fast Cook' } },
   { id: 'athlete',  name: 'Athlete',      rarity: 'rare',   weight: 9,  levelReq: 1, ratingReq: 0,
     pay: 1.0, tip: 0.20, patience: 0.9, infect: { toxin: 4 }, shirt: '#93c47d', hat: 'visor',
+    card: { tip: 3, spd: 9, str: 4, flavor: 'Still doing cardio. Undeath is just a new personal best.' },
     z: { role: 'Runner',  speed: 1.45, serve: 1.3, clean: 1.05, cook: 1.0, attack: 12, maxEnergy: 110, patience: 0.9, rarity: 'rare',  trait: 'Sprinter' } },
   { id: 'business', name: 'Executive',    rarity: 'rare',   weight: 9,  levelReq: 2, ratingReq: 0,
     pay: 1.4, tip: 0.40, patience: 1.0, infect: { toxin: 4, cash: 200 }, shirt: '#3a3f55', hat: null,
+    card: { tip: 8, spd: 4, str: 2, flavor: 'Closes deals by day. Soon: closes caskets.' },
     z: { role: 'Host',    speed: 1.05, serve: 1.15, clean: 1.0, cook: 1.0, attack: 9, maxEnergy: 100, patience: 1.1, rarity: 'rare',  trait: 'Big Tipper' } },
   { id: 'elder',    name: 'Pensioner',    rarity: 'common', weight: 8,  levelReq: 1, ratingReq: 0,
     pay: 0.9, tip: 0.15, patience: 1.7, infect: { toxin: 2 }, shirt: '#c27ba0', hat: null,
+    card: { tip: 2, spd: 1, str: 1, flavor: 'In no hurry whatsoever. Never was.' },
     z: { role: 'Busser',  speed: 0.7, serve: 0.85, clean: 1.3, cook: 1.0, attack: 7, maxEnergy: 100, patience: 1.6, rarity: 'common', trait: 'Patient' } },
   { id: 'punk',     name: 'Punk',         rarity: 'rare',   weight: 7,  levelReq: 2, ratingReq: 0,
     pay: 0.9, tip: 0.10, patience: 0.7, infect: { toxin: 3 }, shirt: '#8e7cc3', hat: 'mohawk',
+    card: { tip: 1, spd: 6, str: 7, flavor: 'Fights the system, and occasionally the furniture.' },
     z: { role: 'Bruiser', speed: 1.1, serve: 1.0, clean: 0.95, cook: 1.0, attack: 22, maxEnergy: 105, patience: 0.6, rarity: 'rare',  trait: 'Rowdy' } },
   { id: 'tourist',  name: 'Tourist',      rarity: 'rare',   weight: 7,  levelReq: 3, ratingReq: 0,
     pay: 1.1, tip: 0.30, patience: 1.0, infect: { toxin: 4 }, shirt: '#ffd966', hat: 'sun',
+    card: { tip: 6, spd: 4, str: 2, flavor: 'Came for the ambience. Stayed because we insisted.' },
     z: { role: 'Server',  speed: 1.05, serve: 1.1, clean: 1.05, cook: 1.0, attack: 10, maxEnergy: 110, patience: 1.1, rarity: 'rare', trait: 'Generous' } },
   { id: 'rich',     name: 'Socialite',    rarity: 'elite',  weight: 4,  levelReq: 4, ratingReq: 3,
     pay: 2.0, tip: 0.60, patience: 1.0, infect: { toxin: 8, cash: 500 }, shirt: '#d4af37', hat: 'tophat',
+    card: { tip: 12, spd: 5, str: 3, flavor: 'Old money, soon to be old meat.' },
     z: { role: 'Host',    speed: 1.2, serve: 1.3, clean: 1.15, cook: 1.1, attack: 14, maxEnergy: 120, patience: 1.2, rarity: 'elite', trait: 'Lavish' } },
   { id: 'oddball',  name: 'Oddball',      rarity: 'elite',  weight: 2,  levelReq: 5, ratingReq: 3.5,
     pay: 1.5, tip: 0.50, patience: 1.2, infect: { toxin: 6 }, shirt: '#5fae8f', hat: 'wizard',
+    card: { tip: 9, spd: 8, str: 8, flavor: 'Nobody knows where they came from. The hat knows.' },
     z: { role: 'Cryptid', speed: 1.35, serve: 1.35, clean: 1.35, cook: 1.35, attack: 25, maxEnergy: 140, patience: 1.4, rarity: 'elite', trait: 'Eldritch' } },
   // Rare fighters are VISUALLY unique (gloves, mohawk crest, heavier build) and
   // read as raid material at a glance: terrible tipper, monster in a fight.
   { id: 'brawler',  name: 'Brawler',      rarity: 'elite',  weight: 3,  levelReq: 3, ratingReq: 2.5,
     pay: 1.0, tip: 0.05, patience: 0.8, infect: { cash: 500 }, shirt: '#8a2f2f', hat: 'mohawk', gloves: '#c43a2e',
+    card: { tip: 1, spd: 10, str: 11, flavor: 'Went twelve rounds with the reaper and asked for a thirteenth.' },
     z: { role: 'Slugger', speed: 1.3, serve: 1.0, clean: 0.9, cook: 0.9, attack: 28, maxEnergy: 150, patience: 0.7, rarity: 'elite', trait: 'Knockout' } },
 ];
 

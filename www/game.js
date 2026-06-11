@@ -114,6 +114,7 @@
       else if (e.type === 'ZombieScaredCustomer') { floatText(e.x, e.y - 20, '😱', 'bad'); toast('😱 A starving zombie scared a customer off! Feed your staff.'); }
       else if (e.type === 'ZombieDaydreaming') floatText(e.x, e.y - 40, '💭');
       else if (e.type === 'recipeUnlocked') toast('📖 New recipe unlocked: ' + e.recipe.emoji + ' ' + e.recipe.name);
+      else if (e.type === 'zombieLevel') { floatText(e.x, e.y - 44, '⬆ Lv ' + e.level, 'xp'); toast('⬆ ' + e.name + ' reached level ' + e.level + ' — energy fully restored!'); }
       else if (e.type === 'ratingUp') { repFlash = 30; repFlashDir = 1; }
       else if (e.type === 'ratingDown') { repFlash = 30; repFlashDir = -1; }
     });
@@ -194,7 +195,7 @@
     var rb = roles.map(function (r) { return '<button class="rolebtn' + (z.role === r[0] ? ' on' : '') + '" data-act="role" data-id="' + zid + '" data-role="' + r[0] + '">' + r[1] + '</button>'; }).join('');
     var stat = function (n, v) { return '<div class="zstat"><span>' + n + '</span><b>' + v + '</b></div>'; };
     openSheet('<div class="sheet">' + head('🧟 ' + z.name) +
-      '<p class="hint">' + rar + ' zombie · doing: <b>' + (z.state === 'resting' ? 'resting' : z.role) + '</b></p>' +
+      '<p class="hint">' + rar + ' zombie · Lv ' + (z.zlevel || 1) + ' (' + (z.zxp || 0) + '/' + world.zXpNeed(z.zlevel || 1) + 'xp) · doing: <b>' + (z.state === 'resting' ? 'resting' : z.role) + '</b></p>' +
       '<div class="ebar"><i style="width:' + Math.max(0, z.energy) + '%;background:' + ecol + '"></i></div>' +
       '<div class="zstats">' + stat('Energy', Math.round(z.energy) + '%') + stat('Speed', '×' + z.speed.toFixed(2)) + stat('Serve', '×' + z.serve.toFixed(2)) + stat('Clean', '×' + z.clean.toFixed(2)) + '</div>' +
       '<div class="r-meta" style="margin:12px 2px 6px;">Job</div><div class="rolerow">' + rb + '</div>' +
@@ -354,7 +355,7 @@
     btns += '</div>';
     return '<div class="zcard"><div class="zhead"><span class="zportrait">🧟</span>' +
       '<div class="zmeta"><div class="zname">' + z.name + ' ' + rarTag(z.rarity) + '</div>' +
-      '<div class="zsub">' + (z.kind || 'Server') + (z.trait ? ' · ' + z.trait : '') + ' · ' + statePill + '</div></div>' +
+      '<div class="zsub">Lv ' + (z.zlevel || 1) + ' (' + (z.zxp || 0) + '/' + world.zXpNeed(z.zlevel || 1) + 'xp) · ' + (z.kind || 'Server') + (z.trait ? ' · ' + z.trait : '') + ' · ' + statePill + '</div></div>' +
       '<div class="zen">' + Math.round(z.energy) + '/' + (z.maxEnergy || 100) + '⚡</div></div>' +
       ebar(z) + stats + btns + '</div>';
   }
@@ -378,12 +379,17 @@
     var canAfford = world.toxin >= (cost.toxin || 0) && world.coins >= (cost.cash || 0);
     var costStr = (cost.toxin ? '☣ ' + cost.toxin : '') + (cost.cash ? (cost.toxin ? ' + ' : '') + '🪙 ' + cost.cash : '');
     var mood = c.mood || (c.annoyed ? 'impatient' : 'content');
+    // per-type info card (like the original's customer cards): health cur/max
+    // (= the zombie energy pool), tip/atk ratings on a 1-12 scale, flavor text.
+    var cd = t.card || { tip: 2, spd: 3, str: 2, flavor: '' };
     openSheet('<div class="sheet">' + head('🧟‍♀️ Recruit a ' + t.name) +
       '<div class="cust-panel">' +
-        '<div class="cust-col"><div class="r-meta">Customer</div>' +
-          kv('Type', t.name + ' ' + rarTag(t.rarity)) + kv('Mood', mood) +
-          kv('Spends', '🪙 ' + Math.round((recipeById(world.lastRecipe) || { price: 5 }).price * t.pay) + ' · tip ' + Math.round(t.tip * 100) + '%') +
-          kv('Patience', (t.patience).toFixed(1) + '×') +
+        '<div class="cust-col"><div class="r-meta">' + t.name + ' ' + rarTag(t.rarity) + '</div>' +
+          kv('Health', z.maxEnergy + '/' + z.maxEnergy) +
+          '<div class="ebar"><i style="width:100%;background:var(--toxic)"></i></div>' +
+          kv('Tip Rating', cd.tip + '/12') + kv('Atk Speed', cd.spd + '/12') + kv('Atk Strength', cd.str + '/12') +
+          kv('Mood', mood) + kv('Patience', (t.patience).toFixed(1) + '×') +
+          (cd.flavor ? '<p class="hint" style="font-style:italic;margin:8px 2px 0;">“' + cd.flavor + '”</p>' : '') +
         '</div>' +
         '<div class="cust-col zprev"><div class="r-meta">Becomes</div>' +
           '<div class="zname">🧟 ' + z.role + ' ' + rarTag(z.rarity) + '</div>' +

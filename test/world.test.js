@@ -695,3 +695,39 @@ test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   }
   for (const rv of ctx.window.RIVALS) assert.ok(rv.reward > 0 && rv.squad > 0, rv.id + ' valid');
 });
+
+test('zombies earn XP per serve and level-ups fully recharge them', () => {
+  const w = boot();
+  const z = w.zombies[0];
+  assert.strictEqual(z.zlevel, 1, 'starts at level 1');
+  z.energy = 30;
+  const need = w.zXpNeed(1);
+  w._zGainXp(z, need);                                  // exactly enough to level
+  assert.strictEqual(z.zlevel, 2, 'leveled up');
+  assert.strictEqual(z.energy, z.maxEnergy, 'level-up fully recharges energy');
+  assert.ok(w.events.some((e) => e.type === 'zombieLevel'), 'level event fired');
+  // a real serve grants +1 zombie XP
+  const z2 = w.zombies[0]; z2.zxp = 0;
+  w.ready = ['coffee'];
+  const tb = w.tables[0]; const ch = w.chairsOf(tb.id)[0];
+  const c = { id: 'cx', x: ch.x, y: ch.y, tx: ch.x, ty: ch.y, fx: ch.x, fy: ch.y, path: [], table: tb.id, chair: ch.id, state: 'waiting', wait: w.t, assigned: null, type: 'civilian' };
+  w.customers.push(c); tb.by = c.id; ch.by = c.id;
+  const res = w.commandZombie(z2.id, { kind: 'customer', id: 'cx' });
+  assert.ok(res.ok, 'serve command accepted');
+  for (let i = 0; i < 600 && c.state === 'waiting'; i++) w.tick(0.1);
+  assert.strictEqual(c.state, 'eating', 'dish delivered');
+  assert.strictEqual(z2.zxp, 1, '+1 zombie XP per serve');
+});
+
+test('every customer type has a full info card (health/tip/atk/flavor)', () => {
+  const ctx = { window: {}, Math, Date };
+  vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);
+  for (const t of ctx.window.CUSTOMER_TYPES) {
+    assert.ok(t.card, t.id + ' has a card');
+    for (const k of ['tip', 'spd', 'str']) {
+      assert.ok(t.card[k] >= 1 && t.card[k] <= 12, t.id + ' card.' + k + ' in 1..12');
+    }
+    assert.ok(t.card.flavor && t.card.flavor.length > 4, t.id + ' has flavor text');
+    assert.ok(t.z.maxEnergy >= 50, t.id + ' health pool sane');
+  }
+});

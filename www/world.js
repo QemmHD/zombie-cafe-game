@@ -159,7 +159,7 @@
   };
   World.prototype._mkZombie = function (i, rar) { var h = home(i); rar = rar || rollRarity(); var s = statsFor(rar);
     return { id: uid(), x: h.x, y: h.y, hx: h.x, hy: h.y, state: 'idle', tx: h.x, ty: h.y, fx: h.x, fy: h.y, path: [], carry: null, carryBatch: null, job: null, cleanId: null, stoveId: null, face: 'L', step: Math.random() * 6,
-      name: pick(ZNAMES), kind: 'Server', rarity: rar, role: 'auto', energy: 100, maxEnergy: 100, speed: s.speed, serve: s.serve, clean: s.clean, cook: 1, attack: 10, patience: s.patience, dazeUntil: 0, stored: false, reanimateUntil: 0 }; };
+      name: pick(ZNAMES), kind: 'Server', rarity: rar, role: 'auto', energy: 100, maxEnergy: 100, speed: s.speed, serve: s.serve, clean: s.clean, cook: 1, attack: 10, patience: s.patience, dazeUntil: 0, stored: false, reanimateUntil: 0, zxp: 0, zlevel: 1 }; };
   // Build a zombie from an infected customer's inherited profile (Phase 9).
   World.prototype._mkZombieFrom = function (ct) {
     var z = this._mkZombie(this.zombies.length, ct.z.rarity);
@@ -190,7 +190,7 @@
     if (!this.cafeName) this.cafeName = 'The Rotten Spoon';
     // forward-compat: ensure zombies + tables + customers have all fields
     var self = this;
-    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; });
+    (this.zombies || []).forEach(function (z, i) { if (z.hx == null) { var h = home(i); z.hx = h.x; z.hy = h.y; } if (z.step == null) z.step = 0; if (!z.face) z.face = 'L'; if (!z.path) z.path = []; if (z.fx == null) { z.fx = z.tx; z.fy = z.ty; } if (z.patience == null) z.patience = 1; if (z.dazeUntil == null) z.dazeUntil = 0; if (z.stored == null) z.stored = false; if (z.maxEnergy == null) z.maxEnergy = 100; if (!z.kind) z.kind = 'Server'; if (z.cook == null) z.cook = 1; if (z.attack == null) z.attack = 10; if (z.reanimateUntil == null) z.reanimateUntil = 0; if (z.zxp == null) { z.zxp = 0; z.zlevel = 1; } });
     (this.tables || []).forEach(function (tb) { if (tb.reserved === undefined) tb.reserved = null; });
     (this.customers || []).forEach(function (c) { if (!c.path) c.path = []; if (c.fx == null) { c.fx = c.tx; c.fy = c.ty; } if (!c.type) c.type = 'civilian'; });
     this.tileClaim = {}; this.chairs = this.chairs || []; this._syncChairs();
@@ -401,6 +401,19 @@
     if (this.toxin < 1) { this.events.push({ type: 'warn', msg: 'Need 1 toxin to feed a zombie' }); return false; }
     this.toxin -= 1; z.energy = z.maxEnergy || 100; if (z.state === 'resting' && z.role !== 'rest') z.state = 'idle';
     this.events.push({ type: 'fed', x: z.x, y: z.y }); return true;
+  };
+  // ---- zombie XP / levels (faithful: staff grow from doing the work) ---
+  // +1 XP per dish served, +2 per raid kill. A level-up FULLY recharges the
+  // zombie's energy (the original's signature reward) and nudges its stats.
+  World.prototype.zXpNeed = function (lvl) { return 4 + lvl * 3; };
+  World.prototype._zGainXp = function (z, n) {
+    z.zxp = (z.zxp || 0) + n; z.zlevel = z.zlevel || 1;
+    var leveled = false;
+    while (z.zxp >= this.zXpNeed(z.zlevel)) {
+      z.zxp -= this.zXpNeed(z.zlevel); z.zlevel++; leveled = true;
+      z.maxEnergy = (z.maxEnergy || 100) + 8; z.attack = (z.attack || 10) + 1;
+    }
+    if (leveled) { z.energy = z.maxEnergy; this.events.push({ type: 'zombieLevel', x: z.x, y: z.y, name: z.name, level: z.zlevel }); }
   };
   World.prototype.pickZombieAt = function (x, y) {
     var best = null, bd = 60;
@@ -866,7 +879,7 @@
         else { this._releaseJob(z); z.state = 'returning'; routeTo(this, z, z.hx, z.hy); }
       } else if (z.state === 'toCustomer') {
         var cu = byId(this.customers, z.job);
-        if (cu && cu.state === 'waiting') { cu.state = 'eating'; cu.eat = this.t; cu.dish = z.carry; cu.assigned = null; z.carry = null; z.job = null; }
+        if (cu && cu.state === 'waiting') { cu.state = 'eating'; cu.eat = this.t; cu.dish = z.carry; cu.assigned = null; z.carry = null; z.job = null; this._zGainXp(z, 1); }
         else this._releaseJob(z);
         z.state = 'returning'; routeTo(this, z, z.hx, z.hy);
       } else if (z.state === 'toClean') {
