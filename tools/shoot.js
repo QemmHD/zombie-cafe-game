@@ -18,11 +18,24 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-let createCanvas;
-try { ({ createCanvas } = require('canvas')); }
+let createCanvas, loadImage;
+try { ({ createCanvas, loadImage } = require('canvas')); }
 catch (e) {
   console.error('Missing dependency "canvas". Install it first:\n  npm install --no-save canvas');
   process.exit(1);
+}
+
+// preload the baked sprite assets so captures show RUNTIME SPRITE rendering
+async function loadSpriteSet() {
+  const mfPath = path.join(WWW, 'assets', 'sprites', 'manifest.json');
+  if (!fs.existsSync(mfPath)) return null;
+  const mf = JSON.parse(fs.readFileSync(mfPath, 'utf8'));
+  const imgs = {};
+  for (const id of Object.keys(mf.sprites || {})) {
+    const e = mf.sprites[id];
+    try { imgs[id] = await loadImage(path.join(WWW, e.file)); } catch (err) { /* fallback */ }
+  }
+  return { mf, imgs };
 }
 
 const ROOT = path.join(__dirname, '..');
@@ -45,7 +58,7 @@ function mkCanvas(w, h) {
   return cv;
 }
 
-function capture(name, W, H) {
+function capture(name, W, H, sprites) {
   const ctx = { window: { devicePixelRatio: 2 }, Math: seededMath(), Date, console };
   vm.createContext(ctx);
   ['data.js', 'world.js', 'render.js', 'demostates.js'].forEach((f) => vm.runInContext(read(f), ctx));
@@ -55,14 +68,16 @@ function capture(name, W, H) {
   const ui = ctx.window.applyDemo(world, name) || {};
   const cv = mkCanvas(W, H);
   const r = new ctx.window.Renderer(cv);
+  if (sprites && !ui.noSprites) r.useSprites(sprites.mf, sprites.imgs);   // RUNTIME sprite rendering in captures
   r.draw(world, 6.0, ui);
   if (ui.shell) r.drawUI(world);          // mobile-framed proofs include the UI shell
   const file = path.join(OUT, name + '.png');
   fs.writeFileSync(file, cv.toBuffer('image/png'));
-  return file;
+  const rep = r.spriteReport();
+  return { file, rep };
 }
 
-function main() {
+async function main() {
   fs.mkdirSync(OUT, { recursive: true });
   // discover the demo list from the module
   const probe = { window: { devicePixelRatio: 2 }, Math: seededMath(), Date, console };
@@ -72,10 +87,11 @@ function main() {
   const want = process.argv.slice(2);
   const states = want.length ? want : all;
   const W = 844 * 2, H = 390 * 2;     // iPhone-ish LANDSCAPE at dpr 2
+  const sprites = await loadSpriteSet();
   states.forEach((s) => {
     if (!all.includes(s)) { console.warn('unknown demo state:', s, '\n  available:', all.join(', ')); return; }
-    const f = capture(s, W, H);
-    console.log('captured', path.relative(ROOT, f));
+    const out = capture(s, W, H, sprites);
+    console.log('captured', path.relative(ROOT, out.file), '| sprites:', out.rep.used.length, '| fallback:', out.rep.fallback.join(',') || 'none');
   });
 }
 

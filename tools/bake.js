@@ -59,9 +59,16 @@ function main() {
   const add = (id, meta, extra) => { manifest.sprites[id] = Object.assign({ id, renderLayer: 1, procedureFallback: true }, meta, extra || {}); };
 
   // ---- furniture / kitchen (static bases) ----
+  // tables split into BASE + TOP so runtime keeps the seated-diner occlusion
+  add('table_base', bake('furniture/tables/table_base.png', (r, c) => { const tb = { id: 'bake-t', x: 0, y: 0, by: null, dirty: false, cleaning: null }; r._table(c, tb, false, 1); }, { S }), { category: 'furniture', footprint: [1, 1] });
+  add('table_top_clean', bake('furniture/tables/table_top_clean.png', (r, c) => { const tb = { id: 'bake-t', x: 0, y: 0, by: null, dirty: false, cleaning: null }; r._tableTop(c, tb, false, 1); }, { S }), { category: 'furniture', footprint: [1, 1] });
+  add('table_top_dirty', bake('furniture/tables/table_top_dirty.png', (r, c) => { const tb = { id: 'bake-t', x: 0, y: 0, by: null, dirty: true, cleaning: null }; r._tableTop(c, tb, false, 1); }, { S }), { category: 'furniture', footprint: [1, 1] });
   add('table_clean', bake('furniture/tables/table_clean.png', (r, c) => { const tb = { id: 'bake-t', x: 0, y: 0, by: null, dirty: false, cleaning: null }; r._table(c, tb, false, 1); r._tableTop(c, tb, false, 1); }, { S }), { category: 'furniture', footprint: [1, 1] });
   add('table_dirty', bake('furniture/tables/table_dirty.png', (r, c) => { const tb = { id: 'bake-t', x: 0, y: 0, by: null, dirty: true, cleaning: null }; r._table(c, tb, false, 1); r._tableTop(c, tb, false, 1); }, { S }), { category: 'furniture', footprint: [1, 1] });
+  // stove body WITHOUT the state overlay (runtime draws pot/tags/progress live)
+  add('stove_body', bake('kitchen/stoves/stove_body.png', (r, c, ctx) => { const w = ctx.window.createWorld(); r._stoveState = function () {}; r._stove(c, { id: 'bake-s', x: 0, y: 0, recipe: null, ready: false }, w, 1, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
   add('stove_idle', bake('kitchen/stoves/stove_idle.png', (r, c, ctx) => { const w = ctx.window.createWorld(); r._stove(c, { id: 'bake-s', x: 0, y: 0, recipe: null, ready: false }, w, 1, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
+  add('pass_body', bake('kitchen/counters/pass_body.png', (r, c, ctx) => { const w = ctx.window.createWorld(); w.ready = []; r._pass(c, w); }, { S, w: 420 }), { category: 'kitchen', footprint: [2, 1] });
   add('pass_counter', bake('kitchen/counters/pass_counter.png', (r, c, ctx) => { const w = ctx.window.createWorld(); w.ready = []; r._pass(c, w); }, { S, w: 420 }), { category: 'kitchen', footprint: [2, 1] });
   add('prep_counter', bake('kitchen/counters/prep_counter.png', (r, c) => { r._decor(c, { id: 'bake-c', deco: 'counter', x: 0, y: 0 }, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
   add('sink', bake('kitchen/sink/sink.png', (r, c) => { r._decor(c, { id: 'bake-sk', deco: 'sink', x: 0, y: 0 }, false); }, { S }), { category: 'kitchen', footprint: [1, 1] });
@@ -87,7 +94,8 @@ function main() {
       add('customer_' + ct + '_' + f, bake('characters/customers/' + ct + '_' + f + '.png', (r, c, ctx) => {
         const TY = (ctx.window.CUSTOMER_TYPES || []).find((t) => t.id === ct) || {};
         const w = ctx.window.createWorld();
-        const cu = { id: 'bake-cu', x: 0, y: 0, state: 'queued', wait: 0, type: ct, color: TY.shirt || '#6fa8dc', skin: '#e0ac69', hair: ['#2b2b2b', '#5a3a1a', '#b04a2a'][idx], hat: TY.hat, face: f, step: 0 };
+        // baked in 'leaving' state (no thought bubble baked into the sprite)
+        const cu = { id: 'bake-cu', x: 0, y: 0, state: 'leaving', wait: 0, type: ct, color: TY.shirt || '#6fa8dc', skin: '#e0ac69', hair: ['#2b2b2b', '#5a3a1a', '#b04a2a'][idx], hat: TY.hat, face: f, step: 0 };
         r._customer(c, cu, w, 1);
       }, { S }), { category: 'character', facing: f, footprint: [1, 1] });
     });

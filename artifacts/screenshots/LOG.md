@@ -197,6 +197,34 @@ replacements are the next real quality jump. (2) Runtime still paints
 procedurally (the bake is the export layer; runtime blitting is wired-ready via
 the manifest but not switched on). (3) Characters improved but remain procedural.
 
+## Stage 4.10B — RUNTIME sprite renderer + grid/floor alignment + validators
+- **Runtime blits from the manifest**: renderer gained `useSprites/_blit/
+  spriteReport`; painters blit table_base / table_top_clean|dirty (occlusion
+  split preserved), stove_body (+ live state overlays), pass_body (+ live
+  dishes), prep counter, sink, fridge, plant, lamp. `game.js` fetches the
+  manifest + installs images at init; the HARNESS preloads them too — every
+  capture now logs `sprites: N | fallback: none`. Procedural drawing is
+  fallback-only (and selection-lift), tracked + reported.
+- **Square-grid + floor alignment** (user request): random visual offset
+  REMOVED (vof=0); CELLS + STOVE_SLOTS redefined as exact tile centers
+  (dining = cols1-5 × rows2-6; kitchen row 0); PASS at (420,180) on tiles
+  (3,1)+(4,1); demo layouts re-composed on tile centers. Everything sits on
+  the grid, flush with the floor; wall items hug the wall (bias, no offset).
+- **Visual-overlap validator** (`layoutOverlaps` from OBJ_MODELS bounds):
+  busy layout = 0 illegal overlaps (test-enforced).
+- **Debug overlays**: `debugSprites` (green spr / red proc / amber anim-live
+  labels + summary box), `debugBounds` (cyan bounds, red illegal pairs, wall
+  base line + front-direction arrows). New artReview_spriteDebug /
+  artReview_boundsDebug captures.
+- Tests: **51/51** (grid alignment, zero overlaps, wall row + anchors, split
+  assets + loader/blit wiring).
+
+**Honest notes:** characters remain live-procedural BY DESIGN (smooth walk
+anim + carried items; labeled amber in the overlay) — baked character frames
+exist in the manifest as the replaceable slots. Sprites are baked FROM our
+painters, so the runtime swap is architectural (drop-in art-ready), visually
+identical until better PNGs land in the slots.
+
 ## Orientation
 App + IPA now **landscape** (manifest `orientation:landscape`; build workflow
 forces `UISupportedInterfaceOrientations` to LandscapeLeft/Right on iPhone+iPad).

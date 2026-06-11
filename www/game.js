@@ -491,6 +491,24 @@
     renderHUD();
   });
 
+  // ---- runtime sprite layer (Stage 4.10B) -----------------------------
+  // Fetch the baked-asset manifest and install each PNG into the renderer as it
+  // loads; painters blit installed sprites and fall back procedurally otherwise.
+  function loadSprites() {
+    if (!window.fetch) return;
+    fetch('assets/sprites/manifest.json').then(function (r) { return r.json(); }).then(function (mf) {
+      var imgs = {}, pending = 0;
+      Object.keys(mf.sprites || {}).forEach(function (id) {
+        var e = mf.sprites[id]; if (!e || !e.file) return;
+        pending++;
+        var im = new Image();
+        im.onload = function () { imgs[id] = im; renderer.useSprites(mf, imgs); if (--pending === 0) console.log('[sprites] installed', Object.keys(imgs).length); };
+        im.onerror = function () { pending--; };
+        im.src = e.file;
+      });
+    }).catch(function () { /* no manifest: procedural fallback */ });
+  }
+
   // ---- init -----------------------------------------------------------
   function init() {
     canvas = el('game'); renderer = new window.Renderer(canvas);
@@ -505,6 +523,7 @@
     canvas.addEventListener('pointermove', function (e) { if (editMode && selected && !el('modal-root').firstChild) updateGhost(e.clientX, e.clientY); });
     document.addEventListener('visibilitychange', function () { if (document.hidden) save(true); });
     window.__setWorld = function (nw) { world = nw; selZ = null; selected = null; editMode = false; deselect(); renderHUD(); };   // debug loader hook
+    loadSprites();                                       // runtime sprite layer (manifest -> images -> renderer)
     updateAutoBtn();
     if (!existing) setTimeout(openHelp, 450);
     requestAnimationFrame(frame);

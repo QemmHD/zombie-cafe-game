@@ -2,6 +2,54 @@
   "generated": "2026-06-11",
   "note": "Baked from the game’s own painters — every entry is replaceable by a drawn PNG with the same anchors.",
   "sprites": {
+    "table_base": {
+      "id": "table_base",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/furniture/tables/table_base.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "furniture",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "table_top_clean": {
+      "id": "table_top_clean",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/furniture/tables/table_top_clean.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "furniture",
+      "footprint": [
+        1,
+        1
+      ]
+    },
+    "table_top_dirty": {
+      "id": "table_top_dirty",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/furniture/tables/table_top_dirty.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "furniture",
+      "footprint": [
+        1,
+        1
+      ]
+    },
     "table_clean": {
       "id": "table_clean",
       "renderLayer": 1,
@@ -34,6 +82,22 @@
         1
       ]
     },
+    "stove_body": {
+      "id": "stove_body",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/stoves/stove_body.png",
+      "frameWidth": 320,
+      "frameHeight": 380,
+      "anchorX": 160,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        1,
+        1
+      ]
+    },
     "stove_idle": {
       "id": "stove_idle",
       "renderLayer": 1,
@@ -47,6 +111,22 @@
       "category": "kitchen",
       "footprint": [
         1,
+        1
+      ]
+    },
+    "pass_body": {
+      "id": "pass_body",
+      "renderLayer": 1,
+      "procedureFallback": true,
+      "file": "assets/sprites/kitchen/counters/pass_body.png",
+      "frameWidth": 420,
+      "frameHeight": 380,
+      "anchorX": 210,
+      "anchorY": 310,
+      "bakeS": 150,
+      "category": "kitchen",
+      "footprint": [
+        2,
         1
       ]
     },

@@ -608,6 +608,57 @@ test('sprite asset pipeline: manifest + priority-1 baked assets exist (4.10)', (
   assert.ok(Object.values(mf.sprites).every((e) => e.procedureFallback), 'every asset declares a procedural fallback (replaceable layer)');
 });
 
+test('grid alignment: furniture sits on exact tile centers (4.10B)', () => {
+  const w = boot();
+  const onCenter = (x, y) => ((x - 60) % 120 === 0) && ((y - 60) % 120 === 0);
+  w.tables.forEach((t) => assert.ok(onCenter(t.x, t.y), 'table on tile center: ' + t.x + ',' + t.y));
+  w.stoves.forEach((s) => assert.ok(onCenter(s.x, s.y), 'stove on tile center: ' + s.x + ',' + s.y));
+  w.coins = 9999; w.buy('fridge'); w.buy('plant');
+  w.decors.forEach((d) => assert.ok(onCenter(d.x, d.y), 'decor on tile center: ' + d.x + ',' + d.y));
+});
+
+test('visual layout validator: busy demo has no illegal overlaps (4.10B)', () => {
+  const vm = require('node:vm');
+  const sandbox = { window: {}, Math, Date, console };
+  vm.createContext(sandbox);
+  ['data.js', 'world.js', 'demostates.js'].forEach((f) => vm.runInContext(read(f), sandbox));
+  const w = sandbox.window.createWorld();
+  for (let i = 0; i < 8; i++) w.tick(0.2);
+  sandbox.window.applyDemo(w, 'busy');
+  const bad = w.layoutOverlaps();
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(bad)), [], 'no illegal visual overlaps, got ' + JSON.stringify(bad));
+});
+
+test('wall alignment: kitchen appliances on the back-wall row with wall anchors (4.10B)', () => {
+  const vm = require('node:vm');
+  const sandbox = { window: {}, Math, Date, console };
+  vm.createContext(sandbox);
+  ['data.js', 'world.js', 'demostates.js'].forEach((f) => vm.runInContext(read(f), sandbox));
+  const w = sandbox.window.createWorld();
+  for (let i = 0; i < 8; i++) w.tick(0.2);
+  sandbox.window.applyDemo(w, 'busy');
+  w.stoves.forEach((s) => assert.strictEqual(w.tileOf(s.x, s.y)[1], 0, 'stove on back-wall row'));
+  const wallArts = ['counter', 'sink', 'fridge'];
+  w.decors.forEach((d) => {
+    const art = ((sandbox.window.SHOP || []).find((s) => s.id === d.deco) || {}).art;
+    if (wallArts.includes(art)) {
+      assert.strictEqual(w.tileOf(d.x, d.y)[1], 0, art + ' on back-wall row');
+      assert.ok(w.isWallAnchor(w.anchorOf(d)), art + ' uses a wall anchor');
+    }
+  });
+});
+
+test('runtime sprite plumbing: split assets exist; loader + blit are wired (4.10B)', () => {
+  const mf = JSON.parse(fs.readFileSync(path.join(WWW, 'assets', 'sprites', 'manifest.json'), 'utf8'));
+  ['table_base', 'table_top_clean', 'table_top_dirty', 'stove_body', 'pass_body'].forEach((id) => {
+    assert.ok(mf.sprites[id] && fs.existsSync(path.join(WWW, mf.sprites[id].file)), id + ' baked');
+  });
+  const render = read('render.js'), game = read('game.js');
+  assert.ok(render.includes('useSprites') && render.includes('_blit(') && render.includes('spriteReport'), 'renderer has sprite layer');
+  assert.ok(render.includes('_spriteOverlay') && render.includes('_boundsOverlay'), 'debug overlays exist');
+  assert.ok(game.includes('loadSprites') && game.includes("manifest.json"), 'game loads the manifest at runtime');
+});
+
 test('data integrity: recipes profitable, rivals rewarding, ids unique', () => {
   const ctx = { window: {}, Math, Date };
   vm.createContext(ctx); vm.runInContext(read('data.js'), ctx);

@@ -55,18 +55,18 @@
   var COLORS = window.CUSTOMER_COLORS, SKINS = window.SKIN_TONES;
   var HAIRS = ['#2b2b2b', '#5a3a1a', '#7a5230', '#d9c27a', '#b04a2a', '#888', '#3a2a4a'];
 
-  // ---- layout: fixed slots for furniture & key points ----------------
-  // Kitchen appliances line the back wall (row ~0). 6 slots across.
-  var STOVE_SLOTS = [ {x:90,y:78}, {x:210,y:78}, {x:330,y:78}, {x:510,y:78}, {x:630,y:78}, {x:750,y:78} ];
-  // The dining floor is a 4x5 grid of cells. Tables AND decor occupy cells, so
-  // decorating your cafe trades off seating — just like the original.
+  // ---- layout: everything aligned to TILE CENTERS (square grid) -------
+  // Kitchen appliances line the back wall on row 0 (slot = a tile center).
+  var STOVE_SLOTS = [ {x:60,y:60}, {x:180,y:60}, {x:300,y:60}, {x:540,y:60}, {x:660,y:60}, {x:780,y:60} ];
+  // The dining floor: cols 1-5 x rows 2-6 of exact tile centers. Tables AND
+  // decor occupy cells (decorating trades off seating); col 0/6 stay as aisles.
   var CELLS = (function () {
-    var xs = [130, 320, 510, 700], ys = [330, 462, 594, 726, 852], out = [];
+    var xs = [180, 300, 420, 540, 660], ys = [300, 420, 540, 660, 780], out = [];
     for (var r = 0; r < ys.length; r++) for (var c = 0; c < xs.length; c++) out.push({ x: xs[c], y: ys[r] });
     return out;
   })();
   var TABLE_SLOTS = CELLS;
-  var PASS = { x: 420, y: 168 };
+  var PASS = { x: 420, y: 180 };       // 2x1 counter on tiles (3,1)+(4,1)
   // Entrance: a doorway in the LEFT wall (plane x≈0), down toward the dining
   // area (kitchen runs along the top). Customers spawn/leave just inside it.
   var DOOR = { x: 60, y: 600 };
@@ -633,6 +633,34 @@
   World.prototype.isWallAnchor = function (a) { return ('' + a).indexOf('WALL_') === 0 || a === 'FRIDGE_WALL_EDGE' || a === 'SINK_WALL_EDGE' || a === 'STOVE_FRONT_EDGE' || a === 'COUNTER_FRONT_EDGE'; };
   // toon-volume MODEL metadata (anchor/footprint/height/occlusion/renderLayer)
   World.prototype.objModel = function (k) { return (window.OBJ_MODELS || {})[k] || null; };
+  // ---- visual layout validator (Stage 4.10B) --------------------------
+  // Uses each object's VISUAL bounds (OBJ_MODELS, in tile units) to flag
+  // furniture whose sprites would collide on screen. Intentional overlaps
+  // (chair tucked at its own table, plates on tops, seated diners) are inside
+  // the parent sprite, so any cross-object intersection here is illegal.
+  World.prototype.visualBoundsOf = function (kind, o) {
+    var m = this.objModel(kind) || { bounds: [0.8, 0.6] };
+    var w = m.bounds[0] * TILE * 0.8, h = m.bounds[1] * TILE * 0.8;   // 0.8 = tuck margin
+    return { x: o.x - w / 2, y: o.y - h / 2, w: w, h: h, kind: kind, id: o.id };
+  };
+  World.prototype.layoutOverlaps = function () {
+    var boxes = [], self = this;
+    this.tables.forEach(function (t) { boxes.push(self.visualBoundsOf('table', t)); });
+    this.stoves.forEach(function (s) { boxes.push(self.visualBoundsOf('stove', s)); });
+    boxes.push(this.visualBoundsOf('pass', { id: 'pass', x: PASS.x + TILE * 0.5, y: PASS.y }));
+    this.decors.forEach(function (d) {
+      var art = (shopById(d.deco) || {}).art;
+      if (art === 'rug') return;                          // walkable mat may sit under things
+      var key = { counter: 'counter', sink: 'sink', fridge: 'fridge' }[art] || 'chair';
+      boxes.push(self.visualBoundsOf(key, d));
+    });
+    var bad = [];
+    for (var i = 0; i < boxes.length; i++) for (var j = i + 1; j < boxes.length; j++) {
+      var a = boxes[i], b = boxes[j];
+      if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) bad.push([a.kind + ':' + a.id, b.kind + ':' + b.id]);
+    }
+    return bad;
+  };
 
   // ---- explicit per-tile claims (reserved vs occupied) ----------------
   // The grid is the source of truth: a tile is free only if it is in-bounds,

@@ -38,10 +38,34 @@
   // per object id) so the room reads as hand-arranged, not pasted on squares.
   // This never affects pathfinding/footprints — only where the sprite is drawn.
   function hashId(id) { var h = 0; id = '' + id; for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return h; }
-  function vof(id) { var h = hashId(id); return { x: (rnd(h) - 0.5) * 20, y: (rnd(h * 1.7 + 3) - 0.5) * 12 }; }
+  // Stage 4.10B: objects align to the square grid — visual offset is ZERO so
+  // every base sits exactly on its tile center, flush with the floor plane.
+  // (kept as a function so seated-customer/table sync call-sites stay stable)
+  function vof() { return { x: 0, y: 0 }; }
   function byTbId(world, id) { for (var i = 0; i < world.tables.length; i++) if (world.tables[i].id === id) return world.tables[i]; return null; }
 
-  function Renderer(canvas) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this.resize(); }
+  function Renderer(canvas) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this._spr = {}; this._sprMeta = {}; this._sprUsed = {}; this._sprFallback = {}; this.resize(); }
+
+  // ---- runtime sprite layer (Stage 4.10B) ------------------------------
+  // Install manifest + loaded images; painters then BLIT these assets and only
+  // fall back to procedural drawing when an asset is missing (tracked, so the
+  // debug overlay can prove sprite vs fallback).
+  Renderer.prototype.useSprites = function (manifest, images) {
+    var self = this;
+    Object.keys(images || {}).forEach(function (id) {
+      if (manifest && manifest.sprites && manifest.sprites[id]) { self._spr[id] = images[id]; self._sprMeta[id] = manifest.sprites[id]; }
+    });
+  };
+  // blit sprite `id` with its base anchor at world point (wx, wy); true if drawn
+  Renderer.prototype._blit = function (c, id, wx, wy) {
+    var img = this._spr[id], m = this._sprMeta[id];
+    if (!img || !m) { this._sprFallback[id || 'unknown'] = 1; return false; }
+    var p = this.project(wx, wy), k = this.S / (m.bakeS || 150);
+    c.drawImage(img, p.x - m.anchorX * k, p.y - m.anchorY * k, m.frameWidth * k, m.frameHeight * k);
+    this._sprUsed[id] = 1;
+    return true;
+  };
+  Renderer.prototype.spriteReport = function () { return { used: Object.keys(this._sprUsed).sort(), fallback: Object.keys(this._sprFallback).sort() }; };
 
   Renderer.prototype.resize = function () {
     var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
@@ -114,6 +138,64 @@
     this._defer.forEach(function (fn) { fn(); });         // icons/bubbles always above the world
     if (ui.edit && ui.ghost && ui.ghost.cell >= 0) this._ghostCell(c, world, ui.ghost, t);
     if (ui.debugGrid) this._gridOverlay(c, world);
+    if (ui.debugSprites) this._spriteOverlay(c, world);
+    if (ui.debugBounds) this._boundsOverlay(c, world);
+  };
+
+  // sprite-source overlay: green label = blitted asset, red = procedural
+  // fallback, amber = characters (live-procedural by design for animation)
+  Renderer.prototype._spriteOverlay = function (c, world) {
+    var self = this, S = this.S;
+    var tag = function (wx, wy, label, ok) {
+      var p = self.project(wx, wy);
+      c.fillStyle = ok === 'live' ? 'rgba(255,200,60,.92)' : ok ? 'rgba(60,180,60,.92)' : 'rgba(220,60,50,.92)';
+      c.font = 'bold ' + Math.max(9, S * 0.085) + 'px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(label, p.x, p.y - S * 0.78);
+    };
+    world.tables.forEach(function (tb) { tag(tb.x, tb.y, 'spr:table', !!self._sprUsed.table_base); });
+    world.stoves.forEach(function (st) { tag(st.x, st.y, 'spr:stove', !!self._sprUsed.stove_body); });
+    tag(Wld.PASS.x + 60, Wld.PASS.y, 'spr:pass', !!self._sprUsed.pass_body);
+    world.decors.forEach(function (d) {
+      var art = (shop(d.deco) || {}).art, sid = DECOR_SPRITE[art];
+      tag(d.x, d.y, sid ? 'spr:' + art : 'proc:' + art, sid ? !!self._sprUsed[sid] : false);
+    });
+    world.zombies.concat(world.customers).forEach(function (e) { if (!e.stored) tag(e.x, e.y, 'anim-live', 'live'); });
+    // summary box
+    var rep = this.spriteReport();
+    c.fillStyle = 'rgba(10,14,10,.85)'; rr(c, 8, 8, 330, 54, 8); c.fill();
+    c.fillStyle = '#7cff5a'; c.font = 'bold 15px system-ui'; c.textAlign = 'left';
+    c.fillText('sprites used: ' + rep.used.length + ' [' + rep.used.slice(0, 5).join(',') + (rep.used.length > 5 ? '…]' : ']'), 16, 26);
+    c.fillStyle = rep.fallback.length ? '#ff6b5d' : '#9fc79a';
+    c.fillText('fallback: ' + (rep.fallback.join(',') || 'none'), 16, 48);
+  };
+  // visual-bounds overlay: cyan = bounds box, red = illegal overlap pair;
+  // wall-anchored items get a wall base line + front-direction arrow
+  Renderer.prototype._boundsOverlay = function (c, world) {
+    var self = this, S = this.S, bad = world.layoutOverlaps ? world.layoutOverlaps() : [];
+    var badIds = {}; bad.forEach(function (pr) { pr.forEach(function (k) { badIds[k.split(':')[1]] = 1; }); });
+    var box = function (kind, o) {
+      var b = world.visualBoundsOf(kind, o);
+      var p1 = self.project(b.x, b.y), p2 = self.project(b.x + b.w, b.y), p3 = self.project(b.x + b.w, b.y + b.h), p4 = self.project(b.x, b.y + b.h);
+      c.strokeStyle = badIds[o.id] ? 'rgba(255,70,60,.95)' : 'rgba(80,220,220,.8)'; c.lineWidth = badIds[o.id] ? 3 : 1.6;
+      c.beginPath(); c.moveTo(p1.x, p1.y); c.lineTo(p2.x, p2.y); c.lineTo(p3.x, p3.y); c.lineTo(p4.x, p4.y); c.closePath(); c.stroke();
+    };
+    world.tables.forEach(function (t) { box('table', t); });
+    world.stoves.forEach(function (s) { box('stove', s); });
+    box('pass', { id: 'pass', x: Wld.PASS.x + 60, y: Wld.PASS.y });
+    world.decors.forEach(function (d) { box({ counter: 'counter', sink: 'sink', fridge: 'fridge' }[(shop(d.deco) || {}).art] || 'chair', d); });
+    // wall base line + front arrows for wall-anchored objects
+    var A = this.project(0, 0), B = this.project(Wld.W, 0);
+    c.strokeStyle = 'rgba(255,200,60,.9)'; c.lineWidth = 2.5; line(c, A.x, A.y, B.x, B.y);
+    var arrow = function (wx, wy) {
+      var p = self.project(wx, wy), q = self.project(wx, wy + 90);
+      c.strokeStyle = 'rgba(255,200,60,.9)'; c.lineWidth = 2.5; line(c, p.x, p.y, q.x, q.y);
+      c.beginPath(); c.moveTo(q.x, q.y); c.lineTo(q.x - 6, q.y - 9); c.lineTo(q.x + 6, q.y - 9); c.closePath(); c.fillStyle = 'rgba(255,200,60,.9)'; c.fill();
+    };
+    world.stoves.forEach(function (st) { arrow(st.x, st.y); });
+    world.decors.forEach(function (d) { if (WALL_ARTS[(shop(d.deco) || {}).art]) arrow(d.x, d.y); });
+    c.fillStyle = 'rgba(10,14,10,.85)'; rr(c, 8, 8, 330, 32, 8); c.fill();
+    c.fillStyle = bad.length ? '#ff6b5d' : '#7cff5a'; c.font = 'bold 15px system-ui'; c.textAlign = 'left';
+    c.fillText('illegal visual overlaps: ' + bad.length, 16, 26);
   };
 
   // ---- environment ----------------------------------------------------
@@ -371,9 +453,14 @@
   Renderer.prototype._pass = function (c, world) {
     var S = this.S, T = Wld.TILE;
     // a real 2-tile service counter: centred between its two footprint tiles
-    var p = this.project(Wld.PASS.x + T * (Wld.PASS_W - 1) / 2, Wld.PASS.y);
-    var b = isoBox(c, p.x, p.y + S * 0.1, S * 0.86, S * 0.3, S * 0.3, C.steel, C.steelD);
-    c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.35, b.topY + b.fh * 0.2, b.fw * 0.35); c.restore();
+    var px0 = Wld.PASS.x + T * (Wld.PASS_W - 1) / 2, p = this.project(px0, Wld.PASS.y);
+    var b;
+    if (this._blit(c, 'pass_body', px0, Wld.PASS.y)) {
+      b = { x: p.x, topY: p.y + S * 0.1 - S * 0.3, fw: S * 0.86, fh: S * 0.3 };   // geometry only (body came from the sprite)
+    } else {
+      b = isoBox(c, p.x, p.y + S * 0.1, S * 0.86, S * 0.3, S * 0.3, C.steel, C.steelD);
+      c.save(); topClip(c, b); c.fillStyle = 'rgba(255,255,255,.12)'; circle(c, b.x - b.fw * 0.3, b.topY - b.fh * 0.2, b.fw * 0.5); c.fillStyle = 'rgba(40,30,16,.18)'; circle(c, b.x + b.fw * 0.35, b.topY + b.fh * 0.2, b.fw * 0.35); c.restore();
+    }
     // ready dishes spread along the long top plane
     var n = world.ready.length, show = Math.min(n, 4);
     for (var i = 0; i < show; i++) {
@@ -403,6 +490,7 @@
   Renderer.prototype._table = function (c, tb, sel, t) {
     var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, y = p.y - lift, D = tableDims(S);
     if (this._selZ && tb.dirty && !tb.cleaning) this._hl(c, p.x, p.y + S * 0.08, S * 1.1, t || 0);
+    if (!sel && this._blit(c, 'table_base', tb.x + vo.x, tb.y + vo.y)) return;   // sprite base (legs+chairs+pedestal)
     c.fillStyle = 'rgba(0,0,0,.34)'; c.beginPath(); c.ellipse(p.x, y + S * 0.05, D.rx, D.ry * 0.85, 0, 0, 7); c.fill();   // contact shadow
     isoChair(c, p.x - D.rx * 1.02, y + S * 0.03, S, 1);     // chairs tucked at the front sides
     isoChair(c, p.x + D.rx * 1.02, y + S * 0.03, S, -1);
@@ -415,6 +503,16 @@
   Renderer.prototype._tableTop = function (c, tb, sel, t) {
     var vo = vof(tb.id), p = this.project(tb.x + vo.x, tb.y + vo.y), S = this.S, lift = sel ? S * 0.14 : 0, D = tableDims(S), ty = p.y - lift - D.lh, th = S * 0.085;
     var ell = function (yy, rx, ry) { c.beginPath(); c.ellipse(p.x, yy, rx, ry, 0, 0, 7); };
+    // sprite top (static surface + plate + static grime); animated extras follow
+    if (!sel && this._blit(c, tb.dirty ? 'table_top_dirty' : 'table_top_clean', tb.x + vo.x, tb.y + vo.y)) {
+      var occ2 = tb.by, eat2 = false; if (occ2) { for (var k2 = 0; k2 < this._custs.length; k2++) if (this._custs[k2].id === occ2) eat2 = this._custs[k2].state === 'eating'; }
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      if (tb.dirty) {
+        c.fillStyle = C.out; for (var fj = 0; fj < 3; fj++) { var aj = (t || 0) * 3 + fj * 2.1; circle(c, p.x + Math.cos(aj) * S * 0.18, ty - S * 0.14 + Math.sin(aj * 1.4) * S * 0.08, S * 0.014); }
+        if (tb.cleaning) { c.fillStyle = '#bfe6ff'; c.font = (S * 0.2) + 'px system-ui'; c.fillText('✦', p.x - S * 0.12, ty - S * 0.16); }
+      } else if (eat2) { c.font = (S * 0.2) + 'px system-ui'; var rc2 = recipe(this._custDish(occ2)); if (rc2) c.fillText(rc2.emoji, p.x, ty - S * 0.06); }
+      return;
+    }
     // edge thickness: a darker ellipse offset down shows a rim along the front
     c.fillStyle = shade(C.woodD, 0.55); ell(ty + th, D.rx, D.ry); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.028; c.stroke();
     // red cloth top (a circle seen in perspective)
@@ -447,8 +545,18 @@
     if (sel) selRing(c, p.x, ty, S * 0.5);
   };
 
+  // sprite ids for static decor arts (runtime blits these from the manifest)
+  var DECOR_SPRITE = { counter: 'prep_counter', sink: 'sink', fridge: 'fridge', plant: 'plant', lamp: 'lamp' };
+  var WALL_ARTS = { counter: 1, sink: 1, fridge: 1 };       // wall-flush: no random offset, hug the wall
   Renderer.prototype._decor = function (c, d, sel) {
-    var vo = vof(d.id), p = this.project(d.x + vo.x, d.y + vo.y), S = this.S, it = shop(d.deco) || {}, lift = sel ? S * 0.18 : 0, y = p.y - lift;
+    var it = shop(d.deco) || {};
+    var wallFlush = WALL_ARTS[it.art] === 1;
+    var vo = wallFlush ? { x: 0, y: 0 } : vof(d.id);                 // wall items sit exactly flush
+    var wallBias = wallFlush ? -18 : 0;                              // pulled back against the wall base
+    var p = this.project(d.x + vo.x, d.y + vo.y + wallBias), S = this.S, lift = sel ? S * 0.18 : 0, y = p.y - lift;
+    // runtime sprite path (selection keeps procedural for the lift + ring)
+    var sid = DECOR_SPRITE[it.art];
+    if (sid && !sel && this._blit(c, sid, d.x + vo.x, d.y + vo.y + wallBias)) return;
     if (['counter', 'sink', 'fridge', 'trash', 'plant', 'jukebox', 'rest'].indexOf(it.art) < 0) this._shadow(c, p.x, p.y + S * 0.12, S * 0.34);   // box arts ground themselves
     c.lineWidth = S * 0.03; c.strokeStyle = C.out;
     switch (it.art) {
@@ -511,12 +619,14 @@
   };
 
   Renderer.prototype._stove = function (c, st, world, t, sel) {
-    var vo = vof(st.id), p = this.project(st.x + vo.x, st.y + vo.y), S = this.S, x = p.x, y = p.y;
+    // wall-flush appliance: no random offset, pulled slightly toward the wall
+    var p = this.project(st.x, st.y - 14), S = this.S, x = p.x, y = p.y;
     if (this._selZ && (st.ready || st.burned)) this._hl(c, x, y + S * 0.2, S * 1.05, t);
     if (st.ready && !st.burning) { c.fillStyle = 'rgba(124,255,90,' + (0.2 + 0.12 * Math.sin(t * 5)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     if (st.burning || st.burned) { c.fillStyle = 'rgba(216,65,58,' + (0.22 + 0.14 * Math.sin(t * 7)) + ')'; rr(c, x - S * 0.5, y - S * 0.82, S, S * 0.95, 12); c.fill(); }
     // ===== a real iso BOX: bottom diamond on the floor, extruded up =====
     var fw = S * 0.42, fh = S * 0.2, bh = S * 0.52, topY = y - bh;
+    if (!sel && this._blit(c, 'stove_body', st.x, st.y - 14)) { this._stoveState(c, st, world, t, x, y, S, fw, fh, topY); return; }
     this._shadow(c, x, y + fh * 0.3, S * 0.52);
     c.fillStyle = '#15160f'; rr(c, x - fw * 0.78, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill(); rr(c, x + fw * 0.6, y + fh * 0.05, S * 0.07, S * 0.12, 2); c.fill();   // feet
     var face = function (pts, col) { c.fillStyle = col; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.closePath(); c.fill(); c.strokeStyle = C.out; c.lineWidth = S * 0.03; c.stroke(); };
@@ -537,6 +647,12 @@
     // grease grime down the faces
     c.save(); c.beginPath(); c.moveTo(lf[0][0], lf[0][1]); c.lineTo(lf[1][0], lf[1][1]); c.lineTo(lf[2][0], lf[2][1]); c.lineTo(lf[3][0], lf[3][1]); c.closePath(); c.clip();
     stainBlob(c, x - fw * 0.4, y - bh * 0.3, S * 0.1, 'rgba(40,30,16,.32)'); drip(c, x - fw * 0.2, topY + fh * 0.2, S * 0.16, S * 0.02, 'rgba(110,150,40,.4)'); c.restore();
+    this._stoveState(c, st, world, t, x, y, S, fw, fh, topY);
+    if (sel) selRing(c, x, y - S * 0.15, S * 0.5);
+  };
+  // dynamic stove overlays (pot, bubbling, tags, progress) shared by the sprite
+  // and procedural body paths
+  Renderer.prototype._stoveState = function (c, st, world, t, x, y, S, fw, fh, topY) {
     var r = recipe(st.recipe) || { time: 1, emoji: '🍳', batch: 0 };
     var topYref = topY;   // a pot sits here while cooking/ready
     c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -565,7 +681,6 @@
       c.fillStyle = C.toxic; c.font = 'bold ' + (S * 0.26) + 'px system-ui'; c.fillText('+', x, topY);
       c.fillStyle = 'rgba(230,243,231,.7)'; c.font = 'bold ' + (S * 0.11) + 'px system-ui'; c.fillText('COOK', x, topY + fh * 0.7);
     }
-    if (sel) selRing(c, x, y - S * 0.15, S * 0.5);
   };
 
   // ---- characters: layered faux-3D sprites ----------------------------

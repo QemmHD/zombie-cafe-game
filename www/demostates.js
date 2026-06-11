@@ -46,13 +46,13 @@
       w.coins = 5000; w.toxin = 20;
       w.buy('counter'); w.buy('fridge'); w.buy('sink'); w.buy('plant'); w.buy('lamp');
       var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._placed; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._placed = 1; } };
-      // kitchen line flush along the back wall (row 0)
-      put('counter', 330, 80); put('sink', 560, 80); put('fridge', 680, 80);
-      // decor in the corners / by seating
-      put('plant', 760, 300); put('lamp', 250, 470);
-      // dining sets spread with walking aisles
+      // kitchen line flush along the back wall (row 0, tile centers)
+      put('counter', 300, 60); put('sink', 540, 60); put('fridge', 660, 60);
+      // decor in the corners / by seating (tile centers)
+      put('plant', 780, 300); put('lamp', 660, 420);
+      // dining sets on tile centers, with full-tile walking aisles between
       var moveTbl = function (tb, x, y) { tb.x = x; tb.y = y; tb.cell = -1; }; var T = w.tables;
-      if (T[0]) moveTbl(T[0], 250, 600); if (T[1]) moveTbl(T[1], 560, 560); if (T[2]) moveTbl(T[2], 430, 760);
+      if (T[0]) moveTbl(T[0], 180, 540); if (T[1]) moveTbl(T[1], 540, 540); if (T[2]) moveTbl(T[2], 300, 780);
       w._syncChairs();
       // cooking + a full pass
       w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 25;
@@ -116,21 +116,23 @@
     artReview_kitchenZone: function (w) {
       w.coins = 9999; w.buy('counter'); w.buy('sink'); w.buy('fridge');
       var put = function (art, x, y) { var d = w.decors.filter(function (dd) { var it = (window.SHOP || []).filter(function (s) { return s.id === dd.deco; })[0] || {}; return it.art === art && !dd._p; })[0]; if (d) { d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); d._p = 1; } };
-      put('counter', 330, 80); put('sink', 540, 80); put('fridge', 680, 80);
+      put('counter', 300, 60); put('sink', 540, 60); put('fridge', 660, 60);
       w.startCook(w.stoves[0].id, 'burger'); w.stoves[0].start = w.t - 20;
       w.zombies[0].stored = true; return {};
     },
     artReview_tableSet: function (w) {
       w.tables.slice(1).forEach(function (tb) { tb.x = -999; });            // hide extras
-      var tb = w.tables[0]; tb.x = 420; tb.y = 560; w._syncChairs();
+      var tb = w.tables[0]; tb.x = 420; tb.y = 540; w._syncChairs();        // exact tile center
       seat(w, tb, 'eating', 3, 'U'); w.zombies[0].stored = true; return {};
     },
     artReview_allObjects: function (w) {
       w.coins = 99999; ['counter', 'sink', 'fridge', 'plant', 'lamp', 'trash', 'jukebox', 'rest'].forEach(function (id) { w.buy(id); });
-      var xs = [130, 320, 510, 700], i = 0;
-      w.decors.forEach(function (d) { var x = xs[i % 4], y = [330, 600][Math.floor(i / 4)] || 330; d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); i++; });
+      var xs = [180, 300, 420, 540], i = 0;                                  // tile centers
+      w.decors.forEach(function (d) { var x = xs[i % 4], y = [300, 540][Math.floor(i / 4)] || 300; d.x = x; d.y = y; d.c = Math.floor(x / 120); d.r = Math.floor(y / 120); i++; });
       w.zombies[0].stored = true; return {};
     },
+    artReview_spriteDebug: function (w) { DEMOS.busy(w); return { debugSprites: true }; },
+    artReview_boundsDebug: function (w) { DEMOS.busy(w); return { debugBounds: true }; },
     // mobile-framed proofs: the same scenes WITH the canvas-painted UI shell
     artReview_uiShell: function (w) { DEMOS.starter(w); return { shell: true }; },
     artReview_mobileFrame: function (w) { DEMOS.busy(w); return { shell: true }; },
