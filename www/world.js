@@ -24,9 +24,12 @@
   var COUNTER_CAP = 40;     // servings the pass can hold (Phase 4)
   var MAX_STOVES = 6, MAX_TABLES = 16;
   var INFECT_CHANCE = 0.16, INFECT_COST = 2;
-  // food burn pipeline (Phase 4): once ready, food must be moved before it burns
-  var BURN_GRACE = 22;      // seconds ready before a burn warning
-  var BURN_HARD = 14;       // extra seconds of warning before it burns
+  // food burn pipeline (Phase 4): once ready, food must be moved before it
+  // burns. Faithful rule: the grace window is PROPORTIONAL to the cook time
+  // (a dish survives roughly one extra cook-time on the stove, i.e. it's gone
+  // by ~2x its cook time) — quick dishes are fragile, slow dishes forgiving.
+  var BURN_WARN_F = 0.6;    // fraction of the grace window before the warning
+  var BURN_MIN = 8;         // floor (seconds) so ultra-fast dishes aren't instant
   // zombie stamina + cleaning
   var DRAIN = 2.0, REGEN_IDLE = 3.0, REGEN_REST = 9.0;   // energy per second
   var TIRED = 14, RESTED = 55;                            // sleep below TIRED, wake at RESTED
@@ -481,9 +484,10 @@
       if (!st.recipe || st.burned) continue;            // burnt food waits to be cleared, doesn't re-cook
       if (!st.ready && this.t >= st.start + (RECIPES[st.recipe].time)) { st.ready = true; st.readyAt = this.t; st.burning = false; this.events.push({ type: 'CookingFinished', x: st.x, y: st.y, emoji: RECIPES[st.recipe].emoji }); }
       if (st.ready && !st.burned) {
-        var since = this.t - (st.readyAt || this.t), grace = RECIPES[st.recipe].burnGrace || BURN_GRACE;
-        if (!st.burning && since >= grace) { st.burning = true; this.events.push({ type: 'FoodBurnWarning', x: st.x, y: st.y }); }
-        if (st.burning && since >= grace + BURN_HARD && !st.collecting) {
+        var since = this.t - (st.readyAt || this.t);
+        var grace = RECIPES[st.recipe].burnGrace || Math.max(BURN_MIN, RECIPES[st.recipe].time);   // ~2x cook time total
+        if (!st.burning && since >= grace * BURN_WARN_F) { st.burning = true; this.events.push({ type: 'FoodBurnWarning', x: st.x, y: st.y }); }
+        if (st.burning && since >= grace && !st.collecting) {
           st.burned = true; st.ready = false; this.events.push({ type: 'FoodBurned', x: st.x, y: st.y });
           this._nudgeRep(-2.5, 'burned food');
         }

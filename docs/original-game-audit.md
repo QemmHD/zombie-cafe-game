@@ -154,6 +154,64 @@ earnings/hr**, Fancy second for cash. This created real build-choice depth.
   *XP/hr* (active play) — recreating the original's core tradeoff even before
   variants land.
 
+## 5. Round 2 — deeper findings (all the details we could dig up)
+
+### Timing & numbers
+- **Burn rule**: finished food survives on the stove for roughly **one extra
+  cook-time** (community rule of thumb: gone by ~2× cook time). The grace is
+  **proportional to the recipe**, not flat — quick dishes are fragile, slow
+  dishes forgiving. The *Fresh* variant extends this window. → **Adopted in
+  this commit** (grace = cook time, min 8s; warning at 60%).
+- **Reanimation**: a zombie/pet that dies in a raid reanimates in **8 hours**
+  (later patched to ~1 hour) and heals gradually after returning.
+- **Stat ranges across the catalog**: energy roughly **50–1250**; tip rating /
+  speed / attack on a **1–12** scale. Huge spreads = collection motivation.
+
+### Zombie progression (we lack this entirely)
+- Zombies have their **own XP/levels**: ~1 XP per customer served, ~2 XP per
+  raid kill (raid kills also pay ~$20 each). **Leveling fully recharges
+  energy.** Serving is the fastest way to level staff.
+- **Merging**: combining identical zombies grants stat bonuses, maxing out
+  after consuming four duplicates — a collection/dupe sink.
+
+### Sink & bussing (mechanic we simplified)
+- Dirty dishes are **carried to the SINK** — servers need a clear path to
+  every table, the serving counter, **and the sink**. Bussing = pick up plate →
+  walk to sink, not wipe-at-the-table (ours cleans in place). → P2 change:
+  make the sink functional and route cleaners through it.
+- Serving controls: tap zombie → tap **counter / sink / table** to direct it.
+
+### Store & economy infrastructure
+- Store sections: **Featured / Decor / Utility / Furniture / Walls-Floors /
+  Special** — Special holds outdoor props (tombstones), **pets (via pet
+  houses)**, **expansion**, money generators (ATM / vending machine), and
+  premium toxin items.
+- **Expansion**: starts ~7×8 and grows step-by-step to a **17×16** maximum with
+  steeply rising prices.
+
+### Pets (9 total)
+- Bought as **pet houses** in Special; pets discount cooking costs, boost tips
+  or buff café/raid stats, and **fight in raids** like zombies (with combo
+  gimmicks for themed sets). They never cook/serve.
+
+### Raids — extra rules
+- Defeated zombies/pets are casualties → 8h reanimation; squads should rest to
+  full energy first (energy = HP).
+- A defeated rival café **closes temporarily, then reopens** as a new café.
+- Losing still pays cash per customer/staff eaten before the wipe.
+
+### Content scale at end of life (targets for our content roadmap)
+- ~**320 recipes** across **21 cookbooks**, **88 chefs**, **225 infectable
+  customer types**, **9 pets**, **20+ raidable cafés**.
+
+### Updated adoption list (delta from §3)
+- **Done now**: proportional burn grace (2× rule); 1×1 serving counters with
+  one stack per square (user-confirmed faithful behavior).
+- **P1 add**: zombie XP/levels (+full recharge on level-up) — cheap, deep.
+- **P2 add**: functional sink bussing (carry plates to sink); duplicate-merge
+  stat bonuses; money-generator props (ATM-style); expansion tiers toward a
+  large max grid.
+
 ## Sources
 - [Zombie Cafe — Wikipedia](https://en.wikipedia.org/wiki/Zombie_Cafe)
 - [Zombie Cafe Wiki (Fandom) — main](https://zombiecafe.fandom.com/wiki/Zombie_Cafe), [Energy level](https://zombiecafe.fandom.com/wiki/Energy_level), [Toxin](https://zombiecafe.fandom.com/wiki/Toxin), [Recipe](https://zombiecafe.fandom.com/wiki/Recipe), [Raid](https://zombiecafe.fandom.com/wiki/Raid), [Rating](https://zombiecafe.fandom.com/wiki/Rating), [Customers](https://zombiecafe.fandom.com/wiki/Customers), [Zombie](https://zombiecafe.fandom.com/wiki/Zombie), [Gacha](https://zombiecafe.fandom.com/wiki/Gacha), [Couch Potato](https://zombiecafe.fandom.com/wiki/Couch_Potato), [Astronaut](https://zombiecafe.fandom.com/wiki/Astronaut), [Composer](https://zombiecafe.fandom.com/wiki/Composer)
@@ -161,3 +219,4 @@ earnings/hr**, Fancy second for cash. This created real build-choice depth.
 - [Zombie Cafe Wikidot — Attacking](http://zombiecafe.wikidot.com/attacking), [Acquiring Vials](http://zombiecafe.wikidot.com/acquiring-vials), [Fast Leveling guide](http://zombiecafe.wikidot.com/forum/t-318977/general-guide-to-fast-leveling), [Zombie Stats](http://zombiecafe.wikidot.com/forum/t-362331/zombie-stats)
 - [TapGamers — Zombie Cafe Guide](https://www.tapgamers.com/?p=2699)
 - [GameFAQs boards — Recipe variations](https://gamefaqs.gamespot.com/boards/620809-zombie-cafe/58252844), [The Zombies Guide](https://gamefaqs.gamespot.com/boards/620809-zombie-cafe/58189845), [Long-term Toxin Planning](https://gamefaqs.gamespot.com/boards/620809-zombie-cafe/58115233)
+- Round 2: [Pets (Fandom)](https://zombiecafe.fandom.com/wiki/Pets), [Café/expansion (Fandom)](https://zombiecafe.fandom.com/wiki/Caf%C3%A9), [Store sections (Fandom)](https://zombiecafe.fandom.com/wiki/Store), [Dishes (Fandom)](https://zombiecafe.fandom.com/wiki/Dishes), [Zombie leveling (Wikidot)](http://zombiecafe.wikidot.com/forum/t-366601/zombie-leveling), [Zombie stat info](https://zombiecafefacts.webs.com/zombie-stat-information), [Table/sink placement (Wikidot)](http://zombiecafe.wikidot.com/forum/t-312548/tables-sink-and-counter-placement)
