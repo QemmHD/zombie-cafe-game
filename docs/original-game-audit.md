@@ -262,6 +262,69 @@ ground truth where they conflict with wiki text.
   speed/strength, flavor text, cash infect cost) surfaced in the infect
   panel and Zombiepedia.
 
+## 7. Round 3 — web research: confirmed numbers, corrections, adoption status
+
+### Now ADOPTED in our build (this session)
+- **Zombie XP/levels**: +1 XP per serve, +2 per raid kill (chef kills pay
+  more); level-up = full energy recharge + stat bump. ✅
+- **Customer info cards**: health cur/max (= zombie energy pool), Tip Rating /
+  Atk Speed / Atk Strength on the 1–12 scale, flavor text, in the recruit
+  panel. ✅
+- **Recipe variants** with the CONFIRMED multipliers: Spicy +10% XP / Very
+  Spicy +20%; Bulk = double cost + double batch for the cook time of ONE;
+  Frozen = 2× cook time at −25% price; Quick −10% / Very Quick −20% time.
+  Fancy's % and Fresh's grace factor were never documented — ours are
+  estimates (Fancy +25/+50% price, Fresh 2× grace). ✅
+- **Review Board**: level 6, 4 random tasks from the confirmed pool (serve N /
+  cook N of a dish / spend / earn / raid / infect — social tasks dropped),
+  purple bonus stars max 3 that fade with time, bribe = 2 toxin per task. ✅
+- **Live raid battles** replacing the timer raid: sidewalk line-up →
+  one-by-one deployment (send-all also exists, as in the original), tap an
+  enemy to retarget, auto-melee with energy-as-HP and Atk-Strength-as-flat-
+  damage, weak waiters + head-chef boss who holds the kitchen line, tap the
+  counter to steal food, ENERGIZE mid-raid toxin refill, white truce flag,
+  eaten cash kept win or lose, downed zombies reanimate in the Meat Locker
+  and return at low energy. ✅
+
+### Confirmed details worth keeping on file
+- Raid rewards: each customer/staff eaten = ~$20 + 2 zombie XP + a bite of
+  energy; head-chef kill = big XP (150 for a normal zombie); 3–4 toxin drops
+  for clean wins; rare Vial (merge item) chance on chef kills, lower against
+  weaker rivals. Reanimation was 8h originally, patched to 1h (ours: scaled
+  to 10 min); the fallen return at energy 20 — ours matches via the
+  Meat-Locker assign rule.
+- Customer infoboxes recovered (energy / tip / speed / atk / cost): Composer
+  525/10/6/5 (30 toxin), Astronaut 550/7/4/7 (35 toxin), Pure Blood vampire
+  650/8/7/7 (35 toxin), Fortune Teller 700/9/7/7 (35 toxin), Black Knight
+  500/6/3/7 (**$2,000,000 cash**). Cards also carry Tip Multiplier (×2–×3),
+  Zombie Regen (+10…40%) and Cook XP (+%) passives — a P2 idea for our
+  trait system. NOTE: the web could not corroborate "Boxer 85/85 · $500" or
+  "Knight in Armor 350/350 · $95,000", but the owner's reference screenshots
+  show them directly — screenshots stay primary evidence; web suggests a
+  cash-infect knight tier topping out far higher.
+- Energy economy: drain ~1 energy/20 s while working, rest regen the same
+  (a Toxin Barrel prop doubles it); daydream frequency scales with low
+  energy plus a hidden per-zombie **Focus** stat (first daydream at focus ×
+  1 min into a job); hidden **Patience** stat sets the snap threshold
+  (attacks a customer at 2–20% energy). Feeding zombies from the fridge does
+  NOT exist in the original — toxin refills only (matches our feed/energize).
+- Meat Locker: 5 hooks free, +5 per 5 toxin, max 100.
+- Expansion: unlocks at level 7, bought with cash square-by-square up to
+  17×16; the per-step price table is lost to time.
+- Tutorial: hosted by the zombie "union rep" mascot; first cook is a
+  2-minute starter dish; the game hands you 1 toxin and prompts an instant
+  FINISH (waiting it out keeps the toxin); first infection is free.
+- Variants were unlocked by raiding (Raid Cookbook) or bought at 5 toxin per
+  variety / 45 toxin for all versions of one recipe — an alternative to our
+  level gating worth considering at P2.
+- Money props (ATM) generate cash faster with the doors open; JP-only gacha:
+  $1,500 random 1–5★, 30 toxin 5–7★, 300 toxin 11-pull.
+
+### Remaining genuine gaps (no surviving data — do not fabricate)
+Expansion price table; in-raid Energize exact toxin cost; review-board task
+timers and bonus-star decay rate; Boxer's numeric stats (owner screenshot is
+the only source); exact Fancy earnings %.
+
 ## Sources
 - [Zombie Cafe — Wikipedia](https://en.wikipedia.org/wiki/Zombie_Cafe)
 - [Zombie Cafe Wiki (Fandom) — main](https://zombiecafe.fandom.com/wiki/Zombie_Cafe), [Energy level](https://zombiecafe.fandom.com/wiki/Energy_level), [Toxin](https://zombiecafe.fandom.com/wiki/Toxin), [Recipe](https://zombiecafe.fandom.com/wiki/Recipe), [Raid](https://zombiecafe.fandom.com/wiki/Raid), [Rating](https://zombiecafe.fandom.com/wiki/Rating), [Customers](https://zombiecafe.fandom.com/wiki/Customers), [Zombie](https://zombiecafe.fandom.com/wiki/Zombie), [Gacha](https://zombiecafe.fandom.com/wiki/Gacha), [Couch Potato](https://zombiecafe.fandom.com/wiki/Couch_Potato), [Astronaut](https://zombiecafe.fandom.com/wiki/Astronaut), [Composer](https://zombiecafe.fandom.com/wiki/Composer)
