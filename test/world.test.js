@@ -570,7 +570,7 @@ test('seating: customer paths to the chair sit point, not the tile centre', () =
 test('queue forms a readable line — distinct, descending slots', () => {
   const w = boot();
   const a = w._queueSpot(0), b = w._queueSpot(1), d = w._queueSpot(2);
-  assert.ok(b.y > a.y && d.y > b.y, 'each queue slot is further down the aisle');
+  assert.ok(b.y < a.y && d.y < b.y, 'each queue slot is further up the aisle from the front door');
   const ta = w.tileOf(a.x, a.y), td = w.tileOf(d.x, d.y);
   assert.ok(ta[0] !== td[0] || ta[1] !== td[1], 'queue slots span distinct tiles');
 });

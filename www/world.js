@@ -85,7 +85,11 @@
   var PASS_SPOTS = [ { x: 420, y: 180 }, { x: 540, y: 180 }, { x: 300, y: 180 }, { x: 660, y: 180 } ];
   // Entrance: a doorway in the LEFT wall (plane x≈0), down toward the dining
   // area (kitchen runs along the top). Customers spawn/leave just inside it.
-  var DOOR = { x: 60, y: 600 };
+  // Entrance at the FRONT-LEFT of the west wall — right where the west+south
+  // street corner meets (faithful to the original: open front, street at the
+  // front). Customers come in from the sidewalk and walk up into the dining
+  // room; the kitchen lines the back wall.
+  var DOOR = { x: 60, y: 840 };
   // idle staff wait along the LEFT wall (col 0), clear of the serving
   // counters (row 1, cols 2-5), the dining cells and the door row
   var HOME_YS = [180, 290, 400, 510, 760, 870];
@@ -850,9 +854,9 @@
     this.customers.push(c);
     if (!this._trySeat(c)) routeTo(this, c, qpos.x, qpos.y);   // no seat: wait in line by the door
   };
-  // Queue forms a readable single-file line down the aisle from the door, with a
-  // gentle stagger so bodies + thought bubbles don't overlap (visual offsets).
-  World.prototype._queueSpot = function (n) { return { x: 120 + (n % 2) * 34, y: DOOR.y + 64 + n * 60 }; };
+  // Queue forms a readable single-file line UP the left aisle from the front
+  // door, with a gentle stagger so bodies + thought bubbles don't overlap.
+  World.prototype._queueSpot = function (n) { return { x: 60 + (n % 2) * 34, y: DOOR.y - 70 - n * 64 }; };
 
   function moveTo(e, dt, spd) {
     spd = spd || SPEED;
