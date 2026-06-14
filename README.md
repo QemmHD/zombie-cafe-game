@@ -51,6 +51,31 @@ ProjectSettings/
 4. Import placeholder art into `Assets/Sprites/` (local extracted assets go here)
 5. Open `Assets/_Game/Scenes/Main.unity` and press Play
 
+## Building a sideload .ipa (iOS)
+
+The game builds to an installable iOS `.ipa` via GitHub Actions
+(`.github/workflows/ios-build.yml`). The default output is an **unsigned,
+sideload-ready** `.ipa` — install it with AltStore, Sideloadly, ESign, or
+TrollStore, which re-sign it with your own Apple ID. No paid Apple Developer
+account is required.
+
+**One-time setup:** add a repository secret named `UNITY_LICENSE` containing your
+Unity `.ulf` license file (Unity can't build in CI without it — see
+https://game.ci/docs/github/activation).
+
+**To build:** push to `main`, or run the **iOS Build (.ipa)** workflow manually
+from the Actions tab. Download the `ZombieCafe-ipa` artifact when it finishes —
+it contains `ZombieCafe-sideload.ipa`.
+
+*(Optional)* To instead get a pre-signed ad-hoc `.ipa`, add the
+`APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD`,
+`APPLE_PROVISIONING_PROFILE_BASE64`, and `APPLE_TEAM_ID` secrets.
+
+Saves are written to `Application.persistentDataPath` (the app's Documents
+container), so progress survives app relaunches and updates, and is included in
+device backups. Writes are atomic with a `.bak` fallback, and the game autosaves
+on background, focus loss, quit, and every 30s.
+
 ## Zombie types catalogued (280+)
 
 Telemarketer, Teacher, Yoga Instructor, Businessman, Accountant, Cyclone, Miracle Girl,

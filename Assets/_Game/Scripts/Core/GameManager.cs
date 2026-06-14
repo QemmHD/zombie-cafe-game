@@ -20,6 +20,9 @@ namespace ZombieCafe.Core
 
         public GameState State { get; private set; } = GameState.Cafe;
 
+        [Tooltip("Seconds between background autosaves. Guards against data loss if the app is killed without a clean pause/quit.")]
+        public float AutosaveInterval = 30f;
+
         void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -30,11 +33,22 @@ namespace ZombieCafe.Core
         void Start()
         {
             SaveSystem.Load();
+            if (AutosaveInterval > 0f)
+                InvokeRepeating(nameof(Autosave), AutosaveInterval, AutosaveInterval);
         }
 
+        void Autosave() => SaveSystem.Save();
+
+        // On iOS, backgrounding fires OnApplicationPause(true); OnApplicationQuit is not
+        // guaranteed when the OS later kills a suspended app, so pause is the critical save.
         void OnApplicationPause(bool paused)
         {
             if (paused) SaveSystem.Save();
+        }
+
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused) SaveSystem.Save();
         }
 
         void OnApplicationQuit()

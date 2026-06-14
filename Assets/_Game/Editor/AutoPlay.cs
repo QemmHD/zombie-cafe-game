@@ -18,6 +18,10 @@ namespace ZombieCafe.Editor
         {
             EditorApplication.delayCall -= Run;
 
+            // Never enter Play mode in headless CI builds (-batchmode), or scripted
+            // builds via -executeMethod would be hijacked and never produce output.
+            if (Application.isBatchMode) return;
+
             if (EditorApplication.isCompiling || EditorApplication.isPlaying) return;
 
             try

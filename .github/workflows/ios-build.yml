@@ -1,0 +1,145 @@
+name: iOS Build (.ipa)
+
+# Builds the game into a sideload-ready iOS .ipa.
+#
+# By default this produces an UNSIGNED .ipa — the format you feed to a sideloading
+# tool (AltStore, Sideloadly, ESign, TrollStore, etc.), which re-signs it with your
+# own Apple ID on install. No Apple Developer account is needed for this path.
+#
+# REQUIRED secret:
+#   UNITY_LICENSE  - contents of your Unity .ulf license file. Unity cannot build
+#                    in CI without it. Get it via the game-ci activation flow:
+#                    https://game.ci/docs/github/activation
+#
+# OPTIONAL secrets (add all four ONLY if you instead want a pre-signed ad-hoc .ipa;
+# leave them unset for the normal sideload build):
+#   APPLE_CERTIFICATE_BASE64          - base64 of your .p12 distribution certificate
+#   APPLE_CERTIFICATE_PASSWORD        - password for that .p12
+#   APPLE_PROVISIONING_PROFILE_BASE64 - base64 of your .mobileprovision
+#   APPLE_TEAM_ID                     - your 10-char Apple Developer Team ID
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-xcode-project:
+    name: Build Xcode project (Unity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-iOS-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-iOS-
+            Library-
+
+      - name: Build iOS Xcode project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          targetPlatform: iOS
+          buildName: iOS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcode-project
+          path: build/iOS
+          retention-days: 3
+
+  export-ipa:
+    name: Archive & export .ipa
+    needs: build-xcode-project
+    runs-on: macos-14
+    # Map secrets into env so step `if:` conditions can gate on them
+    # (the `secrets` context is not usable directly inside `if:`).
+    env:
+      APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-xcode-project
+          path: build/iOS
+
+      - name: Locate Xcode project
+        id: locate
+        run: |
+          PROJ=$(find build/iOS -name "*.xcodeproj" -maxdepth 3 | head -n1)
+          if [ -z "$PROJ" ]; then echo "No .xcodeproj found"; exit 1; fi
+          echo "dir=$(dirname "$PROJ")" >> "$GITHUB_OUTPUT"
+          echo "Found Xcode project: $PROJ"
+
+      # ---------- Default path: unsigned, sideload-ready .ipa ----------
+      - name: Build & package sideload (unsigned) .ipa
+        if: ${{ env.APPLE_CERTIFICATE_BASE64 == '' }}
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: |
+          xcodebuild -project Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/ZombieCafe.xcarchive" \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            archive
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$RUNNER_TEMP/ZombieCafe.xcarchive/Products/Applications/"*.app "$RUNNER_TEMP/ipa/Payload/"
+          cd "$RUNNER_TEMP/ipa"
+          zip -qry ZombieCafe-sideload.ipa Payload
+          rm -rf Payload
+          echo "Built unsigned sideload .ipa — re-sign it with AltStore/Sideloadly on install."
+
+      # ---------- Optional path: pre-signed ad-hoc .ipa ----------
+      - name: Import signing certificate
+        if: ${{ env.APPLE_CERTIFICATE_BASE64 != '' }}
+        run: |
+          KEYCHAIN=$RUNNER_TEMP/build.keychain
+          security create-keychain -p "" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "" "$KEYCHAIN"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple: -k "" "$KEYCHAIN"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Archive & export signed .ipa
+        if: ${{ env.APPLE_CERTIFICATE_BASE64 != '' }}
+        working-directory: ${{ steps.locate.outputs.dir }}
+        run: |
+          xcodebuild -project Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/ZombieCafe.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            archive
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>ad-hoc</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>manual</string>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/ZombieCafe.xcarchive" \
+            -exportPath "$RUNNER_TEMP/ipa" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZombieCafe-ipa
+          path: ${{ runner.temp }}/ipa/*.ipa
+          retention-days: 14
