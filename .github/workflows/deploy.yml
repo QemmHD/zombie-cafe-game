@@ -47,7 +47,11 @@ jobs:
         run: npm run build
 
       - name: Configure Pages
+        # enablement: true auto-creates the Pages site (build type = GitHub Actions)
+        # on first run, so no manual Settings → Pages toggle is needed.
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
