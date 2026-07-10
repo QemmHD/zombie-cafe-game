@@ -1,67 +1,84 @@
-# Zombie Cafe — Unity Clone
+# 🧟 Deadbeat Diner
 
-A fan-made recreation of the original Capcom Zombie Cafe mobile game, built in Unity 2022 LTS.
+> *The staff's undead, and the service is to die for.*
 
-> **Note:** This project contains no Capcom-owned assets. Original sprites, audio, and fonts are excluded via `.gitignore` and are used only locally as dev placeholders.
+A **web-native horror-comedy restaurant tycoon** — cook grisly dishes, **infect
+your customers into staff**, raid rival diners, and grow your undead empire.
+Built with **Phaser 3 + TypeScript + Vite** and deployed to **GitHub Pages**.
+
+A love-letter remake of Capcom/Beeline's *Zombie Cafe* (iOS, 2011), rebuilt from
+scratch with original code and original AI-generated art.
+
+**▶ Play:** https://qemmhd.github.io/zombie-cafe-game/ &nbsp;·&nbsp;
+**📖 Design:** [docs/DESIGN.md](docs/DESIGN.md) &nbsp;·&nbsp;
+**🗺 Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) &nbsp;·&nbsp;
+**🚀 Deploy:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+> First deploy needs a **one-time** repo setting — see [Deployment](docs/DEPLOYMENT.md).
 
 ---
 
-## Features (implemented)
+## The loop
 
-| System | Scripts |
-|--------|---------|
-| Save / Load | `Core/SaveSystem.cs` |
-| Currency (Coins + Brains) | `Economy/CurrencyManager.cs` |
-| Zombie data & levelling | `Data/ZombieData.cs`, `Zombies/ZombieInventory.cs` |
-| Zombie movement & animation | `Zombies/ZombieController.cs` |
-| Cooking stations with progress | `Cafe/CookingStation.cs` |
-| Customer spawning + infection | `Cafe/CustomerSpawner.cs`, `Cafe/Customer.cs` |
-| Cafe levelling | `Cafe/CafeManager.cs` |
-| Combat units (HP, attack, death) | `Combat/CombatUnit.cs` |
-| Raid loop (spawn, fight, loot) | `Combat/RaidManager.cs` |
-| HUD (coins, brains, panels) | `UI/HUDManager.cs` |
-| Station progress UI | `UI/StationUI.cs` |
-| ZombiePedia | `UI/ZombiePediaUI.cs` |
-| Raid prep screen | `UI/RaidPrepUI.cs` |
-| Shop | `Economy/ShopManager.cs` |
-| Audio manager | `Audio/AudioManager.cs` |
+**Cook** a dish → a **zombie server carries it to a seated customer** → the
+**customer pays** → **infect** that customer into your next zombie server.
+Your labor force *is* your clientele. Meanwhile your kitchen keeps earning while
+you're away (**offline/idle earnings**).
+
+## What's in v0.1
+
+- Connected **cook → serve → earn → infect** core loop
+- **Offline/idle earnings** on load (capped accrual from your kitchen's earn rate)
+- **1,052 content entries** ported from the original design (105 zombies, 320 dishes, 602 furniture, + pets/tombstones/boosters) → `src/data/*.json`
+- Real **hand-drawn art** (isometric diner + zombie/customer/stove sprites), coins + toxin economy, HUD, localStorage saves
+- **GitHub Pages** CI (`vite build` → `actions/deploy-pages`)
+
+## Quick start
+
+```bash
+npm install
+npm run dev            # http://localhost:5173/
+npm run build          # tsc typecheck + vite build → dist/
+npm run preview        # serve the production build
+```
 
 ## Project structure
 
 ```
-Assets/
-  _Game/
-    Scripts/            <- all C# game logic
-    Prefabs/            <- zombie, customer, station, UI prefabs
-    ScriptableObjects/  <- ZombieData, DishData, EquipmentData assets
-    Scenes/             <- Main (cafe), Raid, Boot scenes
-    Animations/         <- Animator Controllers
-  Sprites/              <- gitignored (local dev placeholders only)
-  Audio/                <- gitignored (local dev placeholders only)
-  Fonts/                <- bitmap fonts
-Packages/               <- Unity package manifest
-ProjectSettings/
+src/
+  main.ts            Phaser bootstrap (Boot → Preload → Cafe)
+  config.ts          BRAND (rename here), palette, tuning
+  core/              EventBus · Economy (coins+toxin) · SaveManager (+offline earnings)
+  data/              types · content loader · *.json (ported catalogs)
+  game/              Stove · Customer
+  scenes/            Boot · Preload · Cafe
+  ui/                Hud
+public/art/          Higgsfield-generated backdrop + sprites
+Tools/               export_content_json.py · optimize_art.py
+docs/                DESIGN · ROADMAP · DEPLOYMENT
+legacy-unity/        original Unity 2022 prototype (reference only; not built)
 ```
 
-## Getting started
+## Art pipeline
 
-1. Install [Unity Hub](https://unity.com/download) -> install **Unity 2022.3 LTS**
-2. Clone this repo
-3. Open the project folder in Unity Hub -> Open
-4. Import placeholder art into `Assets/Sprites/` (local extracted assets go here)
-5. Open `Assets/_Game/Scenes/Main.unity` and press Play
+Art is generated with **Higgsfield** (`nano_banana_pro`), cut out with
+`remove_background`, then trimmed + downscaled for the web by
+`Tools/optimize_art.py`. Style: 2.5D isometric hand-drawn cartoon, grimy-diner
+palette, horror-**comedy** tone. See [DESIGN.md §4](docs/DESIGN.md).
 
-## Zombie types catalogued (280+)
+## Content pipeline
 
-Telemarketer, Teacher, Yoga Instructor, Businessman, Accountant, Cyclone, Miracle Girl,
-The Steel, 50s Diner 1, Couchpotato, and 270+ others across human + zombie variants.
+`Tools/export_content_json.py` ports the Unity ScriptableObject catalogs under
+`legacy-unity/Assets/Resources/` into flat JSON in `src/data/`, preserving the
+original balance (cook times, coin/toxin rewards, rarities).
 
-## Dish names catalogued (50+)
+## Legal
 
-Toe Jam Sandwiches, Dough-Nots, Handburgers Flies, Onion Wrongs, Sloppy Joe,
-Tumor Melts, Fishbone Pudding, Runey Nose, Gello Mold, Green Plate Special, and more.
+*Zombie Cafe* is a trademark of Capcom/Beeline Interactive. This project is an
+independent fan remake with **original code and original art** — no Capcom assets
+are included or distributed. The app is branded **Deadbeat Diner** to avoid any
+trademark conflict.
 
 ## License
 
-Original Zombie Cafe IP belongs to Capcom. This project is an independent fan recreation
-with original code. No Capcom assets are included or distributed.
+Original code © the authors. See repository for details.

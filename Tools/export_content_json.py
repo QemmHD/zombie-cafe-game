@@ -17,7 +17,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-RES = ROOT / "Assets" / "Resources"
+RES = ROOT / "legacy-unity" / "Assets" / "Resources"
 OUT = ROOT / "src" / "data"
 
 # Enum orderings mirror the C# definitions in Assets/_Game/Scripts/Data/*.cs

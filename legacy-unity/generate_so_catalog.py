@@ -49,7 +49,7 @@ GUIDS = {
     "PetData":       "ffffffffffffffffffffffffffffffff",
 }
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent
 RES = PROJECT_ROOT / "Assets" / "Resources"
 
 

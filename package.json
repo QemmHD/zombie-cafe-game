@@ -1,9 +1,9 @@
 {
-  "name": "zombie-cafe-remake",
+  "name": "deadbeat-diner",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Web-native remake of the classic Zombie Cafe tycoon game (Phaser 3 + TypeScript).",
+  "description": "Deadbeat Diner — a web-native horror-comedy restaurant tycoon (Phaser 3 + TypeScript), inspired by the classic Zombie Cafe.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

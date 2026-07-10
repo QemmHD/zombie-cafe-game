@@ -1,9 +1,11 @@
 // ── Brand ────────────────────────────────────────────────────────────────────
 // Centralised so the rebrand (task: rename the app) is a one-file change.
+// The single source of truth for the app's brand. Renaming the game = editing here.
+// Shortlisted alternatives: Ghoulash · Grave Grub · Rot & Serve · Necro Nosh · Rigor Bistro
 export const BRAND = {
-  name: 'Zombie Cafe',          // working title — final brand chosen during rename pass
+  name: 'Deadbeat Diner',
   version: '0.1.0',
-  tagline: 'Cook. Serve. Infect. Expand.',
+  tagline: "The staff's undead, and the service is to die for.",
 };
 
 // ── Canvas ───────────────────────────────────────────────────────────────────

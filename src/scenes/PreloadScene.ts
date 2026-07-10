@@ -24,8 +24,11 @@ export class PreloadScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, PALETTE.bgTop).setOrigin(0);
-    this.add.text(cx, cy - 40, 'ZOMBIE CAFE', {
+    this.add.text(cx, cy - 44, 'DEADBEAT DINER', {
       fontFamily: 'monospace', fontSize: '30px', color: '#7ee081', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.add.text(cx, cy - 16, "the service is to die for", {
+      fontFamily: 'monospace', fontSize: '12px', color: '#8891a4',
     }).setOrigin(0.5);
     this.add.rectangle(cx, cy + 10, 320, 16, PALETTE.panel).setStrokeStyle(1, PALETTE.panelEdge);
     const fill = this.add.rectangle(cx - 158, cy + 10, 0, 12, PALETTE.toxic).setOrigin(0, 0.5);

@@ -54,9 +54,9 @@ dist/
 # ── Extracted original assets (local placeholders only, NOT for distribution) ──
 # These are Capcom-owned assets extracted from the IPA for dev reference.
 # They must NEVER be committed or distributed.
-Assets/Sprites/Atlases/
-Assets/Sprites/Sliced/
-Assets/Audio/Music/*.caf
-Assets/Audio/SFX/*.caf
-Assets/Audio/Music/*.mp3
-Assets/Audio/SFX/*.mp3
+legacy-unity/Assets/Sprites/Atlases/
+legacy-unity/Assets/Sprites/Sliced/
+legacy-unity/Assets/Audio/Music/*.caf
+legacy-unity/Assets/Audio/SFX/*.caf
+legacy-unity/Assets/Audio/Music/*.mp3
+legacy-unity/Assets/Audio/SFX/*.mp3
