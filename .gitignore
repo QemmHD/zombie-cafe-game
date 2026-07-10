@@ -45,6 +45,12 @@
 ehthumbs.db
 Thumbs.db
 
+# ── Web (Phaser/Vite) build ──
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
 # ── Extracted original assets (local placeholders only, NOT for distribution) ──
 # These are Capcom-owned assets extracted from the IPA for dev reference.
 # They must NEVER be committed or distributed.

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0d0f14" />
+    <meta name="description" content="A web-native remake of the classic Zombie Cafe tycoon — cook grisly dishes, infect your customers, raid rival cafes, and grow your undead empire." />
+    <title>Zombie Cafe — Remake</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        height: 100%;
+        background: #0d0f14;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      #game {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        color: #7ee081;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        z-index: 10;
+        transition: opacity 0.4s ease;
+      }
+      #boot-splash .pulse { animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="boot-splash"><div class="pulse">Loading the undead…</div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

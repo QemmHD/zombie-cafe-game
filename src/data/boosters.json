@@ -1,0 +1,29 @@
+[
+ {
+  "boosterId": "booster_hyper",
+  "displayName": "Hyper Booster",
+  "tier": 2,
+  "cookSpeedMultiplier": 5,
+  "durationSeconds": 300,
+  "buyCost": 20,
+  "tierLabel": "hyper"
+ },
+ {
+  "boosterId": "booster_super",
+  "displayName": "Super Booster",
+  "tier": 1,
+  "cookSpeedMultiplier": 3,
+  "durationSeconds": 300,
+  "buyCost": 10,
+  "tierLabel": "super"
+ },
+ {
+  "boosterId": "booster_turbo",
+  "displayName": "Turbo Booster",
+  "tier": 0,
+  "cookSpeedMultiplier": 2,
+  "durationSeconds": 300,
+  "buyCost": 5,
+  "tierLabel": "turbo"
+ }
+]

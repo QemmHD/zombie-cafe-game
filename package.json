@@ -1,0 +1,20 @@
+{
+  "name": "zombie-cafe-remake",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Web-native remake of the classic Zombie Cafe tycoon game (Phaser 3 + TypeScript).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "export-content": "python3 Tools/export_content_json.py"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

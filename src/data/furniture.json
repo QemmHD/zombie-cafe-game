@@ -1,0 +1,9032 @@
+[
+ {
+  "furnitureId": "chair_01",
+  "displayName": "Chair 01",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 230,
+  "sellValue": 20,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_02",
+  "displayName": "Chair 02",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 310,
+  "sellValue": 40,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_03",
+  "displayName": "Chair 03",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 390,
+  "sellValue": 60,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_04",
+  "displayName": "Chair 04",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 470,
+  "sellValue": 80,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_05",
+  "displayName": "Chair 05",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 550,
+  "sellValue": 100,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_06",
+  "displayName": "Chair 06",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 630,
+  "sellValue": 120,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_07",
+  "displayName": "Chair 07",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 710,
+  "sellValue": 140,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_08",
+  "displayName": "Chair 08",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 790,
+  "sellValue": 160,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_09",
+  "displayName": "Chair 09",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 870,
+  "sellValue": 180,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_10",
+  "displayName": "Chair 10",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 950,
+  "sellValue": 200,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_11",
+  "displayName": "Chair 11",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1030,
+  "sellValue": 220,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_12",
+  "displayName": "Chair 12",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1110,
+  "sellValue": 240,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_13",
+  "displayName": "Chair 13",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1190,
+  "sellValue": 260,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_14",
+  "displayName": "Chair 14",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1270,
+  "sellValue": 280,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_15",
+  "displayName": "Chair 15",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1350,
+  "sellValue": 300,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_16",
+  "displayName": "Chair 16",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1430,
+  "sellValue": 320,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_17",
+  "displayName": "Chair 17",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1510,
+  "sellValue": 340,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_18",
+  "displayName": "Chair 18",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1590,
+  "sellValue": 360,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_19",
+  "displayName": "Chair 19",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1670,
+  "sellValue": 380,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_20",
+  "displayName": "Chair 20",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1750,
+  "sellValue": 400,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_21",
+  "displayName": "Chair 21",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1830,
+  "sellValue": 420,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_22",
+  "displayName": "Chair 22",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1910,
+  "sellValue": 440,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_23",
+  "displayName": "Chair 23",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1990,
+  "sellValue": 460,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_24",
+  "displayName": "Chair 24",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2070,
+  "sellValue": 480,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_25",
+  "displayName": "Chair 25",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2150,
+  "sellValue": 500,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_26",
+  "displayName": "Chair 26",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2230,
+  "sellValue": 520,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_27",
+  "displayName": "Chair 27",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2310,
+  "sellValue": 540,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_28",
+  "displayName": "Chair 28",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2390,
+  "sellValue": 560,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_29",
+  "displayName": "Chair 29",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2470,
+  "sellValue": 580,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_30",
+  "displayName": "Chair 30",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2550,
+  "sellValue": 600,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_31",
+  "displayName": "Chair 31",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2630,
+  "sellValue": 620,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_32",
+  "displayName": "Chair 32",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2710,
+  "sellValue": 640,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_33",
+  "displayName": "Chair 33",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2790,
+  "sellValue": 660,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_34",
+  "displayName": "Chair 34",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2870,
+  "sellValue": 680,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_35",
+  "displayName": "Chair 35",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2950,
+  "sellValue": 700,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_36",
+  "displayName": "Chair 36",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3030,
+  "sellValue": 720,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_37",
+  "displayName": "Chair 37",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3110,
+  "sellValue": 740,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_38",
+  "displayName": "Chair 38",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3190,
+  "sellValue": 760,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_39",
+  "displayName": "Chair 39",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3270,
+  "sellValue": 780,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_40",
+  "displayName": "Chair 40",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3350,
+  "sellValue": 800,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_41",
+  "displayName": "Chair 41",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3430,
+  "sellValue": 820,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_42",
+  "displayName": "Chair 42",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3510,
+  "sellValue": 840,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_43",
+  "displayName": "Chair 43",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3590,
+  "sellValue": 860,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_44",
+  "displayName": "Chair 44",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3670,
+  "sellValue": 880,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_45",
+  "displayName": "Chair 45",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3750,
+  "sellValue": 900,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_46",
+  "displayName": "Chair 46",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3830,
+  "sellValue": 920,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_47",
+  "displayName": "Chair 47",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3910,
+  "sellValue": 940,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_48",
+  "displayName": "Chair 48",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3990,
+  "sellValue": 960,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_49",
+  "displayName": "Chair 49",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4070,
+  "sellValue": 980,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_50",
+  "displayName": "Chair 50",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4150,
+  "sellValue": 1000,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_51",
+  "displayName": "Chair 51",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4230,
+  "sellValue": 1020,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_52",
+  "displayName": "Chair 52",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4310,
+  "sellValue": 1040,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_53",
+  "displayName": "Chair 53",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4390,
+  "sellValue": 1060,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_54",
+  "displayName": "Chair 54",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4470,
+  "sellValue": 1080,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_55",
+  "displayName": "Chair 55",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4550,
+  "sellValue": 1100,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "chair_56",
+  "displayName": "Chair 56",
+  "furnitureType": 2,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4630,
+  "sellValue": 1120,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "chair"
+ },
+ {
+  "furnitureId": "counter_01",
+  "displayName": "Counter 01",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 720,
+  "sellValue": 35,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_02",
+  "displayName": "Counter 02",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 840,
+  "sellValue": 70,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_03",
+  "displayName": "Counter 03",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 960,
+  "sellValue": 105,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_04",
+  "displayName": "Counter 04",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1080,
+  "sellValue": 140,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_05",
+  "displayName": "Counter 05",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1200,
+  "sellValue": 175,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_06",
+  "displayName": "Counter 06",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1320,
+  "sellValue": 210,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_07",
+  "displayName": "Counter 07",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1440,
+  "sellValue": 245,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_08",
+  "displayName": "Counter 08",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1560,
+  "sellValue": 280,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_09",
+  "displayName": "Counter 09",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1680,
+  "sellValue": 315,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_10",
+  "displayName": "Counter 10",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1800,
+  "sellValue": 350,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_11",
+  "displayName": "Counter 11",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 1920,
+  "sellValue": 385,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_12",
+  "displayName": "Counter 12",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2040,
+  "sellValue": 420,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_13",
+  "displayName": "Counter 13",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2160,
+  "sellValue": 455,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_14",
+  "displayName": "Counter 14",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2280,
+  "sellValue": 490,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_15",
+  "displayName": "Counter 15",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2400,
+  "sellValue": 525,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_16",
+  "displayName": "Counter 16",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2520,
+  "sellValue": 560,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_17",
+  "displayName": "Counter 17",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2640,
+  "sellValue": 595,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_18",
+  "displayName": "Counter 18",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2760,
+  "sellValue": 630,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "counter_19",
+  "displayName": "Counter 19",
+  "furnitureType": 5,
+  "size": {
+   "x": 2,
+   "y": 1
+  },
+  "buyCost": 2880,
+  "sellValue": 665,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "counter"
+ },
+ {
+  "furnitureId": "decor_001",
+  "displayName": "Decor 001",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 150,
+  "sellValue": 10,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_002",
+  "displayName": "Decor 002",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 200,
+  "sellValue": 20,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_003",
+  "displayName": "Decor 003",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 250,
+  "sellValue": 30,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_004",
+  "displayName": "Decor 004",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 300,
+  "sellValue": 40,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_005",
+  "displayName": "Decor 005",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 350,
+  "sellValue": 50,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_006",
+  "displayName": "Decor 006",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 400,
+  "sellValue": 60,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_007",
+  "displayName": "Decor 007",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 450,
+  "sellValue": 70,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_008",
+  "displayName": "Decor 008",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 500,
+  "sellValue": 80,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_009",
+  "displayName": "Decor 009",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 550,
+  "sellValue": 90,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_010",
+  "displayName": "Decor 010",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 600,
+  "sellValue": 100,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_011",
+  "displayName": "Decor 011",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 650,
+  "sellValue": 110,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_012",
+  "displayName": "Decor 012",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 700,
+  "sellValue": 120,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_013",
+  "displayName": "Decor 013",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 750,
+  "sellValue": 130,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_014",
+  "displayName": "Decor 014",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 800,
+  "sellValue": 140,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_015",
+  "displayName": "Decor 015",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 850,
+  "sellValue": 150,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_016",
+  "displayName": "Decor 016",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 900,
+  "sellValue": 160,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_017",
+  "displayName": "Decor 017",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 950,
+  "sellValue": 170,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_018",
+  "displayName": "Decor 018",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1000,
+  "sellValue": 180,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_019",
+  "displayName": "Decor 019",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1050,
+  "sellValue": 190,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_020",
+  "displayName": "Decor 020",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1100,
+  "sellValue": 200,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_021",
+  "displayName": "Decor 021",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1150,
+  "sellValue": 210,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_022",
+  "displayName": "Decor 022",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1200,
+  "sellValue": 220,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_023",
+  "displayName": "Decor 023",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1250,
+  "sellValue": 230,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_024",
+  "displayName": "Decor 024",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1300,
+  "sellValue": 240,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_025",
+  "displayName": "Decor 025",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1350,
+  "sellValue": 250,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_026",
+  "displayName": "Decor 026",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1400,
+  "sellValue": 260,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_027",
+  "displayName": "Decor 027",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1450,
+  "sellValue": 270,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_028",
+  "displayName": "Decor 028",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1500,
+  "sellValue": 280,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_029",
+  "displayName": "Decor 029",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1550,
+  "sellValue": 290,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_030",
+  "displayName": "Decor 030",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1600,
+  "sellValue": 300,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_031",
+  "displayName": "Decor 031",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1650,
+  "sellValue": 310,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_032",
+  "displayName": "Decor 032",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1700,
+  "sellValue": 320,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_033",
+  "displayName": "Decor 033",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1750,
+  "sellValue": 330,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_034",
+  "displayName": "Decor 034",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1800,
+  "sellValue": 340,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_035",
+  "displayName": "Decor 035",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1850,
+  "sellValue": 350,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_036",
+  "displayName": "Decor 036",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1900,
+  "sellValue": 360,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_037",
+  "displayName": "Decor 037",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1950,
+  "sellValue": 370,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_038",
+  "displayName": "Decor 038",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2000,
+  "sellValue": 380,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_039",
+  "displayName": "Decor 039",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2050,
+  "sellValue": 390,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_040",
+  "displayName": "Decor 040",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2100,
+  "sellValue": 400,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_041",
+  "displayName": "Decor 041",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2150,
+  "sellValue": 410,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_042",
+  "displayName": "Decor 042",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2200,
+  "sellValue": 420,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_043",
+  "displayName": "Decor 043",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2250,
+  "sellValue": 430,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_044",
+  "displayName": "Decor 044",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2300,
+  "sellValue": 440,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_045",
+  "displayName": "Decor 045",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2350,
+  "sellValue": 450,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_046",
+  "displayName": "Decor 046",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2400,
+  "sellValue": 460,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_047",
+  "displayName": "Decor 047",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2450,
+  "sellValue": 470,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_048",
+  "displayName": "Decor 048",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2500,
+  "sellValue": 480,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_049",
+  "displayName": "Decor 049",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2550,
+  "sellValue": 490,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_050",
+  "displayName": "Decor 050",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2600,
+  "sellValue": 500,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_051",
+  "displayName": "Decor 051",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2650,
+  "sellValue": 510,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_052",
+  "displayName": "Decor 052",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2700,
+  "sellValue": 520,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_053",
+  "displayName": "Decor 053",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2750,
+  "sellValue": 530,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_054",
+  "displayName": "Decor 054",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2800,
+  "sellValue": 540,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_055",
+  "displayName": "Decor 055",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2850,
+  "sellValue": 550,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_056",
+  "displayName": "Decor 056",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2900,
+  "sellValue": 560,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_057",
+  "displayName": "Decor 057",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2950,
+  "sellValue": 570,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_058",
+  "displayName": "Decor 058",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3000,
+  "sellValue": 580,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_059",
+  "displayName": "Decor 059",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3050,
+  "sellValue": 590,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_060",
+  "displayName": "Decor 060",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3100,
+  "sellValue": 600,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_061",
+  "displayName": "Decor 061",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3150,
+  "sellValue": 610,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_062",
+  "displayName": "Decor 062",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3200,
+  "sellValue": 620,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_063",
+  "displayName": "Decor 063",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3250,
+  "sellValue": 630,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_064",
+  "displayName": "Decor 064",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3300,
+  "sellValue": 640,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_065",
+  "displayName": "Decor 065",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3350,
+  "sellValue": 650,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_066",
+  "displayName": "Decor 066",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3400,
+  "sellValue": 660,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_067",
+  "displayName": "Decor 067",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3450,
+  "sellValue": 670,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_068",
+  "displayName": "Decor 068",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3500,
+  "sellValue": 680,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_069",
+  "displayName": "Decor 069",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3550,
+  "sellValue": 690,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_070",
+  "displayName": "Decor 070",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3600,
+  "sellValue": 700,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_071",
+  "displayName": "Decor 071",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3650,
+  "sellValue": 710,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_072",
+  "displayName": "Decor 072",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3700,
+  "sellValue": 720,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_073",
+  "displayName": "Decor 073",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3750,
+  "sellValue": 730,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_074",
+  "displayName": "Decor 074",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3800,
+  "sellValue": 740,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_075",
+  "displayName": "Decor 075",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3850,
+  "sellValue": 750,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_076",
+  "displayName": "Decor 076",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3900,
+  "sellValue": 760,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_077",
+  "displayName": "Decor 077",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3950,
+  "sellValue": 770,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_078",
+  "displayName": "Decor 078",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4000,
+  "sellValue": 780,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_079",
+  "displayName": "Decor 079",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4050,
+  "sellValue": 790,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_080",
+  "displayName": "Decor 080",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4100,
+  "sellValue": 800,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_081",
+  "displayName": "Decor 081",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4150,
+  "sellValue": 810,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_082",
+  "displayName": "Decor 082",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4200,
+  "sellValue": 820,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_083",
+  "displayName": "Decor 083",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4250,
+  "sellValue": 830,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_084",
+  "displayName": "Decor 084",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4300,
+  "sellValue": 840,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_085",
+  "displayName": "Decor 085",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4350,
+  "sellValue": 850,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_086",
+  "displayName": "Decor 086",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4400,
+  "sellValue": 860,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_087",
+  "displayName": "Decor 087",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4450,
+  "sellValue": 870,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_088",
+  "displayName": "Decor 088",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4500,
+  "sellValue": 880,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_089",
+  "displayName": "Decor 089",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4550,
+  "sellValue": 890,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_090",
+  "displayName": "Decor 090",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4600,
+  "sellValue": 900,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_091",
+  "displayName": "Decor 091",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4650,
+  "sellValue": 910,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_092",
+  "displayName": "Decor 092",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4700,
+  "sellValue": 920,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_093",
+  "displayName": "Decor 093",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4750,
+  "sellValue": 930,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_094",
+  "displayName": "Decor 094",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4800,
+  "sellValue": 940,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_095",
+  "displayName": "Decor 095",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4850,
+  "sellValue": 950,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_096",
+  "displayName": "Decor 096",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4900,
+  "sellValue": 960,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_097",
+  "displayName": "Decor 097",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4950,
+  "sellValue": 970,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_098",
+  "displayName": "Decor 098",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5000,
+  "sellValue": 980,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_099",
+  "displayName": "Decor 099",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5050,
+  "sellValue": 990,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_100",
+  "displayName": "Decor 100",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5100,
+  "sellValue": 1000,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_101",
+  "displayName": "Decor 101",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5150,
+  "sellValue": 1010,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_102",
+  "displayName": "Decor 102",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5200,
+  "sellValue": 1020,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_103",
+  "displayName": "Decor 103",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5250,
+  "sellValue": 1030,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_104",
+  "displayName": "Decor 104",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5300,
+  "sellValue": 1040,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_105",
+  "displayName": "Decor 105",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5350,
+  "sellValue": 1050,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_106",
+  "displayName": "Decor 106",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5400,
+  "sellValue": 1060,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_107",
+  "displayName": "Decor 107",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5450,
+  "sellValue": 1070,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_108",
+  "displayName": "Decor 108",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5500,
+  "sellValue": 1080,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_109",
+  "displayName": "Decor 109",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5550,
+  "sellValue": 1090,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_110",
+  "displayName": "Decor 110",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5600,
+  "sellValue": 1100,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_111",
+  "displayName": "Decor 111",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5650,
+  "sellValue": 1110,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_112",
+  "displayName": "Decor 112",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5700,
+  "sellValue": 1120,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_113",
+  "displayName": "Decor 113",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5750,
+  "sellValue": 1130,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_114",
+  "displayName": "Decor 114",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5800,
+  "sellValue": 1140,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_115",
+  "displayName": "Decor 115",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5850,
+  "sellValue": 1150,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_116",
+  "displayName": "Decor 116",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5900,
+  "sellValue": 1160,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_117",
+  "displayName": "Decor 117",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5950,
+  "sellValue": 1170,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_118",
+  "displayName": "Decor 118",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6000,
+  "sellValue": 1180,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_119",
+  "displayName": "Decor 119",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6050,
+  "sellValue": 1190,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_120",
+  "displayName": "Decor 120",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6100,
+  "sellValue": 1200,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_121",
+  "displayName": "Decor 121",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6150,
+  "sellValue": 1210,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_122",
+  "displayName": "Decor 122",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6200,
+  "sellValue": 1220,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_123",
+  "displayName": "Decor 123",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6250,
+  "sellValue": 1230,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_124",
+  "displayName": "Decor 124",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6300,
+  "sellValue": 1240,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_125",
+  "displayName": "Decor 125",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6350,
+  "sellValue": 1250,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_126",
+  "displayName": "Decor 126",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6400,
+  "sellValue": 1260,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_127",
+  "displayName": "Decor 127",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6450,
+  "sellValue": 1270,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_128",
+  "displayName": "Decor 128",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6500,
+  "sellValue": 1280,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_129",
+  "displayName": "Decor 129",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6550,
+  "sellValue": 1290,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_130",
+  "displayName": "Decor 130",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6600,
+  "sellValue": 1300,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_131",
+  "displayName": "Decor 131",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6650,
+  "sellValue": 1310,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_132",
+  "displayName": "Decor 132",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6700,
+  "sellValue": 1320,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_133",
+  "displayName": "Decor 133",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6750,
+  "sellValue": 1330,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_134",
+  "displayName": "Decor 134",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6800,
+  "sellValue": 1340,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_135",
+  "displayName": "Decor 135",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6850,
+  "sellValue": 1350,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_136",
+  "displayName": "Decor 136",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6900,
+  "sellValue": 1360,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_137",
+  "displayName": "Decor 137",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6950,
+  "sellValue": 1370,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_138",
+  "displayName": "Decor 138",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7000,
+  "sellValue": 1380,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_139",
+  "displayName": "Decor 139",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7050,
+  "sellValue": 1390,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_140",
+  "displayName": "Decor 140",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7100,
+  "sellValue": 1400,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_141",
+  "displayName": "Decor 141",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7150,
+  "sellValue": 1410,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_142",
+  "displayName": "Decor 142",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7200,
+  "sellValue": 1420,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_143",
+  "displayName": "Decor 143",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7250,
+  "sellValue": 1430,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_144",
+  "displayName": "Decor 144",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7300,
+  "sellValue": 1440,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_145",
+  "displayName": "Decor 145",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7350,
+  "sellValue": 1450,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_146",
+  "displayName": "Decor 146",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7400,
+  "sellValue": 1460,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_147",
+  "displayName": "Decor 147",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7450,
+  "sellValue": 1470,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_148",
+  "displayName": "Decor 148",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7500,
+  "sellValue": 1480,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_149",
+  "displayName": "Decor 149",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7550,
+  "sellValue": 1490,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_150",
+  "displayName": "Decor 150",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7600,
+  "sellValue": 1500,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_151",
+  "displayName": "Decor 151",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7650,
+  "sellValue": 1510,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_152",
+  "displayName": "Decor 152",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7700,
+  "sellValue": 1520,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_153",
+  "displayName": "Decor 153",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7750,
+  "sellValue": 1530,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_154",
+  "displayName": "Decor 154",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7800,
+  "sellValue": 1540,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_155",
+  "displayName": "Decor 155",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7850,
+  "sellValue": 1550,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_156",
+  "displayName": "Decor 156",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7900,
+  "sellValue": 1560,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_157",
+  "displayName": "Decor 157",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7950,
+  "sellValue": 1570,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_158",
+  "displayName": "Decor 158",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8000,
+  "sellValue": 1580,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_159",
+  "displayName": "Decor 159",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8050,
+  "sellValue": 1590,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_160",
+  "displayName": "Decor 160",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8100,
+  "sellValue": 1600,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_161",
+  "displayName": "Decor 161",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8150,
+  "sellValue": 1610,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_162",
+  "displayName": "Decor 162",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8200,
+  "sellValue": 1620,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_163",
+  "displayName": "Decor 163",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8250,
+  "sellValue": 1630,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_164",
+  "displayName": "Decor 164",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8300,
+  "sellValue": 1640,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_165",
+  "displayName": "Decor 165",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8350,
+  "sellValue": 1650,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_166",
+  "displayName": "Decor 166",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8400,
+  "sellValue": 1660,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_167",
+  "displayName": "Decor 167",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8450,
+  "sellValue": 1670,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_168",
+  "displayName": "Decor 168",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8500,
+  "sellValue": 1680,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_169",
+  "displayName": "Decor 169",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8550,
+  "sellValue": 1690,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_170",
+  "displayName": "Decor 170",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8600,
+  "sellValue": 1700,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_171",
+  "displayName": "Decor 171",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8650,
+  "sellValue": 1710,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_172",
+  "displayName": "Decor 172",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8700,
+  "sellValue": 1720,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_173",
+  "displayName": "Decor 173",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8750,
+  "sellValue": 1730,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_174",
+  "displayName": "Decor 174",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8800,
+  "sellValue": 1740,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_175",
+  "displayName": "Decor 175",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8850,
+  "sellValue": 1750,
+  "cafeLevelRequired": 21,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_176",
+  "displayName": "Decor 176",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8900,
+  "sellValue": 1760,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_177",
+  "displayName": "Decor 177",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8950,
+  "sellValue": 1770,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_178",
+  "displayName": "Decor 178",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9000,
+  "sellValue": 1780,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_179",
+  "displayName": "Decor 179",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9050,
+  "sellValue": 1790,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_180",
+  "displayName": "Decor 180",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9100,
+  "sellValue": 1800,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_181",
+  "displayName": "Decor 181",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9150,
+  "sellValue": 1810,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "decor_182",
+  "displayName": "Decor 182",
+  "furnitureType": 7,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9200,
+  "sellValue": 1820,
+  "cafeLevelRequired": 22,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "decor"
+ },
+ {
+  "furnitureId": "floor_01",
+  "displayName": "Floor 01",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 300,
+  "sellValue": 12,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_02",
+  "displayName": "Floor 02",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 350,
+  "sellValue": 24,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_03",
+  "displayName": "Floor 03",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 400,
+  "sellValue": 36,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_04",
+  "displayName": "Floor 04",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 450,
+  "sellValue": 48,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_05",
+  "displayName": "Floor 05",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 500,
+  "sellValue": 60,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_06",
+  "displayName": "Floor 06",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 550,
+  "sellValue": 72,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_07",
+  "displayName": "Floor 07",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 600,
+  "sellValue": 84,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_08",
+  "displayName": "Floor 08",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 650,
+  "sellValue": 96,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_09",
+  "displayName": "Floor 09",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 700,
+  "sellValue": 108,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_10",
+  "displayName": "Floor 10",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 750,
+  "sellValue": 120,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_11",
+  "displayName": "Floor 11",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 800,
+  "sellValue": 132,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_12",
+  "displayName": "Floor 12",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 850,
+  "sellValue": 144,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_13",
+  "displayName": "Floor 13",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 900,
+  "sellValue": 156,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_14",
+  "displayName": "Floor 14",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 950,
+  "sellValue": 168,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_15",
+  "displayName": "Floor 15",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1000,
+  "sellValue": 180,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_16",
+  "displayName": "Floor 16",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1050,
+  "sellValue": 192,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_17",
+  "displayName": "Floor 17",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1100,
+  "sellValue": 204,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_18",
+  "displayName": "Floor 18",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1150,
+  "sellValue": 216,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_19",
+  "displayName": "Floor 19",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1200,
+  "sellValue": 228,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "floor_20",
+  "displayName": "Floor 20",
+  "furnitureType": 10,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1250,
+  "sellValue": 240,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "floor"
+ },
+ {
+  "furnitureId": "fridge_01",
+  "displayName": "Fridge 01",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 1100,
+  "sellValue": 70,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_02",
+  "displayName": "Fridge 02",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 1400,
+  "sellValue": 140,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_03",
+  "displayName": "Fridge 03",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 1700,
+  "sellValue": 210,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_04",
+  "displayName": "Fridge 04",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 2000,
+  "sellValue": 280,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_05",
+  "displayName": "Fridge 05",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 2300,
+  "sellValue": 350,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_06",
+  "displayName": "Fridge 06",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 2600,
+  "sellValue": 420,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_07",
+  "displayName": "Fridge 07",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 2900,
+  "sellValue": 490,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_08",
+  "displayName": "Fridge 08",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 3200,
+  "sellValue": 560,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_09",
+  "displayName": "Fridge 09",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 3500,
+  "sellValue": 630,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_10",
+  "displayName": "Fridge 10",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 3800,
+  "sellValue": 700,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_11",
+  "displayName": "Fridge 11",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 4100,
+  "sellValue": 770,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "fridge_12",
+  "displayName": "Fridge 12",
+  "furnitureType": 3,
+  "size": {
+   "x": 1,
+   "y": 2
+  },
+  "buyCost": 4400,
+  "sellValue": 840,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "fridge"
+ },
+ {
+  "furnitureId": "pot_01",
+  "displayName": "Pot 01",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 440,
+  "sellValue": 25,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.025,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_02",
+  "displayName": "Pot 02",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 530,
+  "sellValue": 50,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.03,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_03",
+  "displayName": "Pot 03",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 620,
+  "sellValue": 75,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.035,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_04",
+  "displayName": "Pot 04",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 710,
+  "sellValue": 100,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.04,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_05",
+  "displayName": "Pot 05",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 800,
+  "sellValue": 125,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.045,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_06",
+  "displayName": "Pot 06",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 890,
+  "sellValue": 150,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0.05,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_07",
+  "displayName": "Pot 07",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 980,
+  "sellValue": 175,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0.055,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_08",
+  "displayName": "Pot 08",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1070,
+  "sellValue": 200,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0.06,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_09",
+  "displayName": "Pot 09",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1160,
+  "sellValue": 225,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0.065,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_10",
+  "displayName": "Pot 10",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1250,
+  "sellValue": 250,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0.07,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_11",
+  "displayName": "Pot 11",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1340,
+  "sellValue": 275,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0.075,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_12",
+  "displayName": "Pot 12",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1430,
+  "sellValue": 300,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0.08,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_13",
+  "displayName": "Pot 13",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1520,
+  "sellValue": 325,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0.085,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_14",
+  "displayName": "Pot 14",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1610,
+  "sellValue": 350,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0.09,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_15",
+  "displayName": "Pot 15",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1700,
+  "sellValue": 375,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0.095,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_16",
+  "displayName": "Pot 16",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1790,
+  "sellValue": 400,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0.1,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_17",
+  "displayName": "Pot 17",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1880,
+  "sellValue": 425,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0.105,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_18",
+  "displayName": "Pot 18",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1970,
+  "sellValue": 450,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0.11,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_19",
+  "displayName": "Pot 19",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2060,
+  "sellValue": 475,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0.115,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_20",
+  "displayName": "Pot 20",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2150,
+  "sellValue": 500,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0.12,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_21",
+  "displayName": "Pot 21",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2240,
+  "sellValue": 525,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0.125,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_22",
+  "displayName": "Pot 22",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2330,
+  "sellValue": 550,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0.13,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_23",
+  "displayName": "Pot 23",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2420,
+  "sellValue": 575,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0.135,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_24",
+  "displayName": "Pot 24",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2510,
+  "sellValue": 600,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0.14,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_25",
+  "displayName": "Pot 25",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2600,
+  "sellValue": 625,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0.145,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_26",
+  "displayName": "Pot 26",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2690,
+  "sellValue": 650,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0.15,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_27",
+  "displayName": "Pot 27",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2780,
+  "sellValue": 675,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0.155,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "pot_28",
+  "displayName": "Pot 28",
+  "furnitureType": 6,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2870,
+  "sellValue": 700,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0.16,
+  "happinessBonus": 0,
+  "typeLabel": "pot"
+ },
+ {
+  "furnitureId": "sink_01",
+  "displayName": "Sink 01",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 500,
+  "sellValue": 30,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_02",
+  "displayName": "Sink 02",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 600,
+  "sellValue": 60,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_03",
+  "displayName": "Sink 03",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 700,
+  "sellValue": 90,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_04",
+  "displayName": "Sink 04",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 800,
+  "sellValue": 120,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_05",
+  "displayName": "Sink 05",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 900,
+  "sellValue": 150,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_06",
+  "displayName": "Sink 06",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1000,
+  "sellValue": 180,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_07",
+  "displayName": "Sink 07",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1100,
+  "sellValue": 210,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_08",
+  "displayName": "Sink 08",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1200,
+  "sellValue": 240,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_09",
+  "displayName": "Sink 09",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1300,
+  "sellValue": 270,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_10",
+  "displayName": "Sink 10",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1400,
+  "sellValue": 300,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_11",
+  "displayName": "Sink 11",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1500,
+  "sellValue": 330,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_12",
+  "displayName": "Sink 12",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1600,
+  "sellValue": 360,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "sink_13",
+  "displayName": "Sink 13",
+  "furnitureType": 4,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1700,
+  "sellValue": 390,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "sink"
+ },
+ {
+  "furnitureId": "stove_01",
+  "displayName": "Stove 01",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 700,
+  "sellValue": 50,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.06,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_02",
+  "displayName": "Stove 02",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 900,
+  "sellValue": 100,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.07,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_03",
+  "displayName": "Stove 03",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1100,
+  "sellValue": 150,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.08,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_04",
+  "displayName": "Stove 04",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1300,
+  "sellValue": 200,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.09,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_05",
+  "displayName": "Stove 05",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1500,
+  "sellValue": 250,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0.1,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_06",
+  "displayName": "Stove 06",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1700,
+  "sellValue": 300,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0.11,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_07",
+  "displayName": "Stove 07",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1900,
+  "sellValue": 350,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0.12,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_08",
+  "displayName": "Stove 08",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2100,
+  "sellValue": 400,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0.13,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_09",
+  "displayName": "Stove 09",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2300,
+  "sellValue": 450,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0.14,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_10",
+  "displayName": "Stove 10",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2500,
+  "sellValue": 500,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0.15,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_11",
+  "displayName": "Stove 11",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2700,
+  "sellValue": 550,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0.16,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_12",
+  "displayName": "Stove 12",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2900,
+  "sellValue": 600,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0.17,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_13",
+  "displayName": "Stove 13",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3100,
+  "sellValue": 650,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0.18,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_14",
+  "displayName": "Stove 14",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3300,
+  "sellValue": 700,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0.19,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_15",
+  "displayName": "Stove 15",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3500,
+  "sellValue": 750,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0.2,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_16",
+  "displayName": "Stove 16",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3700,
+  "sellValue": 800,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0.21,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_17",
+  "displayName": "Stove 17",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3900,
+  "sellValue": 850,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0.22,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_18",
+  "displayName": "Stove 18",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4100,
+  "sellValue": 900,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0.23,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_19",
+  "displayName": "Stove 19",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4300,
+  "sellValue": 950,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0.24,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_20",
+  "displayName": "Stove 20",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4500,
+  "sellValue": 1000,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0.25,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_21",
+  "displayName": "Stove 21",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4700,
+  "sellValue": 1050,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0.26,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_22",
+  "displayName": "Stove 22",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4900,
+  "sellValue": 1100,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0.27,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_23",
+  "displayName": "Stove 23",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5100,
+  "sellValue": 1150,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0.28,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_24",
+  "displayName": "Stove 24",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5300,
+  "sellValue": 1200,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0.29,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_25",
+  "displayName": "Stove 25",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5500,
+  "sellValue": 1250,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0.3,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_26",
+  "displayName": "Stove 26",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5700,
+  "sellValue": 1300,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0.31,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_27",
+  "displayName": "Stove 27",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 5900,
+  "sellValue": 1350,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0.32,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_28",
+  "displayName": "Stove 28",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6100,
+  "sellValue": 1400,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0.33,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_29",
+  "displayName": "Stove 29",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6300,
+  "sellValue": 1450,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0.34,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_30",
+  "displayName": "Stove 30",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6500,
+  "sellValue": 1500,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0.35,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_31",
+  "displayName": "Stove 31",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6700,
+  "sellValue": 1550,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0.36,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_32",
+  "displayName": "Stove 32",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 6900,
+  "sellValue": 1600,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0.37,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_33",
+  "displayName": "Stove 33",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7100,
+  "sellValue": 1650,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0.38,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_34",
+  "displayName": "Stove 34",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7300,
+  "sellValue": 1700,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0.39,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_35",
+  "displayName": "Stove 35",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7500,
+  "sellValue": 1750,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0.4,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_36",
+  "displayName": "Stove 36",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7700,
+  "sellValue": 1800,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0.41,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_37",
+  "displayName": "Stove 37",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 7900,
+  "sellValue": 1850,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0.42,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_38",
+  "displayName": "Stove 38",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8100,
+  "sellValue": 1900,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0.43,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_39",
+  "displayName": "Stove 39",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8300,
+  "sellValue": 1950,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0.44,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_40",
+  "displayName": "Stove 40",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8500,
+  "sellValue": 2000,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0.45,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_41",
+  "displayName": "Stove 41",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8700,
+  "sellValue": 2050,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0.46,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_42",
+  "displayName": "Stove 42",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 8900,
+  "sellValue": 2100,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0.47,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_43",
+  "displayName": "Stove 43",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9100,
+  "sellValue": 2150,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0.48,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_44",
+  "displayName": "Stove 44",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9300,
+  "sellValue": 2200,
+  "cafeLevelRequired": 14,
+  "cookSpeedBonus": 0.49,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_45",
+  "displayName": "Stove 45",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9500,
+  "sellValue": 2250,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0.5,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_46",
+  "displayName": "Stove 46",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9700,
+  "sellValue": 2300,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0.51,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_47",
+  "displayName": "Stove 47",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 9900,
+  "sellValue": 2350,
+  "cafeLevelRequired": 15,
+  "cookSpeedBonus": 0.52,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_48",
+  "displayName": "Stove 48",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 10100,
+  "sellValue": 2400,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0.53,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_49",
+  "displayName": "Stove 49",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 10300,
+  "sellValue": 2450,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0.54,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_50",
+  "displayName": "Stove 50",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 10500,
+  "sellValue": 2500,
+  "cafeLevelRequired": 16,
+  "cookSpeedBonus": 0.55,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_51",
+  "displayName": "Stove 51",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 10700,
+  "sellValue": 2550,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0.56,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_52",
+  "displayName": "Stove 52",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 10900,
+  "sellValue": 2600,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0.57,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_53",
+  "displayName": "Stove 53",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 11100,
+  "sellValue": 2650,
+  "cafeLevelRequired": 17,
+  "cookSpeedBonus": 0.58,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_54",
+  "displayName": "Stove 54",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 11300,
+  "sellValue": 2700,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0.59,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_55",
+  "displayName": "Stove 55",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 11500,
+  "sellValue": 2750,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0.6,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_56",
+  "displayName": "Stove 56",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 11700,
+  "sellValue": 2800,
+  "cafeLevelRequired": 18,
+  "cookSpeedBonus": 0.61,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_57",
+  "displayName": "Stove 57",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 11900,
+  "sellValue": 2850,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0.62,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_58",
+  "displayName": "Stove 58",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 12100,
+  "sellValue": 2900,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0.63,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_59",
+  "displayName": "Stove 59",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 12300,
+  "sellValue": 2950,
+  "cafeLevelRequired": 19,
+  "cookSpeedBonus": 0.64,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_60",
+  "displayName": "Stove 60",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 12500,
+  "sellValue": 3000,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0.65,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "stove_61",
+  "displayName": "Stove 61",
+  "furnitureType": 0,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 12700,
+  "sellValue": 3050,
+  "cafeLevelRequired": 20,
+  "cookSpeedBonus": 0.66,
+  "happinessBonus": 0,
+  "typeLabel": "stove"
+ },
+ {
+  "furnitureId": "table_01",
+  "displayName": "Table 01",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 450,
+  "sellValue": 40,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_02",
+  "displayName": "Table 02",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 600,
+  "sellValue": 80,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_03",
+  "displayName": "Table 03",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 750,
+  "sellValue": 120,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_04",
+  "displayName": "Table 04",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 900,
+  "sellValue": 160,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_05",
+  "displayName": "Table 05",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1050,
+  "sellValue": 200,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_06",
+  "displayName": "Table 06",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1200,
+  "sellValue": 240,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_07",
+  "displayName": "Table 07",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1350,
+  "sellValue": 280,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_08",
+  "displayName": "Table 08",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1500,
+  "sellValue": 320,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_09",
+  "displayName": "Table 09",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1650,
+  "sellValue": 360,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_10",
+  "displayName": "Table 10",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1800,
+  "sellValue": 400,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_11",
+  "displayName": "Table 11",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 1950,
+  "sellValue": 440,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_12",
+  "displayName": "Table 12",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 2100,
+  "sellValue": 480,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_13",
+  "displayName": "Table 13",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 2250,
+  "sellValue": 520,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_14",
+  "displayName": "Table 14",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 2400,
+  "sellValue": 560,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_15",
+  "displayName": "Table 15",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 2550,
+  "sellValue": 600,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_16",
+  "displayName": "Table 16",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 2700,
+  "sellValue": 640,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_17",
+  "displayName": "Table 17",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 2850,
+  "sellValue": 680,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_18",
+  "displayName": "Table 18",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3000,
+  "sellValue": 720,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_19",
+  "displayName": "Table 19",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3150,
+  "sellValue": 760,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_20",
+  "displayName": "Table 20",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3300,
+  "sellValue": 800,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_21",
+  "displayName": "Table 21",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3450,
+  "sellValue": 840,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_22",
+  "displayName": "Table 22",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3600,
+  "sellValue": 880,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_23",
+  "displayName": "Table 23",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3750,
+  "sellValue": 920,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_24",
+  "displayName": "Table 24",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 3900,
+  "sellValue": 960,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_25",
+  "displayName": "Table 25",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4050,
+  "sellValue": 1000,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_26",
+  "displayName": "Table 26",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4200,
+  "sellValue": 1040,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_27",
+  "displayName": "Table 27",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4350,
+  "sellValue": 1080,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_28",
+  "displayName": "Table 28",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4500,
+  "sellValue": 1120,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_29",
+  "displayName": "Table 29",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4650,
+  "sellValue": 1160,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_30",
+  "displayName": "Table 30",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4800,
+  "sellValue": 1200,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_31",
+  "displayName": "Table 31",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 4950,
+  "sellValue": 1240,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_32",
+  "displayName": "Table 32",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 5100,
+  "sellValue": 1280,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_33",
+  "displayName": "Table 33",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 5250,
+  "sellValue": 1320,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_34",
+  "displayName": "Table 34",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 5400,
+  "sellValue": 1360,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_35",
+  "displayName": "Table 35",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 5550,
+  "sellValue": 1400,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_36",
+  "displayName": "Table 36",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 5700,
+  "sellValue": 1440,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_37",
+  "displayName": "Table 37",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 5850,
+  "sellValue": 1480,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_38",
+  "displayName": "Table 38",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6000,
+  "sellValue": 1520,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_39",
+  "displayName": "Table 39",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6150,
+  "sellValue": 1560,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_40",
+  "displayName": "Table 40",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6300,
+  "sellValue": 1600,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_41",
+  "displayName": "Table 41",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6450,
+  "sellValue": 1640,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_42",
+  "displayName": "Table 42",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6600,
+  "sellValue": 1680,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_43",
+  "displayName": "Table 43",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6750,
+  "sellValue": 1720,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_44",
+  "displayName": "Table 44",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 6900,
+  "sellValue": 1760,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_45",
+  "displayName": "Table 45",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7050,
+  "sellValue": 1800,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_46",
+  "displayName": "Table 46",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7200,
+  "sellValue": 1840,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_47",
+  "displayName": "Table 47",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7350,
+  "sellValue": 1880,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_48",
+  "displayName": "Table 48",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7500,
+  "sellValue": 1920,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_49",
+  "displayName": "Table 49",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7650,
+  "sellValue": 1960,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_50",
+  "displayName": "Table 50",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7800,
+  "sellValue": 2000,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_51",
+  "displayName": "Table 51",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 7950,
+  "sellValue": 2040,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_52",
+  "displayName": "Table 52",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 8100,
+  "sellValue": 2080,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_53",
+  "displayName": "Table 53",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 8250,
+  "sellValue": 2120,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "table_54",
+  "displayName": "Table 54",
+  "furnitureType": 1,
+  "size": {
+   "x": 2,
+   "y": 2
+  },
+  "buyCost": 8400,
+  "sellValue": 2160,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "table"
+ },
+ {
+  "furnitureId": "wall_01",
+  "displayName": "Wall 01",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 260,
+  "sellValue": 15,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_02",
+  "displayName": "Wall 02",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 320,
+  "sellValue": 30,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_03",
+  "displayName": "Wall 03",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 380,
+  "sellValue": 45,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_04",
+  "displayName": "Wall 04",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 440,
+  "sellValue": 60,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_05",
+  "displayName": "Wall 05",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 500,
+  "sellValue": 75,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_06",
+  "displayName": "Wall 06",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 560,
+  "sellValue": 90,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_07",
+  "displayName": "Wall 07",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 620,
+  "sellValue": 105,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_08",
+  "displayName": "Wall 08",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 680,
+  "sellValue": 120,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_09",
+  "displayName": "Wall 09",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 740,
+  "sellValue": 135,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_10",
+  "displayName": "Wall 10",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 800,
+  "sellValue": 150,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_11",
+  "displayName": "Wall 11",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 860,
+  "sellValue": 165,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_12",
+  "displayName": "Wall 12",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 920,
+  "sellValue": 180,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_13",
+  "displayName": "Wall 13",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 980,
+  "sellValue": 195,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_14",
+  "displayName": "Wall 14",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1040,
+  "sellValue": 210,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_15",
+  "displayName": "Wall 15",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1100,
+  "sellValue": 225,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_16",
+  "displayName": "Wall 16",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1160,
+  "sellValue": 240,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_17",
+  "displayName": "Wall 17",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1220,
+  "sellValue": 255,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_18",
+  "displayName": "Wall 18",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1280,
+  "sellValue": 270,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_19",
+  "displayName": "Wall 19",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1340,
+  "sellValue": 285,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_20",
+  "displayName": "Wall 20",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1400,
+  "sellValue": 300,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_21",
+  "displayName": "Wall 21",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1460,
+  "sellValue": 315,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_22",
+  "displayName": "Wall 22",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1520,
+  "sellValue": 330,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_23",
+  "displayName": "Wall 23",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1580,
+  "sellValue": 345,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_24",
+  "displayName": "Wall 24",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1640,
+  "sellValue": 360,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_25",
+  "displayName": "Wall 25",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1700,
+  "sellValue": 375,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_26",
+  "displayName": "Wall 26",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1760,
+  "sellValue": 390,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_27",
+  "displayName": "Wall 27",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1820,
+  "sellValue": 405,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_28",
+  "displayName": "Wall 28",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1880,
+  "sellValue": 420,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_29",
+  "displayName": "Wall 29",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1940,
+  "sellValue": 435,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_30",
+  "displayName": "Wall 30",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2000,
+  "sellValue": 450,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_31",
+  "displayName": "Wall 31",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2060,
+  "sellValue": 465,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_32",
+  "displayName": "Wall 32",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2120,
+  "sellValue": 480,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_33",
+  "displayName": "Wall 33",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2180,
+  "sellValue": 495,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_34",
+  "displayName": "Wall 34",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2240,
+  "sellValue": 510,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_35",
+  "displayName": "Wall 35",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2300,
+  "sellValue": 525,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_36",
+  "displayName": "Wall 36",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2360,
+  "sellValue": 540,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_37",
+  "displayName": "Wall 37",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2420,
+  "sellValue": 555,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_38",
+  "displayName": "Wall 38",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2480,
+  "sellValue": 570,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_39",
+  "displayName": "Wall 39",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2540,
+  "sellValue": 585,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_40",
+  "displayName": "Wall 40",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2600,
+  "sellValue": 600,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_41",
+  "displayName": "Wall 41",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2660,
+  "sellValue": 615,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_42",
+  "displayName": "Wall 42",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2720,
+  "sellValue": 630,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_43",
+  "displayName": "Wall 43",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2780,
+  "sellValue": 645,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_44",
+  "displayName": "Wall 44",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2840,
+  "sellValue": 660,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_45",
+  "displayName": "Wall 45",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2900,
+  "sellValue": 675,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_46",
+  "displayName": "Wall 46",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2960,
+  "sellValue": 690,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_47",
+  "displayName": "Wall 47",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3020,
+  "sellValue": 705,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_48",
+  "displayName": "Wall 48",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3080,
+  "sellValue": 720,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_49",
+  "displayName": "Wall 49",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3140,
+  "sellValue": 735,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "wall_50",
+  "displayName": "Wall 50",
+  "furnitureType": 8,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3200,
+  "sellValue": 750,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wall"
+ },
+ {
+  "furnitureId": "walldecor_001",
+  "displayName": "Wall Decor 001",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 160,
+  "sellValue": 10,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_002",
+  "displayName": "Wall Decor 002",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 200,
+  "sellValue": 20,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_003",
+  "displayName": "Wall Decor 003",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 240,
+  "sellValue": 30,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_004",
+  "displayName": "Wall Decor 004",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 280,
+  "sellValue": 40,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_005",
+  "displayName": "Wall Decor 005",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 320,
+  "sellValue": 50,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_006",
+  "displayName": "Wall Decor 006",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 360,
+  "sellValue": 60,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_007",
+  "displayName": "Wall Decor 007",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 400,
+  "sellValue": 70,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_008",
+  "displayName": "Wall Decor 008",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 440,
+  "sellValue": 80,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_009",
+  "displayName": "Wall Decor 009",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 480,
+  "sellValue": 90,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_010",
+  "displayName": "Wall Decor 010",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 520,
+  "sellValue": 100,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_011",
+  "displayName": "Wall Decor 011",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 560,
+  "sellValue": 110,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_012",
+  "displayName": "Wall Decor 012",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 600,
+  "sellValue": 120,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_013",
+  "displayName": "Wall Decor 013",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 640,
+  "sellValue": 130,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_014",
+  "displayName": "Wall Decor 014",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 680,
+  "sellValue": 140,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_015",
+  "displayName": "Wall Decor 015",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 720,
+  "sellValue": 150,
+  "cafeLevelRequired": 1,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_016",
+  "displayName": "Wall Decor 016",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 760,
+  "sellValue": 160,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_017",
+  "displayName": "Wall Decor 017",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 800,
+  "sellValue": 170,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_018",
+  "displayName": "Wall Decor 018",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 840,
+  "sellValue": 180,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_019",
+  "displayName": "Wall Decor 019",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 880,
+  "sellValue": 190,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_020",
+  "displayName": "Wall Decor 020",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 920,
+  "sellValue": 200,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_021",
+  "displayName": "Wall Decor 021",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 960,
+  "sellValue": 210,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_022",
+  "displayName": "Wall Decor 022",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1000,
+  "sellValue": 220,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_023",
+  "displayName": "Wall Decor 023",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1040,
+  "sellValue": 230,
+  "cafeLevelRequired": 2,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_024",
+  "displayName": "Wall Decor 024",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1080,
+  "sellValue": 240,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_025",
+  "displayName": "Wall Decor 025",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1120,
+  "sellValue": 250,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_026",
+  "displayName": "Wall Decor 026",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1160,
+  "sellValue": 260,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_027",
+  "displayName": "Wall Decor 027",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1200,
+  "sellValue": 270,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_028",
+  "displayName": "Wall Decor 028",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1240,
+  "sellValue": 280,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_029",
+  "displayName": "Wall Decor 029",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1280,
+  "sellValue": 290,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_030",
+  "displayName": "Wall Decor 030",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1320,
+  "sellValue": 300,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_031",
+  "displayName": "Wall Decor 031",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1360,
+  "sellValue": 310,
+  "cafeLevelRequired": 3,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_032",
+  "displayName": "Wall Decor 032",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1400,
+  "sellValue": 320,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_033",
+  "displayName": "Wall Decor 033",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1440,
+  "sellValue": 330,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_034",
+  "displayName": "Wall Decor 034",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1480,
+  "sellValue": 340,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_035",
+  "displayName": "Wall Decor 035",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1520,
+  "sellValue": 350,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_036",
+  "displayName": "Wall Decor 036",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1560,
+  "sellValue": 360,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_037",
+  "displayName": "Wall Decor 037",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1600,
+  "sellValue": 370,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_038",
+  "displayName": "Wall Decor 038",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1640,
+  "sellValue": 380,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_039",
+  "displayName": "Wall Decor 039",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1680,
+  "sellValue": 390,
+  "cafeLevelRequired": 4,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_040",
+  "displayName": "Wall Decor 040",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1720,
+  "sellValue": 400,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_041",
+  "displayName": "Wall Decor 041",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1760,
+  "sellValue": 410,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_042",
+  "displayName": "Wall Decor 042",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1800,
+  "sellValue": 420,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_043",
+  "displayName": "Wall Decor 043",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1840,
+  "sellValue": 430,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_044",
+  "displayName": "Wall Decor 044",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1880,
+  "sellValue": 440,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_045",
+  "displayName": "Wall Decor 045",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1920,
+  "sellValue": 450,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_046",
+  "displayName": "Wall Decor 046",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 1960,
+  "sellValue": 460,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_047",
+  "displayName": "Wall Decor 047",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2000,
+  "sellValue": 470,
+  "cafeLevelRequired": 5,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_048",
+  "displayName": "Wall Decor 048",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2040,
+  "sellValue": 480,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_049",
+  "displayName": "Wall Decor 049",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2080,
+  "sellValue": 490,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_050",
+  "displayName": "Wall Decor 050",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2120,
+  "sellValue": 500,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_051",
+  "displayName": "Wall Decor 051",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2160,
+  "sellValue": 510,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_052",
+  "displayName": "Wall Decor 052",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2200,
+  "sellValue": 520,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_053",
+  "displayName": "Wall Decor 053",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2240,
+  "sellValue": 530,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_054",
+  "displayName": "Wall Decor 054",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2280,
+  "sellValue": 540,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_055",
+  "displayName": "Wall Decor 055",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2320,
+  "sellValue": 550,
+  "cafeLevelRequired": 6,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_056",
+  "displayName": "Wall Decor 056",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2360,
+  "sellValue": 560,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_057",
+  "displayName": "Wall Decor 057",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2400,
+  "sellValue": 570,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_058",
+  "displayName": "Wall Decor 058",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2440,
+  "sellValue": 580,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_059",
+  "displayName": "Wall Decor 059",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2480,
+  "sellValue": 590,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_060",
+  "displayName": "Wall Decor 060",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2520,
+  "sellValue": 600,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_061",
+  "displayName": "Wall Decor 061",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2560,
+  "sellValue": 610,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_062",
+  "displayName": "Wall Decor 062",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2600,
+  "sellValue": 620,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_063",
+  "displayName": "Wall Decor 063",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2640,
+  "sellValue": 630,
+  "cafeLevelRequired": 7,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_064",
+  "displayName": "Wall Decor 064",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2680,
+  "sellValue": 640,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_065",
+  "displayName": "Wall Decor 065",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2720,
+  "sellValue": 650,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_066",
+  "displayName": "Wall Decor 066",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2760,
+  "sellValue": 660,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_067",
+  "displayName": "Wall Decor 067",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2800,
+  "sellValue": 670,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_068",
+  "displayName": "Wall Decor 068",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2840,
+  "sellValue": 680,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_069",
+  "displayName": "Wall Decor 069",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2880,
+  "sellValue": 690,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_070",
+  "displayName": "Wall Decor 070",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2920,
+  "sellValue": 700,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_071",
+  "displayName": "Wall Decor 071",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 2960,
+  "sellValue": 710,
+  "cafeLevelRequired": 8,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_072",
+  "displayName": "Wall Decor 072",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3000,
+  "sellValue": 720,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_073",
+  "displayName": "Wall Decor 073",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3040,
+  "sellValue": 730,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_074",
+  "displayName": "Wall Decor 074",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3080,
+  "sellValue": 740,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_075",
+  "displayName": "Wall Decor 075",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3120,
+  "sellValue": 750,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_076",
+  "displayName": "Wall Decor 076",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3160,
+  "sellValue": 760,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_077",
+  "displayName": "Wall Decor 077",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3200,
+  "sellValue": 770,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_078",
+  "displayName": "Wall Decor 078",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3240,
+  "sellValue": 780,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_079",
+  "displayName": "Wall Decor 079",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3280,
+  "sellValue": 790,
+  "cafeLevelRequired": 9,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_080",
+  "displayName": "Wall Decor 080",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3320,
+  "sellValue": 800,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_081",
+  "displayName": "Wall Decor 081",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3360,
+  "sellValue": 810,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_082",
+  "displayName": "Wall Decor 082",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3400,
+  "sellValue": 820,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_083",
+  "displayName": "Wall Decor 083",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3440,
+  "sellValue": 830,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_084",
+  "displayName": "Wall Decor 084",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3480,
+  "sellValue": 840,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_085",
+  "displayName": "Wall Decor 085",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3520,
+  "sellValue": 850,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_086",
+  "displayName": "Wall Decor 086",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3560,
+  "sellValue": 860,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_087",
+  "displayName": "Wall Decor 087",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3600,
+  "sellValue": 870,
+  "cafeLevelRequired": 10,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_088",
+  "displayName": "Wall Decor 088",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3640,
+  "sellValue": 880,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_089",
+  "displayName": "Wall Decor 089",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3680,
+  "sellValue": 890,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_090",
+  "displayName": "Wall Decor 090",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3720,
+  "sellValue": 900,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_091",
+  "displayName": "Wall Decor 091",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3760,
+  "sellValue": 910,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_092",
+  "displayName": "Wall Decor 092",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3800,
+  "sellValue": 920,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_093",
+  "displayName": "Wall Decor 093",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3840,
+  "sellValue": 930,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_094",
+  "displayName": "Wall Decor 094",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3880,
+  "sellValue": 940,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_095",
+  "displayName": "Wall Decor 095",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3920,
+  "sellValue": 950,
+  "cafeLevelRequired": 11,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_096",
+  "displayName": "Wall Decor 096",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 3960,
+  "sellValue": 960,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_097",
+  "displayName": "Wall Decor 097",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4000,
+  "sellValue": 970,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_098",
+  "displayName": "Wall Decor 098",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4040,
+  "sellValue": 980,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_099",
+  "displayName": "Wall Decor 099",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4080,
+  "sellValue": 990,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_100",
+  "displayName": "Wall Decor 100",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4120,
+  "sellValue": 1000,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_101",
+  "displayName": "Wall Decor 101",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4160,
+  "sellValue": 1010,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_102",
+  "displayName": "Wall Decor 102",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4200,
+  "sellValue": 1020,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_103",
+  "displayName": "Wall Decor 103",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4240,
+  "sellValue": 1030,
+  "cafeLevelRequired": 12,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_104",
+  "displayName": "Wall Decor 104",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4280,
+  "sellValue": 1040,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_105",
+  "displayName": "Wall Decor 105",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4320,
+  "sellValue": 1050,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_106",
+  "displayName": "Wall Decor 106",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4360,
+  "sellValue": 1060,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ },
+ {
+  "furnitureId": "walldecor_107",
+  "displayName": "Wall Decor 107",
+  "furnitureType": 9,
+  "size": {
+   "x": 1,
+   "y": 1
+  },
+  "buyCost": 4400,
+  "sellValue": 1070,
+  "cafeLevelRequired": 13,
+  "cookSpeedBonus": 0,
+  "happinessBonus": 0,
+  "typeLabel": "wallDecor"
+ }
+]

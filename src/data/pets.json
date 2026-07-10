@@ -1,0 +1,119 @@
+[
+ {
+  "petId": "pet_bat",
+  "displayName": "Bat",
+  "ability": 3,
+  "abilityCooldown": 2.5,
+  "habitatSize": {
+   "x": 1,
+   "y": 1
+  },
+  "baseHP": 50,
+  "baseAttack": 18,
+  "abilityLabel": "tornado"
+ },
+ {
+  "petId": "pet_crow",
+  "displayName": "Crow",
+  "ability": 3,
+  "abilityCooldown": 3,
+  "habitatSize": {
+   "x": 1,
+   "y": 1
+  },
+  "baseHP": 60,
+  "baseAttack": 20,
+  "abilityLabel": "tornado"
+ },
+ {
+  "petId": "pet_dragon",
+  "displayName": "Dragon",
+  "ability": 1,
+  "abilityCooldown": 6,
+  "habitatSize": {
+   "x": 2,
+   "y": 2
+  },
+  "baseHP": 120,
+  "baseAttack": 45,
+  "abilityLabel": "areaAttack"
+ },
+ {
+  "petId": "pet_ghost_cat",
+  "displayName": "Ghost Cat",
+  "ability": 1,
+  "abilityCooldown": 3,
+  "habitatSize": {
+   "x": 1,
+   "y": 1
+  },
+  "baseHP": 60,
+  "baseAttack": 20,
+  "abilityLabel": "areaAttack"
+ },
+ {
+  "petId": "pet_phoenix",
+  "displayName": "Phoenix",
+  "ability": 5,
+  "abilityCooldown": 5.5,
+  "habitatSize": {
+   "x": 2,
+   "y": 2
+  },
+  "baseHP": 100,
+  "baseAttack": 40,
+  "abilityLabel": "shield"
+ },
+ {
+  "petId": "pet_snake",
+  "displayName": "Snake",
+  "ability": 4,
+  "abilityCooldown": 4.5,
+  "habitatSize": {
+   "x": 1,
+   "y": 1
+  },
+  "baseHP": 65,
+  "baseAttack": 26,
+  "abilityLabel": "pounce"
+ },
+ {
+  "petId": "pet_spider",
+  "displayName": "Spider",
+  "ability": 1,
+  "abilityCooldown": 3.5,
+  "habitatSize": {
+   "x": 1,
+   "y": 1
+  },
+  "baseHP": 55,
+  "baseAttack": 22,
+  "abilityLabel": "areaAttack"
+ },
+ {
+  "petId": "pet_wolf",
+  "displayName": "Wolf",
+  "ability": 1,
+  "abilityCooldown": 5,
+  "habitatSize": {
+   "x": 2,
+   "y": 2
+  },
+  "baseHP": 90,
+  "baseAttack": 35,
+  "abilityLabel": "areaAttack"
+ },
+ {
+  "petId": "pet_zombie_dog",
+  "displayName": "Zombie Dog",
+  "ability": 4,
+  "abilityCooldown": 4,
+  "habitatSize": {
+   "x": 1,
+   "y": 1
+  },
+  "baseHP": 70,
+  "baseAttack": 25,
+  "abilityLabel": "pounce"
+ }
+]

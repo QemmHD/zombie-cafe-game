@@ -1,0 +1,93 @@
+[
+ {
+  "tombstoneId": "tombstone_angel",
+  "displayName": "Angel Tombstone",
+  "buffType": 1,
+  "buffValue": 0.1,
+  "buffLabel": "health"
+ },
+ {
+  "tombstoneId": "tombstone_cross",
+  "displayName": "Cross Tombstone",
+  "buffType": 1,
+  "buffValue": 0.05,
+  "buffLabel": "health"
+ },
+ {
+  "tombstoneId": "tombstone_crypt",
+  "displayName": "Crypt Tombstone",
+  "buffType": 1,
+  "buffValue": 0.15,
+  "buffLabel": "health"
+ },
+ {
+  "tombstoneId": "tombstone_diamond",
+  "displayName": "Diamond Tombstone",
+  "buffType": 0,
+  "buffValue": 0.25,
+  "buffLabel": "strength"
+ },
+ {
+  "tombstoneId": "tombstone_gargoyle",
+  "displayName": "Gargoyle Tombstone",
+  "buffType": 0,
+  "buffValue": 0.1,
+  "buffLabel": "strength"
+ },
+ {
+  "tombstoneId": "tombstone_gold",
+  "displayName": "Gold Tombstone",
+  "buffType": 1,
+  "buffValue": 0.2,
+  "buffLabel": "health"
+ },
+ {
+  "tombstoneId": "tombstone_grim_reaper",
+  "displayName": "Grim Reaper Tombstone",
+  "buffType": 4,
+  "buffValue": 0.2,
+  "buffLabel": "grimReaper"
+ },
+ {
+  "tombstoneId": "tombstone_obelisk",
+  "displayName": "Obelisk Tombstone",
+  "buffType": 0,
+  "buffValue": 0.15,
+  "buffLabel": "strength"
+ },
+ {
+  "tombstoneId": "tombstone_obsidian",
+  "displayName": "Obsidian Tombstone",
+  "buffType": 0,
+  "buffValue": 0.2,
+  "buffLabel": "strength"
+ },
+ {
+  "tombstoneId": "tombstone_pet_habitat",
+  "displayName": "Pet Habitat Stone",
+  "buffType": 6,
+  "buffValue": 1,
+  "buffLabel": "pet"
+ },
+ {
+  "tombstoneId": "tombstone_revive",
+  "displayName": "Revive Tombstone",
+  "buffType": 2,
+  "buffValue": 1,
+  "buffLabel": "revive"
+ },
+ {
+  "tombstoneId": "tombstone_skull",
+  "displayName": "Skull Tombstone",
+  "buffType": 0,
+  "buffValue": 0.05,
+  "buffLabel": "strength"
+ },
+ {
+  "tombstoneId": "tombstone_super_server",
+  "displayName": "Super Server Stone",
+  "buffType": 5,
+  "buffValue": 0.25,
+  "buffLabel": "superServer"
+ }
+]
