@@ -12,10 +12,6 @@ export const BRAND = {
 export const GAME_WIDTH = 960;
 export const GAME_HEIGHT = 600;
 
-// Vertical-slice tuning. The ported dish data carries the original game's real
-// (idle-scale) cook times — up to 8 hours. For a demoable slice we compress time
-// so the loop is visible in seconds; DEMO_TIME_SCALE is the single knob.
-export const DEMO_TIME_SCALE = 120; // 1 real second = 120 in-game seconds
 
 // ── Palette (spooky diner: charcoal + toxic green + blood red) ───────────────
 export const PALETTE = {

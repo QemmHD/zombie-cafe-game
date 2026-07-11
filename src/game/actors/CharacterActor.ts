@@ -53,6 +53,9 @@ export class CharacterActor {
   }
 
   destroy(): void {
+    // No tween callback may outlive the actor (setTexture on a destroyed
+    // Image dereferences a nulled scene and kills the game loop).
+    this.view.scene.tweens.killTweensOf(this.sprite);
     this.walker.dispose();
     this.sprite.destroy();
     this.shadow.destroy();

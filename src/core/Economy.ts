@@ -1,13 +1,14 @@
 import { EventBus } from './EventBus';
 import { Save } from './SaveManager';
 
-// Two-currency economy mirroring the original: Coins (soft) + Brains (premium).
+// Two-currency economy matching the original: Coins (soft) + Toxin (the green
+// serum premium currency — earned only, never bought; canon §8).
 export const Economy = {
   get coins(): number {
     return Save.data.coins;
   },
-  get brains(): number {
-    return Save.data.brains;
+  get toxin(): number {
+    return Save.data.toxin;
   },
 
   addCoins(amount: number): void {
@@ -23,16 +24,16 @@ export const Economy = {
     return true;
   },
 
-  addBrains(amount: number): void {
+  addToxin(amount: number): void {
     if (amount === 0) return;
-    Save.data.brains = Math.max(0, Save.data.brains + amount);
-    EventBus.publish('brains-changed', Save.data.brains);
+    Save.data.toxin = Math.max(0, Save.data.toxin + amount);
+    EventBus.publish('toxin-changed', Save.data.toxin);
   },
 
-  spendBrains(amount: number): boolean {
-    if (Save.data.brains < amount) return false;
-    Save.data.brains -= amount;
-    EventBus.publish('brains-changed', Save.data.brains);
+  spendToxin(amount: number): boolean {
+    if (Save.data.toxin < amount) return false;
+    Save.data.toxin -= amount;
+    EventBus.publish('toxin-changed', Save.data.toxin);
     return true;
   },
 };

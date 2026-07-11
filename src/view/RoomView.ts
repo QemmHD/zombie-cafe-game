@@ -2,6 +2,9 @@ import Phaser from 'phaser';
 import {
   BAND,
   CafeGrid,
+  DEFAULT_FIT_ZOOM_FLOOR,
+  ZOOM_MAX,
+  clamp,
   HALF_H,
   HALF_W,
   entityDepth,
@@ -80,7 +83,7 @@ export class RoomView {
     const cam = this.scene.cameras.main;
     const zw = (cam.width - marginPx * 2) / (b.maxX - b.minX);
     const zh = (cam.height - marginPx * 2) / (b.maxY - b.minY);
-    const zoom = Math.min(zw, zh, 2);
+    const zoom = clamp(Math.min(zw, zh), DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
     cam.setZoom(zoom);
     cam.centerOn((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2 + 12);
     return zoom;

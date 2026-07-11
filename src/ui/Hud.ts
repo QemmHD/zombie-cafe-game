@@ -10,7 +10,7 @@ export class Hud {
   private scene: Phaser.Scene;
   private layer: Phaser.GameObjects.Container;
   private coinsText!: Phaser.GameObjects.Text;
-  private brainsText!: Phaser.GameObjects.Text;
+  private toxinText!: Phaser.GameObjects.Text;
   private levelText!: Phaser.GameObjects.Text;
   private zombieText!: Phaser.GameObjects.Text;
   private toasts: Phaser.GameObjects.Container[] = [];
@@ -20,11 +20,15 @@ export class Hud {
     this.layer = scene.add.container(0, 0).setDepth(5000);
     this.build();
 
-    EventBus.subscribe('coins-changed', () => this.refresh());
-    EventBus.subscribe('brains-changed', () => this.refresh());
-    EventBus.subscribe('zombie-added', () => this.refresh());
-    EventBus.subscribe('cafe-level-up', () => this.refresh());
-    EventBus.subscribe('notify', (msg: string) => this.toast(msg));
+    const unsubs = [
+      EventBus.subscribe('coins-changed', () => this.refresh()),
+      EventBus.subscribe('toxin-changed', () => this.refresh()),
+      EventBus.subscribe('zombie-added', () => this.refresh()),
+      EventBus.subscribe('cafe-level-up', () => this.refresh()),
+      EventBus.subscribe('notify', (msg: string) => this.toast(msg)),
+    ];
+    // A restarted HUD scene must not leave stale handlers poking dead objects.
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => unsubs.forEach((u) => u()));
     this.refresh();
   }
 
@@ -43,7 +47,7 @@ export class Hud {
     this.layer.add(bar);
 
     this.coinsText = this.chip(12, PALETTE.coin, '0');
-    this.brainsText = this.chip(174, PALETTE.brains, '0');
+    this.toxinText = this.chip(174, PALETTE.toxic, '0');
     this.levelText = this.chip(336, PALETTE.toxic, 'Lv 1');
     this.zombieText = this.chip(498, PALETTE.blood, '0');
 
@@ -55,7 +59,7 @@ export class Hud {
 
   private refresh(): void {
     this.coinsText.setText(this.fmt(Economy.coins));
-    this.brainsText.setText(this.fmt(Economy.brains));
+    this.toxinText.setText(this.fmt(Economy.toxin));
     this.levelText.setText(`Lv ${Save.data.cafeLevel}`);
     this.zombieText.setText(`${Save.data.zombies.length} 🧟`);
   }

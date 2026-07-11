@@ -26,4 +26,7 @@ declare global {
     __game?: Phaser.Game;
   }
 }
-window.__game = game;
+// DEV builds and explicit ?qa runs only — production consoles get nothing.
+if (import.meta.env.DEV || new URLSearchParams(location.search).has('qa')) {
+  window.__game = game;
+}

@@ -154,4 +154,4 @@ if __name__ == "__main__":
     wall_section(33).save(OUT / "wall_01.png")
     door_mat(44).save(OUT / "door_mat.png")
     for f in sorted(OUT.glob("*.png")):
-        print(f"  {f.name:готов18s}" if False else f"  {f.name:18s} {Image.open(f).size} {f.stat().st_size // 1024}KB")
+        print(f"  {f.name:18s} {Image.open(f).size} {f.stat().st_size // 1024}KB")

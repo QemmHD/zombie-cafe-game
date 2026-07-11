@@ -27,7 +27,7 @@ export class CafeScene extends Phaser.Scene {
   private waiters: CharacterActor[] = [];
   private customers = new Set<CustomerActor>();
   private seatsTaken = new Set<string>(); // seatId = chair placementId
-  private spawnTimer = 1600;
+  private spawnTimer = 3000;
   private saveTimer = 5000;
   private servedSinceLevel = 0;
   private seedCounter = 1;
@@ -51,6 +51,10 @@ export class CafeScene extends Phaser.Scene {
     this.reportOfflineEarnings();
 
     EventBus.publish('notify', 'Tap a stove to staff it. Feed customers to infect them!');
+
+    // Progress comes from SERVING (canon §6: XP per serving), not infection RNG.
+    const unsubServe = EventBus.subscribe('customer-served', () => this.maybeLevelUp());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubServe);
 
     this.game.events.on(Phaser.Core.Events.BLUR, () => Save.save());
     window.addEventListener('visibilitychange', () => {
@@ -94,31 +98,41 @@ export class CafeScene extends Phaser.Scene {
   private dispatchWaiter(stove: StoveSim): boolean {
     const idle = Save.data.zombies.find((z) => z.assignment === 'idle');
     if (!idle) return false;
-    this.sendWaiterTo(stove, idle);
-    return true;
+    return this.sendWaiterTo(stove, idle);
   }
 
-  private sendWaiterTo(stove: StoveSim, zombie: ZombieInstance): void {
+  private sendWaiterTo(stove: StoveSim, zombie: ZombieInstance): boolean {
     const cells = this.grid.interactionCells(stove.placementId);
-    if (cells.length === 0) return;
-    const data = getZombie(zombie.zombieId);
-    const speed = zombieTilesPerSec(data ? Math.round(data.baseSpeed * 3) : DEFAULT_SPEED_STAT);
+    if (cells.length === 0) return false;
+    // The one stat->speed module; StaffStats (M6) will own stat derivation.
+    const speed = zombieTilesPerSec(DEFAULT_SPEED_STAT);
     const w = new CharacterActor(this.view, 'zombie_waiter', this.grid.door(), speed, this.seedCounter++, `waiter_${this.seedCounter}`);
     // Any reachable interaction cell will do — layouts can seal some of them.
     const reached = cells.some((cell) => w.walker.requestMove(cell).status === 'ok');
     if (!reached) {
       w.destroy();
       EventBus.publish('notify', 'That stove is walled off — your zombie refuses.');
-      return;
+      return false;
     }
     zombie.assignment = 'kitchen';
+    stove.expectStaff(); // stove stays honest: no double-dispatch window
     w.sprite.setData('stoveId', stove.placementId);
     this.waiters.push(w);
-    // When the waiter arrives, the pot goes on.
     const onTick = (events: ReturnType<CharacterActor['tick']>) => {
-      for (const e of events) if (e.type === 'arrived') stove.staffArrived(zombie);
+      for (const e of events) {
+        if (e.type === 'arrived') stove.staffArrived(zombie);
+        if (e.type === 'blocked') {
+          // Route died (furniture moved mid-walk): free everyone honestly.
+          zombie.assignment = 'idle';
+          stove.revertToUnstaffed();
+          this.waiters = this.waiters.filter((x) => x !== w);
+          w.destroy();
+          EventBus.publish('notify', 'Your zombie got walled in and gave up.');
+        }
+      }
     };
     w.sprite.setData('onTick', onTick);
+    return true;
   }
 
   private reportOfflineEarnings(): void {
@@ -171,7 +185,6 @@ export class CafeScene extends Phaser.Scene {
   private onCustomerConverted(z: Zombie): void {
     Save.data.zombies.push({ zombieId: z.zombieId, level: 1, xp: 0, assignment: 'idle' });
     EventBus.publish('zombie-added', z);
-    this.maybeLevelUp();
   }
 
   private maybeLevelUp(): void {
@@ -202,7 +215,7 @@ export class CafeScene extends Phaser.Scene {
     this.spawnTimer -= deltaMs;
     if (this.spawnTimer <= 0) {
       this.spawnCustomer();
-      this.spawnTimer = Phaser.Math.Between(2800, 5200);
+      this.spawnTimer = Phaser.Math.Between(12000, 20000); // canon-shaped pacing
     }
 
     this.saveTimer -= deltaMs;

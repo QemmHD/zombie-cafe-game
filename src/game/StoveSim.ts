@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import { DEMO_TIME_SCALE, PALETTE } from '../config';
+import { PALETTE } from '../config';
 import { Economy } from '../core/Economy';
 import { EventBus } from '../core/EventBus';
 import { getZombie } from '../data/content';
 import type { Dish, ZombieInstance } from '../data/types';
-import type { PlacementId } from '../engine/contracts';
+import { BAND, type PlacementId } from '../engine/contracts';
 import type { RoomView } from '../view/RoomView';
 
 type StoveState = 'unstaffed' | 'awaiting-cook' | 'cooking' | 'ready';
@@ -29,6 +29,7 @@ export class StoveSim {
   private barFill: Phaser.GameObjects.Rectangle;
   private bubble: Phaser.GameObjects.Container;
   private steam: Phaser.GameObjects.Ellipse;
+  private bobTween: Phaser.Tweens.Tween | null = null;
 
   onRequestStaff: (() => boolean) | null = null; // scene dispatches a waiter; true if one is coming
   private top = { x: 0, y: 0 };
@@ -43,7 +44,8 @@ export class StoveSim {
     const { x, y } = sprite;
     const h = sprite.displayHeight;
     this.top = { x, y: y - h };
-    const depth = sprite.depth + 1;
+    // Status UI lives in the world-FX band: no prop or character may occlude it.
+    const depth = BAND.FX_WORLD;
 
     this.label = scene.add
       .text(x, y + 4, 'tap to staff', { fontFamily: 'monospace', fontSize: '15px', color: '#e8ecf2' })
@@ -62,6 +64,18 @@ export class StoveSim {
     this.bubble.add([bBg, bTxt]).setVisible(false);
 
     sprite.on('pointerdown', () => this.onTap());
+  }
+
+  /** A waiter has been dispatched; block double-taps while they shamble over. */
+  expectStaff(): void {
+    this.state = 'awaiting-cook';
+    this.label.setText('staff incoming…').setColor('#8891a4');
+  }
+
+  /** Dispatch failed or died en route: the stove is honest about it again. */
+  revertToUnstaffed(): void {
+    this.state = 'unstaffed';
+    this.label.setText('tap to staff').setColor('#e8ecf2');
   }
 
   /** Called by the scene when the dispatched waiter reaches the stove. */
@@ -84,18 +98,19 @@ export class StoveSim {
   private onTap(): void {
     if (this.state === 'ready') this.collect();
     else if (this.state === 'unstaffed') {
-      if (this.onRequestStaff?.()) {
-        this.state = 'awaiting-cook';
-        this.label.setText('staff incoming…').setColor('#8891a4');
-      } else {
+      if (!this.onRequestStaff?.()) {
         EventBus.publish('notify', 'No idle zombies — infect a customer first!');
       }
+      // On success the dispatcher calls expectStaff() — state is its call.
     }
   }
 
   private collect(): void {
     Economy.addCoins(this.dish.coinReward);
     EventBus.publish('dish-collected', this.dish.coinReward);
+    this.bobTween?.pause();
+    this.view.scene.tweens.killTweensOf(this.bubble);
+    this.bobTween = null;
     this.view.scene.tweens.add({
       targets: this.bubble,
       y: this.top.y - 44,
@@ -108,7 +123,7 @@ export class StoveSim {
 
   update(dtSec: number): void {
     if (this.state !== 'cooking') return;
-    this.elapsedGame += dtSec * DEMO_TIME_SCALE;
+    this.elapsedGame += dtSec; // real seconds — canon: no scale constant exists
     const p = Phaser.Math.Clamp(this.elapsedGame / this.cookGame, 0, 1);
     this.barFill.width = 76 * p;
     this.steam.y = this.top.y + 6 + Math.sin(this.elapsedGame / 40) * 3;
@@ -118,13 +133,18 @@ export class StoveSim {
       this.steam.setAlpha(0);
       this.label.setText('READY').setColor('#f2c14e');
       this.bubble.setVisible(true);
-      this.view.scene.tweens.add({
-        targets: this.bubble,
-        y: this.top.y - 20,
-        duration: 520,
-        yoyo: true,
-        repeat: -1,
-      });
+      // One reusable bob tween — never stack a new infinite tween per READY.
+      if (!this.bobTween) {
+        this.bobTween = this.view.scene.tweens.add({
+          targets: this.bubble,
+          y: this.top.y - 20,
+          duration: 520,
+          yoyo: true,
+          repeat: -1,
+        });
+      } else {
+        this.bobTween.restart();
+      }
     }
   }
 }

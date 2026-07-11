@@ -2,12 +2,12 @@ import type { ZombieInstance } from '../data/types';
 import { getZombie, DISHES } from '../data/content';
 
 const SAVE_KEY = 'zombiecafe.save.v1';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 export interface SaveData {
   version: number;
   coins: number;
-  brains: number;
+  toxin: number;
   cafeLevel: number;
   playerXP: number;
   zombies: ZombieInstance[];
@@ -20,7 +20,7 @@ export function freshSave(): SaveData {
   return {
     version: SAVE_VERSION,
     coins: 500,
-    brains: 10,
+    toxin: 10,
     cafeLevel: 1,
     playerXP: 0,
     zombies: [
@@ -61,9 +61,15 @@ export class SaveManager {
     }
   }
 
-  private migrate(old: Partial<SaveData>): SaveData {
-    // Only one version so far — merge onto a fresh baseline for forward-compat.
-    return { ...freshSave(), ...old, version: SAVE_VERSION };
+  private migrate(old: Partial<SaveData> & { brains?: number }): SaveData {
+    // v1 -> v2: the "Brains" currency never existed in the original (canon §8);
+    // it becomes Toxin at min(brains, 99).
+    const merged = { ...freshSave(), ...old, version: SAVE_VERSION };
+    if (old.brains !== undefined && old.toxin === undefined) {
+      merged.toxin = Math.min(old.brains, 99);
+    }
+    delete (merged as { brains?: number }).brains;
+    return merged;
   }
 
   // The core idle loop the Unity build never implemented: on load, pay out

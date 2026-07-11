@@ -8,7 +8,7 @@ import { CUSTOMER_SPEED, type Seat } from '../../engine/contracts';
 import type { RoomView } from '../../view/RoomView';
 import { CharacterActor } from './CharacterActor';
 
-type Phase = 'entering' | 'eating' | 'leaving' | 'done';
+type Phase = 'entering' | 'eating' | 'converting' | 'leaving' | 'done';
 
 /**
  * A human customer: walks the grid from the door to a real seat (A* — routes
@@ -78,7 +78,7 @@ export class CustomerActor extends CharacterActor {
 
   private startEating(): void {
     this.phase = 'eating';
-    this.eatTimer = 2.4 + Math.random() * 1.2;
+    this.eatTimer = 7 + Math.random() * 2; // ~8s, canon FSM shape
     const p = this.view.worldOf(this.seat.tile.tx, this.seat.tile.ty);
     this.plate = this.view.scene.add
       .circle(p.x + 14, p.y - 26, 7, PALETTE.toxic)
@@ -87,6 +87,9 @@ export class CustomerActor extends CharacterActor {
   }
 
   private finishEating(): void {
+    // One-shot: leave 'eating' SYNCHRONOUSLY so this can never re-fire while
+    // the infect tween runs (review blocker: duplicate payouts + zombies).
+    this.phase = 'converting';
     this.plate?.destroy();
     this.plate = null;
     Economy.addCoins(this.tip);
@@ -110,9 +113,8 @@ export class CustomerActor extends CharacterActor {
         this.sprite.setScale(118 / this.sprite.height);
         this.sprite.setTint(0x9fe8a0);
         const z = randomCommonZombie();
-        Economy.addBrains(1);
         EventBus.publish('customer-infected', z.displayName);
-        EventBus.publish('notify', `${z.displayName} joined your staff! (+1 🧠)`);
+        EventBus.publish('notify', `${z.displayName} joined your staff!`);
         this.onConverted(z);
       },
       onComplete: () => {
@@ -123,8 +125,11 @@ export class CustomerActor extends CharacterActor {
   }
 
   private leave(): void {
+    this.phase = 'leaving';
     const res = this.walker.requestMove(this.view.grid.door());
-    if (res.status !== 'ok') this.finish(); // trapped: vanish gracefully rather than haunt
+    // Trapped, or already standing on the door tile (requestMove returns ok
+    // and goes idle WITHOUT an 'arrived' event) — finish now, don't deadlock.
+    if (res.status !== 'ok' || this.walker.state === 'idle') this.finish();
   }
 
   private finish(): void {
