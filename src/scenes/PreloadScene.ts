@@ -18,6 +18,9 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('door_mat', 'art/room/door_mat.png');
     this.load.image('sidewalk', 'art/room/sidewalk.png');
     this.load.image('asphalt', 'art/room/asphalt.png');
+    this.load.image('grass', 'art/room/grass.png');
+    this.load.image('road_stripe', 'art/room/road_stripe.png');
+    this.load.image('wall_door', 'art/room/wall_door.png');
 
     // World & characters
     this.load.image('city_bg', 'art/city_bg.jpg');

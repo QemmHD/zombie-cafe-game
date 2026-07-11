@@ -103,7 +103,7 @@ export function starterLayout(): LayoutSchema {
     w: STARTER_W,
     h: STARTER_H,
     expansionTier: 0,
-    door: { x: Math.floor(STARTER_W / 2), y: STARTER_H - 1 },
+    door: { x: Math.floor(STARTER_W / 2), y: 0 },
     floors: new Array(STARTER_W * STARTER_H).fill(FLOOR_DEFAULT),
     wallsRight: new Array(STARTER_W).fill(WALL_DEFAULT),
     wallsLeft: new Array(STARTER_H).fill(WALL_DEFAULT),
@@ -230,17 +230,21 @@ export class CafeGrid {
     return out;
   }
 
-  /** Chairs orthogonally adjacent to a table footprint (original: pairs cap throughput). */
+  /** Chairs orthogonally adjacent to a table footprint. Ground truth: ONE seat
+   * per table (one customer per table) — the first adjacent chair in canonical
+   * placement order claims the table; extra chairs are decorative. */
   seats(): Seat[] {
     const out: Seat[] = [];
+    const claimed = new Set<PlacementId>();
     for (const p of this.placementsById.values()) {
       if (p.kind !== 'chair') continue;
       for (const dir of DIRS) {
         const n = { tx: p.anchor.tx + DIR_DELTA[dir].tx, ty: p.anchor.ty + DIR_DELTA[dir].ty };
         const adj = this.placementAt(n);
-        if (adj && adj.kind === 'table') {
+        if (adj && adj.kind === 'table' && !claimed.has(adj.id)) {
+          claimed.add(adj.id);
           out.push({ chairId: p.id, tile: { ...p.anchor }, tableId: adj.id, facing: dir });
-          break; // one seat per chair; first table in canonical DIRS order wins
+          break;
         }
       }
     }
@@ -371,10 +375,11 @@ export class CafeGrid {
     this.events.emit('wallDecorRemoved', { decor: d });
   }
 
-  /** Door must sit on a front edge (tx = w-1 or ty = h-1) and be unoccupied. */
+  /** Door must sit on a BACK edge (tx = 0 or ty = 0) and be unoccupied —
+   * the original's door is a wall item; customers enter from the street behind. */
   setDoor(t: Tile): void {
-    if (!this.inBounds(t) || !(t.tx === this._w - 1 || t.ty === this._h - 1))
-      throw new EngineError('door-invalid', 'door must be on a front edge');
+    if (!this.inBounds(t) || !(t.tx === 0 || t.ty === 0))
+      throw new EngineError('door-invalid', 'door must be on a back edge');
     if (this.cells[t.ty * this._w + t.tx].occupantId !== null)
       throw new EngineError('door-invalid', 'door tile is occupied');
     this._door = { ...t };
@@ -399,13 +404,7 @@ export class CafeGrid {
     this._w = newW;
     this._h = newH;
     this._expansionTier++;
-    // The old door edge is interior now; keep its tx, snap to the new front edge.
-    if (!(this._door.tx === newW - 1 || this._door.ty === newH - 1)) {
-      const candidate = { tx: this._door.tx, ty: newH - 1 };
-      this._door = this.cells[candidate.ty * newW + candidate.tx].occupantId === null
-        ? candidate
-        : { tx: Math.floor(newW / 2), ty: newH - 1 };
-    }
+    // Back edges (tx=0 / ty=0) survive expansion, so the door never relocates.
     this.bump();
     this.events.emit('expanded', { w: newW, h: newH });
   }
@@ -465,7 +464,7 @@ export class CafeGrid {
       w,
       h,
       expansionTier: l.expansionTier ?? 0,
-      door: l.door ?? { x: Math.floor(w / 2), y: h - 1 },
+      door: l.door ?? { x: Math.floor(w / 2), y: 0 },
       floors,
       wallsRight: fixWalls(l.wallsRight, w, 'right'),
       wallsLeft: fixWalls(l.wallsLeft, h, 'left'),
@@ -477,9 +476,9 @@ export class CafeGrid {
     const grid = new CafeGrid(base, catalog);
 
     // Door validity (must be front edge + will stay unoccupied since no placements yet).
-    if (!grid.inBounds(grid._door) || !(grid._door.tx === w - 1 || grid._door.ty === h - 1)) {
+    if (!grid.inBounds(grid._door) || !(grid._door.tx === 0 || grid._door.ty === 0)) {
       repairs.push({ kind: 'door-relocated', detail: `door (${grid._door.tx},${grid._door.ty}) -> default` });
-      grid._door = { tx: Math.floor(w / 2), ty: h - 1 };
+      grid._door = { tx: Math.floor(w / 2), ty: 0 };
     }
 
     // Replay placements through validation; failures evict to storage.

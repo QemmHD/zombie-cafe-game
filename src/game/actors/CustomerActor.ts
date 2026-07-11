@@ -60,12 +60,16 @@ export class CustomerActor extends CharacterActor {
       this.introT = Math.max(0, this.introT - dtSec);
       const t = 1 - this.introT / CustomerActor.INTRO;
       const door = this.view.grid.door();
-      const from = this.view.worldOf(door.tx, door.ty + 1.35); // on the sidewalk
+      // From the sidewalk BEHIND the wall, through the doorway, into the room.
+      const behind = door.ty === 0 ? { fx: door.tx, fy: -1.1 } : { fx: -1.1, fy: door.ty };
+      const from = this.view.worldOf(behind.fx, behind.fy);
       const to = this.view.worldOf(door.tx, door.ty);
       this.sprite.setPosition(
         from.x + (to.x - from.x) * t,
         from.y + (to.y - from.y) * t + 18 - Math.abs(Math.sin(t * 9)) * 3,
       );
+      // Under the wall band while outside; pop into the entity band at the door.
+      this.sprite.setDepth(t < 0.5 ? 810 : this.sprite.depth);
       this.sprite.setAlpha(Math.min(1, t * 3 + 0.3));
       return;
     }

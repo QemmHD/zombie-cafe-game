@@ -13,7 +13,7 @@ describe('CafeGrid placement', () => {
   it('starter room is 7x8 with the door on the front edge', () => {
     const g = CafeGrid.starter(catalog);
     expect([g.w, g.h]).toEqual([7, 8]);
-    expect(g.door()).toEqual({ tx: 3, ty: 7 });
+    expect(g.door()).toEqual({ tx: 3, ty: 0 });
     expect(g.walkable({ tx: 0, ty: 0 })).toBe(true);
   });
 
@@ -126,7 +126,7 @@ describe('expansion', () => {
     expect(g.cellAt({ tx: 0, ty: 0 }).floorId).toBe('floor_marble');
     expect(g.cellAt({ tx: 7, ty: 8 }).floorId).toBe(FLOOR_DEFAULT);
     const d = g.door();
-    expect(d.tx === g.w - 1 || d.ty === g.h - 1).toBe(true);
+    expect(d.tx === 0 || d.ty === 0).toBe(true);
     expect(g.expansionTier).toBe(1);
     expect(() => g.expand(7, 8)).toThrow(/shrink/);
   });
@@ -171,11 +171,11 @@ describe('persistence', () => {
 
   it('deserialize repairs bad door and wrong-length arrays', () => {
     const l = starterLayout();
-    l.door = { x: 2, y: 2 }; // not a front edge
+    l.door = { x: 2, y: 2 }; // not a back edge
     l.floors = ['floor_default']; // wrong length
     l.wallsRight = []; // wrong length
     const { grid, repairs } = CafeGrid.deserialize(l, catalog);
-    expect(grid.door()).toEqual({ tx: 3, ty: 7 });
+    expect(grid.door()).toEqual({ tx: 3, ty: 0 });
     expect(repairs.map((r) => r.kind)).toEqual(
       expect.arrayContaining(['door-relocated', 'floors-resized', 'walls-resized']),
     );

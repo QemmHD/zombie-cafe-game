@@ -3,7 +3,7 @@
   "w": 7,
   "h": 8,
   "expansionTier": 0,
-  "door": { "x": 3, "y": 7 },
+  "door": { "x": 3, "y": 0 },
   "floors": [
     "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
     "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",

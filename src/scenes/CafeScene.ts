@@ -10,8 +10,6 @@ import {
   CafeGrid,
   DEFAULT_SPEED_STAT,
   TAP_VS_PAN_PX,
-  characterSortKey,
-  entityDepth,
   zombieTilesPerSec,
   type FootprintItem,
   type LayoutSchema,
@@ -328,8 +326,10 @@ export class CafeScene extends Phaser.Scene {
   private spawnPedestrian(): void {
     if (this.peds.length >= 3) return;
     const dir = (Math.random() < 0.5 ? 1 : -1) as 1 | -1;
-    const fy = this.grid.h + 0.35 + Math.random() * 0.4;
-    const fx = dir === 1 ? -3.5 : this.grid.w + 3;
+    // Ground truth: the street is BEHIND the cafe; pedestrians pass back there,
+    // glimpsed beyond the wall tops and at the corners.
+    const fy = -0.7 - Math.random() * 0.35;
+    const fx = dir === 1 ? -4.5 : this.grid.w + 4;
     const img = this.add.image(0, 0, 'customer').setOrigin(0.5, 0.96);
     img.setScale(104 / img.height);
     const tints = [0xd9c9a8, 0xc9b8d0, 0xa8c9d9, 0xd9b8a8, 0xb8d9b0];
@@ -354,10 +354,10 @@ export class CafeScene extends Phaser.Scene {
       p.img.setPosition(w.x, w.y + 18 - bob);
       p.img.setRotation(Math.sin(p.phase / 2) * 0.04);
       p.shadow.setPosition(w.x, w.y + 16);
-      const d = entityDepth(characterSortKey(p.fx, p.fy), true);
-      p.img.setDepth(d);
-      p.shadow.setDepth(d - 1);
-      if ((p.dir === 1 && p.fx > this.grid.w + 3.5) || (p.dir === -1 && p.fx < -4)) {
+      // Behind the back walls: render beneath the wall band, above the street.
+      p.img.setDepth(800);
+      p.shadow.setDepth(799);
+      if ((p.dir === 1 && p.fx > this.grid.w + 4.5) || (p.dir === -1 && p.fx < -5)) {
         p.img.destroy();
         p.shadow.destroy();
         this.peds.splice(i, 1);

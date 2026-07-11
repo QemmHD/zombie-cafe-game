@@ -160,6 +160,60 @@ def street_tile(base, seed: int, curb: bool = False) -> Image.Image:
     return img
 
 
+def grass_tile(seed: int) -> Image.Image:
+    """Front lawn (original: grass apron in front of the cafe, street behind)."""
+    rng = random.Random(seed)
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    tex = Image.new("RGBA", (W, H), (86, 118, 62, 255))
+    d = ImageDraw.Draw(tex, "RGBA")
+    for _ in range(1400):
+        x, y = rng.randrange(W), rng.randrange(H)
+        tone = rng.choice([(140, 176, 96), (60, 88, 44), (108, 140, 76)])
+        d.point((x, y), fill=(*tone, rng.randint(30, 90)))
+    # small grass tufts
+    for _ in range(26):
+        x, y = rng.randrange(8, W - 8), rng.randrange(6, H - 6)
+        for b in range(3):
+            d.line([x + b * 2 - 2, y, x + b * 2 - 3 + rng.randint(0, 2), y - rng.randint(3, 6)],
+                   fill=(128, 164, 88, 200), width=1)
+    tex = tex.filter(ImageFilter.GaussianBlur(0.3))
+    img.paste(tex, (0, 0), diamond_mask(W, H))
+    dd = ImageDraw.Draw(img, "RGBA")
+    dd.polygon([(W // 2, 1), (W - 2, H // 2), (W // 2, H - 2), (1, H // 2)],
+               outline=(40, 58, 32, 255))
+    return img
+
+
+def road_stripe_tile(seed: int) -> Image.Image:
+    """Asphalt with the original's yellow lane stripe running along the row axis."""
+    img = street_tile((58, 58, 64), seed)
+    d = ImageDraw.Draw(img, "RGBA")
+    # dashed yellow stripe across the diamond's horizontal axis
+    for x0 in range(24, W - 24, 40):
+        d.line([(x0, H // 2), (min(x0 + 22, W - 24), H // 2)], fill=(214, 176, 60, 230), width=6)
+    return img
+
+
+def wall_door_section(seed: int) -> Image.Image:
+    """A back-wall section with the doorway in it (the original's door is a wall item)."""
+    img = wall_section(seed)
+    d = ImageDraw.Draw(img, "RGBA")
+    # dark doorway opening following the parallelogram (base rise x/2)
+    for x in range(28, 100):
+        top = x // 2
+        arch = 210 if 40 <= x <= 88 else 230  # slight arch shape
+        for y in range(top + arch, top + 384 - 4):
+            img.putpixel((x, y), (26, 20, 26, 255))
+    # door frame
+    for x in (27, 28, 99, 100):
+        top = x // 2
+        for y in range(top + 205, top + 384 - 2):
+            img.putpixel((x, y), (96, 66, 40, 255))
+    # OPEN sign glow above the door
+    d.rectangle([48, 150, 82, 168], fill=(40, 80, 46, 255), outline=(126, 224, 129, 255))
+    return img
+
+
 def door_mat(seed: int) -> Image.Image:
     rng = random.Random(seed)
     img = floor_tile(MAT, (40, 12, 10), seed)
@@ -178,5 +232,8 @@ if __name__ == "__main__":
     door_mat(44).save(OUT / "door_mat.png")
     street_tile((126, 122, 118), 55, curb=True).save(OUT / "sidewalk.png")
     street_tile((58, 58, 64), 66).save(OUT / "asphalt.png")
+    grass_tile(77).save(OUT / "grass.png")
+    road_stripe_tile(88).save(OUT / "road_stripe.png")
+    wall_door_section(33).save(OUT / "wall_door.png")
     for f in sorted(OUT.glob("*.png")):
         print(f"  {f.name:18s} {Image.open(f).size} {f.stat().st_size // 1024}KB")

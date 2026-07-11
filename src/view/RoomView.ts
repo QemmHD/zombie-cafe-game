@@ -85,7 +85,7 @@ export class RoomView {
    */
   fitCamera(marginPx = 10): number {
     const b = roomBounds(this.grid.w, this.grid.h);
-    const maxY = b.maxY + 105; // include the sidewalk/asphalt strip out front
+    const maxY = b.maxY + 70; // include the front grass apron
     const cam = this.scene.cameras.main;
     const zw = (cam.width - marginPx * 2) / (b.maxX - b.minX);
     const zoom = clamp(zw, DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
@@ -116,22 +116,34 @@ export class RoomView {
   // ── construction ───────────────────────────────────────────────────────────
 
   /**
-   * The street outside (original: the cafe fronts a sidewalk where pedestrians
-   * pass). Render-only rows beyond the SW front edge: one sidewalk row with a
-   * curb facing the cafe, then asphalt — extended sideways past the room so it
-   * reads as a passing street, not a platform.
+   * Ground truth (spec 92): the street runs BEHIND the cafe — sidewalk + curb
+   * + striped road past the two back walls, glimpsed at the top corners and
+   * through the doorway. The FRONT of the lot is a grass apron. All render-only.
    */
   private buildStreet(): void {
-    for (let row = 0; row < 3; row++) {
-      const ty = this.grid.h + row;
-      const key = row === 0 ? 'sidewalk' : 'asphalt';
-      for (let tx = -4; tx < this.grid.w + 4; tx++) {
+    // Street behind the right-back wall (rows ty = -1 sidewalk, -2 road)
+    for (let tx = -5; tx < this.grid.w + 5; tx++) {
+      for (const [ty, key] of [[-1, 'sidewalk'], [-2, 'road_stripe']] as const) {
         const c = tileToWorld(tx, ty);
-        this.scene.add
-          .image(c.x, c.y, key)
-          .setScale(ART_SCALE)
-          .setDepth(-20 + (tx + ty) / 1000)
-          .setAlpha(row === 2 ? 0.85 : 1); // far asphalt fades toward the backdrop
+        this.scene.add.image(c.x, c.y, key).setScale(ART_SCALE).setDepth(-20 + (tx + ty) / 1000);
+      }
+    }
+    // Street wrapping behind the left-back wall (columns tx = -1, -2)
+    for (let ty = 0; ty < this.grid.h + 5; ty++) {
+      for (const [tx, key] of [[-1, 'sidewalk'], [-2, 'road_stripe']] as const) {
+        const c = tileToWorld(tx, ty);
+        this.scene.add.image(c.x, c.y, key).setScale(ART_SCALE).setDepth(-20 + (tx + ty) / 1000);
+      }
+    }
+    // Grass apron in front (the original's lawn — tombstones live here later)
+    for (let row = 0; row < 2; row++) {
+      for (let tx = -2; tx < this.grid.w + 3; tx++) {
+        const c = tileToWorld(tx, this.grid.h + row);
+        this.scene.add.image(c.x, c.y, 'grass').setScale(ART_SCALE).setDepth(-20 + (tx + this.grid.h + row) / 1000);
+      }
+      for (let ty = 0; ty < this.grid.h; ty++) {
+        const c = tileToWorld(this.grid.w + row, ty);
+        this.scene.add.image(c.x, c.y, 'grass').setScale(ART_SCALE).setDepth(-20 + (this.grid.w + row + ty) / 1000);
       }
     }
   }
@@ -152,17 +164,24 @@ export class RoomView {
   }
 
   private buildWalls(): void {
+    const door = this.grid.door();
     for (let k = 0; k < this.grid.w; k++) {
       const p = rightWallSectionTopLeft(k);
+      const isDoor = door.ty === 0 && k === door.tx;
       this.wallSprites.push(
-        this.scene.add.image(p.x, p.y, 'wall').setOrigin(0, 0).setScale(ART_SCALE).setDepth(BAND.WALL + k),
+        this.scene.add
+          .image(p.x, p.y, isDoor ? 'wall_door' : 'wall')
+          .setOrigin(0, 0)
+          .setScale(ART_SCALE)
+          .setDepth(BAND.WALL + k),
       );
     }
     for (let m = 0; m < this.grid.h; m++) {
       const p = leftWallSectionTopLeft(m);
+      const isDoor = door.tx === 0 && m === door.ty;
       this.wallSprites.push(
         this.scene.add
-          .image(p.x, p.y, 'wall')
+          .image(p.x, p.y, isDoor ? 'wall_door' : 'wall')
           .setOrigin(0, 0)
           .setScale(ART_SCALE)
           .setFlipX(true)
