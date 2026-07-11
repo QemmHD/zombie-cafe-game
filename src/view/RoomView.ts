@@ -78,16 +78,22 @@ export class RoomView {
     });
   }
 
-  /** Fit the camera to room + street strip; returns the applied zoom. */
-  fitCamera(marginPx = 40): number {
+  /**
+   * Original framing: the room FILLS the screen (fit to width; the vertical
+   * overflow is reachable by drag-pan, like the original's scroll). Camera
+   * bounds keep the pan inside room + street.
+   */
+  fitCamera(marginPx = 10): number {
     const b = roomBounds(this.grid.w, this.grid.h);
-    const maxY = b.maxY + 100; // include the sidewalk/asphalt strip out front
+    const maxY = b.maxY + 105; // include the sidewalk/asphalt strip out front
     const cam = this.scene.cameras.main;
     const zw = (cam.width - marginPx * 2) / (b.maxX - b.minX);
-    const zh = (cam.height - marginPx * 2) / (maxY - b.minY);
-    const zoom = clamp(Math.min(zw, zh), DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
+    const zoom = clamp(zw, DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
     cam.setZoom(zoom);
-    cam.centerOn((b.minX + b.maxX) / 2, (b.minY + maxY) / 2);
+    const pad = 90;
+    cam.setBounds(b.minX - pad, b.minY - pad, b.maxX - b.minX + pad * 2, maxY - b.minY + pad * 2);
+    // Bias the initial view toward the front: door, seats, and street in frame.
+    cam.centerOn((b.minX + b.maxX) / 2, (b.minY + maxY) / 2 + 40);
     return zoom;
   }
 

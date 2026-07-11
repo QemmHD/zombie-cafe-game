@@ -9,6 +9,7 @@ import type { Zombie, ZombieInstance } from '../data/types';
 import {
   CafeGrid,
   DEFAULT_SPEED_STAT,
+  TAP_VS_PAN_PX,
   characterSortKey,
   entityDepth,
   zombieTilesPerSec,
@@ -42,6 +43,7 @@ export class CafeScene extends Phaser.Scene {
   // Street life: render-only pedestrians passing on the sidewalk.
   private peds: { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; fx: number; fy: number; dir: 1 | -1; speed: number; phase: number }[] = [];
   private pedTimer = 2500;
+  private panStart: { x: number; y: number; sx: number; sy: number } | null = null;
 
   constructor() {
     super('Cafe');
@@ -87,7 +89,7 @@ export class CafeScene extends Phaser.Scene {
     bg.setScrollFactor(0).setDepth(-100).setAlpha(0.92);
     // Push the backdrop back so the diner reads as the subject, not a sticker.
     this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH * 2, GAME_HEIGHT * 2, 0x0a0c12, 0.32)
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH * 2, GAME_HEIGHT * 2, 0x0a0c12, 0.52)
       .setScrollFactor(0)
       .setDepth(-99);
     bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height) / this.cameras.main.zoom || 1);
@@ -234,19 +236,43 @@ export class CafeScene extends Phaser.Scene {
       const id = obj.getData('placementId') as PlacementId | undefined;
       if (!id) return;
       if (this.holdTimer && this.holdTimer.getProgress() < 1) {
-        // Short press = interact (stove tap). Long press already lifted it.
+        // Short press = interact (stove tap). Long press already lifted it;
+        // a drag past the pan threshold is neither.
         this.holdTimer.remove();
         this.holdTimer = null;
-        if (!this.moveSession) this.stovesById.get(id)?.tap();
+        if (!this.moveSession && _ptr.getDistance() <= TAP_VS_PAN_PX) {
+          this.stovesById.get(id)?.tap();
+        }
       }
     });
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
-      if (!this.moveSession) return;
-      this.updateGhost(ptr);
+      if (this.moveSession) {
+        this.updateGhost(ptr);
+        return;
+      }
+      // Drag-to-pan, like the original's scrollable cafe view.
+      if (ptr.isDown && this.panStart) {
+        const dx = ptr.x - this.panStart.x;
+        const dy = ptr.y - this.panStart.y;
+        if (Math.hypot(dx, dy) > TAP_VS_PAN_PX) {
+          this.holdTimer?.remove(); // a drag is not a furniture-lift hold
+          this.holdTimer = null;
+          const cam = this.cameras.main;
+          cam.scrollX = this.panStart.sx - dx / cam.zoom;
+          cam.scrollY = this.panStart.sy - dy / cam.zoom;
+        }
+      }
     });
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
-      if (!this.moveSession || over.some((o) => o.getData('placementId') === this.moveSession?.id)) return;
-      this.tryDrop(ptr);
+      if (this.moveSession) {
+        if (!over.some((o) => o.getData('placementId') === this.moveSession?.id)) this.tryDrop(ptr);
+        return;
+      }
+      const cam = this.cameras.main;
+      this.panStart = { x: ptr.x, y: ptr.y, sx: cam.scrollX, sy: cam.scrollY };
+    });
+    this.input.on('pointerup', () => {
+      this.panStart = null;
     });
   }
 
