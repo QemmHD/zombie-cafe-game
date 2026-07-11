@@ -3,13 +3,20 @@
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
+// One of the original's 216 recipes (decoded foodData table, spec 93 App. A).
 export interface Dish {
   dishId: string;
   displayName: string;
-  cookTimeSeconds: number; // real idle-scale time (30s … 28800s)
-  coinReward: number;
-  brainReward: number;
   cafeLevelRequired: number;
+  cookTimeSeconds: number; // authentic idle-scale time (120s … 72h)
+  price: number; // paid up-front when the cook starts (M5 economy)
+  servings: number; // plates produced per cook
+  perServing: number; // coins per plate served
+  coinReward: number; // gross income = servings * perServing
+  xp: number; // cafe XP per completed dish
+  imageId: number; // original art index (future dish-art mapping)
+  stoveTag: number; // required stove tag; 0 = any stove
+  cookbook: number; // cookbook the recipe belongs to
 }
 
 export interface Zombie {

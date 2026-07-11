@@ -24,6 +24,7 @@ export class CustomerActor extends CharacterActor {
   private onConverted: (z: Zombie) => void;
   private onDone: (c: CustomerActor) => void;
   private plate: Phaser.GameObjects.Arc | null = null;
+  private mood: Phaser.GameObjects.Container | null = null;
   private eatTimer = 0;
   // Walk-in from the sidewalk (render-only intro; the walker waits at the door)
   private introT = 0.7;
@@ -48,6 +49,7 @@ export class CustomerActor extends CharacterActor {
     const res = this.walker.requestMove(seat.tile, { allowNonWalkableGoal: true });
     if (res.status !== 'ok') {
       // Seat unreachable (player walled it off — authentic!). Turn around.
+      this.showMood('sad');
       this.phase = 'leaving';
       this.leave();
     }
@@ -78,6 +80,7 @@ export class CustomerActor extends CharacterActor {
         for (const e of this.tick(dtSec)) {
           if (e.type === 'arrived') this.startEating();
           if (e.type === 'blocked') {
+            this.showMood('sad');
             this.phase = 'leaving';
             this.leave();
           }
@@ -96,11 +99,74 @@ export class CustomerActor extends CharacterActor {
         break;
       }
     }
+    // The thought bubble rides above the head through every phase.
+    if (this.mood) {
+      this.mood.setPosition(this.sprite.x + 16, this.headY() - 10);
+      this.mood.setDepth(this.sprite.depth + 2);
+    }
+  }
+
+  private headY(): number {
+    return this.sprite.y - this.sprite.displayHeight;
+  }
+
+  /**
+   * Ground truth (spec 92 §7): customers telegraph mood with happy-yellow /
+   * frowning-blue thought bubbles — the original's core readability device.
+   */
+  private showMood(kind: 'happy' | 'sad'): void {
+    this.mood?.destroy();
+    const scene = this.view.scene;
+    const fill = kind === 'happy' ? 0xf7d154 : 0x7fa8d9;
+    const g = scene.add.graphics();
+    g.fillStyle(fill, 1);
+    g.lineStyle(2, 0x0d0f14, 1);
+    g.fillCircle(0, 0, 13);
+    g.strokeCircle(0, 0, 13);
+    // thought-tail dot toward the head
+    g.fillCircle(-10, 12, 3.5);
+    g.strokeCircle(-10, 12, 3.5);
+    // face: two eyes + smile or frown
+    g.fillStyle(0x0d0f14, 1);
+    g.fillCircle(-4.5, -3.5, 1.8);
+    g.fillCircle(4.5, -3.5, 1.8);
+    g.beginPath();
+    if (kind === 'happy') g.arc(0, 1.5, 6, 0.15 * Math.PI, 0.85 * Math.PI);
+    else g.arc(0, 10, 6, 1.15 * Math.PI, 1.85 * Math.PI);
+    g.strokePath();
+    const c = scene.add.container(this.sprite.x + 16, this.headY() - 10, [g]);
+    c.setScale(0);
+    scene.tweens.add({ targets: c, scale: 1, duration: 200, ease: 'Back.easeOut' });
+    this.mood = c;
+  }
+
+  /** Coin pop when the bill is paid — money you SEE is money you feel. */
+  private coinFloat(amount: number): void {
+    const scene = this.view.scene;
+    const t = scene.add
+      .text(this.sprite.x, this.headY() - 4, `+${amount}`, {
+        fontFamily: 'monospace',
+        fontSize: '16px',
+        color: '#f2c14e',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setStroke('#0d0f14', 4)
+      .setDepth(this.sprite.depth + 3);
+    scene.tweens.add({
+      targets: t,
+      y: t.y - 36,
+      alpha: 0,
+      duration: 900,
+      ease: 'Cubic.easeOut',
+      onComplete: () => t.destroy(),
+    });
   }
 
   private startEating(): void {
     this.phase = 'eating';
     this.eatTimer = 7 + Math.random() * 2; // ~8s, canon FSM shape
+    this.showMood('happy');
     const p = this.view.worldOf(this.seat.tile.tx, this.seat.tile.ty);
     this.plate = this.view.scene.add
       .circle(p.x + 14, p.y - 26, 7, PALETTE.toxic)
@@ -114,7 +180,10 @@ export class CustomerActor extends CharacterActor {
     this.phase = 'converting';
     this.plate?.destroy();
     this.plate = null;
+    this.mood?.destroy();
+    this.mood = null;
     Economy.addCoins(this.tip);
+    this.coinFloat(this.tip);
     EventBus.publish('customer-served', this.tip);
     if (Math.random() < this.infectionChance) this.infect();
     else {
@@ -157,6 +226,7 @@ export class CustomerActor extends CharacterActor {
     if (this.phase === 'done') return;
     this.phase = 'done';
     this.plate?.destroy();
+    this.mood?.destroy();
     this.onDone(this);
     this.destroy();
   }
