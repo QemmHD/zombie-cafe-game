@@ -50,4 +50,5 @@ export interface ZombieInstance {
   level: number;
   xp: number;
   assignment: 'idle' | 'kitchen' | 'raiding' | 'meatlocker';
+  energy: number; // 0-100: work drains it; tired zombies daydream (original rule)
 }

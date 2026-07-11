@@ -2,7 +2,7 @@ import type { ZombieInstance } from '../data/types';
 import { getZombie, DISHES } from '../data/content';
 
 const SAVE_KEY = 'zombiecafe.save.v1';
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 
 export interface SaveData {
   version: number;
@@ -10,6 +10,7 @@ export interface SaveData {
   toxin: number;
   cafeLevel: number;
   playerXP: number;
+  rating: number; // star rating 1..5 — service quality gates customer traffic
   zombies: ZombieInstance[];
   // Idle bookkeeping
   lastSaveUtc: number;      // ms epoch
@@ -23,9 +24,10 @@ export function freshSave(): SaveData {
     toxin: 10,
     cafeLevel: 1,
     playerXP: 0,
+    rating: 3,
     zombies: [
-      { zombieId: 'zombie_rotten', level: 1, xp: 0, assignment: 'kitchen' },
-      { zombieId: 'zombie_chef', level: 1, xp: 0, assignment: 'idle' },
+      { zombieId: 'zombie_rotten', level: 1, xp: 0, assignment: 'kitchen', energy: 100 },
+      { zombieId: 'zombie_chef', level: 1, xp: 0, assignment: 'idle', energy: 100 },
     ],
     lastSaveUtc: Date.now(),
     idleCoinsPerSec: 0,
@@ -69,6 +71,9 @@ export class SaveManager {
       merged.toxin = Math.min(old.brains, 99);
     }
     delete (merged as { brains?: number }).brains;
+    // v2 -> v3: zombies gain energy; the cafe gains a star rating.
+    merged.rating = typeof old.rating === 'number' ? old.rating : 3;
+    merged.zombies = (merged.zombies ?? []).map((z) => ({ ...z, energy: z.energy ?? 100 }));
     return merged;
   }
 

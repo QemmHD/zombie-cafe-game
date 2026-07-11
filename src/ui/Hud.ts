@@ -13,6 +13,7 @@ export class Hud {
   private toxinText!: Phaser.GameObjects.Text;
   private levelText!: Phaser.GameObjects.Text;
   private zombieText!: Phaser.GameObjects.Text;
+  private ratingText!: Phaser.GameObjects.Text;
   private toasts: Phaser.GameObjects.Container[] = [];
 
   constructor(scene: Phaser.Scene) {
@@ -25,6 +26,7 @@ export class Hud {
       EventBus.subscribe('toxin-changed', () => this.refresh()),
       EventBus.subscribe('zombie-added', () => this.refresh()),
       EventBus.subscribe('cafe-level-up', () => this.refresh()),
+      EventBus.subscribe('rating-changed', () => this.refresh()),
       EventBus.subscribe('notify', (msg: string) => this.toast(msg)),
     ];
     // A restarted HUD scene must not leave stale handlers poking dead objects.
@@ -34,9 +36,9 @@ export class Hud {
 
   private chip(x: number, color: number, label: string): Phaser.GameObjects.Text {
     const s = this.scene;
-    const box = s.add.rectangle(x, 26, 150, 34, PALETTE.panel, 0.92).setStrokeStyle(1, PALETTE.panelEdge).setOrigin(0, 0.5);
-    const dot = s.add.circle(x + 18, 26, 8, color);
-    const txt = s.add.text(x + 34, 26, label, { fontFamily: 'monospace', fontSize: '16px', color: '#e8ecf2' }).setOrigin(0, 0.5);
+    const box = s.add.rectangle(x, 26, 128, 34, PALETTE.panel, 0.92).setStrokeStyle(1, PALETTE.panelEdge).setOrigin(0, 0.5);
+    const dot = s.add.circle(x + 16, 26, 7, color);
+    const txt = s.add.text(x + 30, 26, label, { fontFamily: 'monospace', fontSize: '15px', color: '#e8ecf2' }).setOrigin(0, 0.5);
     this.layer.add([box, dot, txt]);
     return txt;
   }
@@ -47,9 +49,10 @@ export class Hud {
     this.layer.add(bar);
 
     this.coinsText = this.chip(12, PALETTE.coin, '0');
-    this.toxinText = this.chip(174, PALETTE.toxic, '0');
-    this.levelText = this.chip(336, PALETTE.toxic, 'Lv 1');
-    this.zombieText = this.chip(498, PALETTE.blood, '0');
+    this.toxinText = this.chip(148, PALETTE.toxic, '0');
+    this.levelText = this.chip(284, PALETTE.toxic, 'Lv 1');
+    this.zombieText = this.chip(420, PALETTE.blood, '0');
+    this.ratingText = this.chip(556, PALETTE.coin, '★ 3.0');
 
     const brand = s.add
       .text(GAME_WIDTH - 12, 26, `${BRAND.name}  v${BRAND.version}`, { fontFamily: 'monospace', fontSize: '12px', color: '#8891a4' })
@@ -62,6 +65,8 @@ export class Hud {
     this.toxinText.setText(this.fmt(Economy.toxin));
     this.levelText.setText(`Lv ${Save.data.cafeLevel}`);
     this.zombieText.setText(`${Save.data.zombies.length} 🧟`);
+    const r = Save.data.rating;
+    this.ratingText.setText(`★ ${r.toFixed(1)}`).setColor(r >= 3.5 ? '#7ee081' : r >= 2.2 ? '#f2c14e' : '#ff7a6a');
   }
 
   private fmt(n: number): string {

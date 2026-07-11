@@ -8,8 +8,10 @@ export type GameEvent =
   | 'zombie-added'
   | 'dish-collected'
   | 'customer-served'
+  | 'customer-angry'
   | 'customer-infected'
   | 'cafe-level-up'
+  | 'rating-changed'
   | 'notify'
   | 'offline-earnings';
 

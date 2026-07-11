@@ -3,29 +3,38 @@ import { PALETTE } from '../../config';
 import { Economy } from '../../core/Economy';
 import { EventBus } from '../../core/EventBus';
 import { randomCommonZombie } from '../../data/content';
-import type { Zombie } from '../../data/types';
+import type { Dish, Zombie } from '../../data/types';
 import { CUSTOMER_SPEED, characterSortKey, entityDepth, type Seat } from '../../engine/contracts';
 import type { RoomView } from '../../view/RoomView';
 import { CharacterActor } from './CharacterActor';
 
-type Phase = 'entering' | 'eating' | 'converting' | 'leaving' | 'done';
+type Phase = 'entering' | 'waiting' | 'eating' | 'converting' | 'leaving' | 'done';
+
+/** Seconds a seated customer waits for food before storming out (UNKNOWN in
+ * sources; tuned so one stocked counter comfortably feeds the room). */
+const PATIENCE_SEC = 50;
 
 /**
- * A human customer: walks the grid from the door to a real seat (A* — routes
- * around furniture, exactly what the painted-backdrop version could not do),
- * eats, pays, maybe gets infected, and shambles home.
+ * A human customer, authentic flow (researched): walks in the back door to a
+ * free seat, WAITS to be served from a stocked serving counter, eats, pays
+ * per serving, leaves a dirty plate. Leaves angry (rating hit) if nobody
+ * serves them. Infection is the PLAYER's verb — tap them, spend Toxin.
  */
 export class CustomerActor extends CharacterActor {
   phase: Phase = 'entering';
   readonly seat: Seat;
+  /** A serve job has claimed this customer (prevents double-delivery). */
+  claimed = false;
+  servedDish: Dish | null = null;
 
-  private tip: number;
-  private infectionChance: number;
   private onConverted: (z: Zombie) => void;
   private onDone: (c: CustomerActor) => void;
+  private onAte: (c: CustomerActor) => void;
   private plate: Phaser.GameObjects.Arc | null = null;
   private mood: Phaser.GameObjects.Container | null = null;
   private eatTimer = 0;
+  private patience = PATIENCE_SEC;
+  private waitedSec = 0; // slow service kills the tip (researched: ~30s cutoff)
   // Walk-in from the sidewalk (render-only intro; the walker waits at the door)
   private introT = 0.7;
   private static readonly INTRO = 0.7;
@@ -33,18 +42,18 @@ export class CustomerActor extends CharacterActor {
   constructor(
     view: RoomView,
     seat: Seat,
-    tip: number,
-    infectionChance: number,
     seed: number,
     onConverted: (z: Zombie) => void,
+    onAte: (c: CustomerActor) => void,
     onDone: (c: CustomerActor) => void,
   ) {
     super(view, 'customer', view.grid.door(), CUSTOMER_SPEED, seed, `cust_${seed}`);
     this.seat = seat;
-    this.tip = tip;
-    this.infectionChance = infectionChance;
     this.onConverted = onConverted;
+    this.onAte = onAte;
     this.onDone = onDone;
+    this.sprite.setData('customerRef', this);
+    this.sprite.enableTap();
 
     const res = this.walker.requestMove(seat.tile, { allowNonWalkableGoal: true });
     if (res.status !== 'ok') {
@@ -79,7 +88,7 @@ export class CustomerActor extends CharacterActor {
     switch (this.phase) {
       case 'entering': {
         for (const e of this.tick(dtSec)) {
-          if (e.type === 'arrived') this.startEating();
+          if (e.type === 'arrived') this.startWaiting();
           if (e.type === 'blocked') {
             this.showMood('sad');
             this.phase = 'leaving';
@@ -88,7 +97,15 @@ export class CustomerActor extends CharacterActor {
         }
         break;
       }
+      case 'waiting': {
+        this.tick(dtSec); // keep idle pose/facing alive
+        this.patience -= dtSec;
+        this.waitedSec += dtSec;
+        if (this.patience <= 0) this.stormOut();
+        break;
+      }
       case 'eating': {
+        this.tick(dtSec);
         this.eatTimer -= dtSec;
         if (this.eatTimer <= 0) this.finishEating();
         break;
@@ -103,6 +120,79 @@ export class CustomerActor extends CharacterActor {
     this.followMood();
   }
 
+  private startWaiting(): void {
+    this.phase = 'waiting';
+    this.patience = PATIENCE_SEC;
+    this.showMood('hungry');
+  }
+
+  /** A waiter delivers a plate from the serving counter. */
+  serve(dish: Dish): void {
+    if (this.phase !== 'waiting') return;
+    this.phase = 'eating';
+    this.servedDish = dish;
+    this.eatTimer = 7 + Math.random() * 2; // ~8s, canon FSM shape
+    this.sprite.setMotion('eat');
+    this.showMood('happy');
+    const p = this.view.worldOf(this.seat.tile.tx, this.seat.tile.ty);
+    this.plate = this.view.scene.add
+      .circle(p.x + 14, p.y - 26, 7, PALETTE.toxic)
+      .setStrokeStyle(2, 0x0d0f14)
+      .setDepth(this.sprite.depth + 1);
+  }
+
+  /** Still infectable? (Seated and human.) */
+  canInfect(): boolean {
+    return this.phase === 'waiting' || this.phase === 'eating';
+  }
+
+  /** The player's Toxin verb: turn this customer into staff. */
+  infectByPlayer(): void {
+    if (!this.canInfect()) return;
+    this.phase = 'converting';
+    this.sprite.setMotion('auto');
+    this.plate?.destroy();
+    this.plate = null;
+    this.mood?.destroy();
+    this.mood = null;
+    this.infect();
+  }
+
+  private finishEating(): void {
+    // One-shot: leave 'eating' SYNCHRONOUSLY so this can never re-fire.
+    this.phase = 'converting'; // transient guard state while we settle the bill
+    this.sprite.setMotion('auto');
+    this.plate?.destroy();
+    this.plate = null;
+    this.mood?.destroy();
+    this.mood = null;
+    // Researched: customers pay per serving, plus a tip when service was
+    // quick (~20% of the plate, none past ~30s of waiting).
+    const base = this.servedDish ? this.servedDish.perServing : 0;
+    const tip = base > 0 && this.waitedSec <= 30 ? Math.max(1, Math.round(base * 0.2)) : 0;
+    const pay = base + tip;
+    if (pay > 0) {
+      Economy.addCoins(pay);
+      this.coinFloat(pay, tip);
+    }
+    EventBus.publish('customer-served', pay);
+    this.onAte(this); // scene drops a dirty plate on the table
+    this.phase = 'leaving';
+    this.leave();
+  }
+
+  private stormOut(): void {
+    this.showMood('sad');
+    EventBus.publish('customer-angry', undefined);
+    EventBus.publish('notify', 'A customer left hungry — your rating suffers!');
+    this.phase = 'leaving';
+    this.leave();
+  }
+
+  private headY(): number {
+    return this.sprite.y - this.sprite.displayHeight;
+  }
+
   /** The thought bubble rides above the head through every phase. */
   private followMood(): void {
     if (this.mood) {
@@ -111,18 +201,14 @@ export class CustomerActor extends CharacterActor {
     }
   }
 
-  private headY(): number {
-    return this.sprite.y - this.sprite.displayHeight;
-  }
-
   /**
-   * Ground truth (spec 92 §7): customers telegraph mood with happy-yellow /
-   * frowning-blue thought bubbles — the original's core readability device.
+   * Ground truth (spec 92 §7): customers telegraph mood with thought bubbles —
+   * happy-yellow, frowning-blue, and a pale "feed me" bubble while waiting.
    */
-  private showMood(kind: 'happy' | 'sad'): void {
+  private showMood(kind: 'happy' | 'sad' | 'hungry'): void {
     this.mood?.destroy();
     const scene = this.view.scene;
-    const fill = kind === 'happy' ? 0xf7d154 : 0x7fa8d9;
+    const fill = kind === 'happy' ? 0xf7d154 : kind === 'sad' ? 0x7fa8d9 : 0xece7d6;
     const g = scene.add.graphics();
     g.fillStyle(fill, 1);
     g.lineStyle(2, 0x0d0f14, 1);
@@ -131,14 +217,26 @@ export class CustomerActor extends CharacterActor {
     // thought-tail dot toward the head
     g.fillCircle(-10, 12, 3.5);
     g.strokeCircle(-10, 12, 3.5);
-    // face: two eyes + smile or frown
-    g.fillStyle(0x0d0f14, 1);
-    g.fillCircle(-4.5, -3.5, 1.8);
-    g.fillCircle(4.5, -3.5, 1.8);
-    g.beginPath();
-    if (kind === 'happy') g.arc(0, 1.5, 6, 0.15 * Math.PI, 0.85 * Math.PI);
-    else g.arc(0, 10, 6, 1.15 * Math.PI, 1.85 * Math.PI);
-    g.strokePath();
+    if (kind === 'hungry') {
+      // fork + knife glyph: "somebody feed me"
+      g.lineStyle(2, 0x0d0f14, 1);
+      g.lineBetween(-4, -6, -4, 7);
+      g.lineBetween(-6.5, -6, -6.5, -1);
+      g.lineBetween(-1.5, -6, -1.5, -1);
+      g.lineBetween(4, -6, 4, 7);
+      g.beginPath();
+      g.arc(4, -3, 3, Math.PI, Math.PI * 1.9);
+      g.strokePath();
+    } else {
+      // face: two eyes + smile or frown
+      g.fillStyle(0x0d0f14, 1);
+      g.fillCircle(-4.5, -3.5, 1.8);
+      g.fillCircle(4.5, -3.5, 1.8);
+      g.beginPath();
+      if (kind === 'happy') g.arc(0, 1.5, 6, 0.15 * Math.PI, 0.85 * Math.PI);
+      else g.arc(0, 10, 6, 1.15 * Math.PI, 1.85 * Math.PI);
+      g.strokePath();
+    }
     const c = scene.add.container(this.sprite.x + 16, this.headY() - 10, [g]);
     c.setScale(0);
     scene.tweens.add({ targets: c, scale: 1, duration: 200, ease: 'Back.easeOut' });
@@ -146,10 +244,11 @@ export class CustomerActor extends CharacterActor {
   }
 
   /** Coin pop when the bill is paid — money you SEE is money you feel. */
-  private coinFloat(amount: number): void {
+  private coinFloat(amount: number, tip = 0): void {
     const scene = this.view.scene;
+    const label = tip > 0 ? `+${amount - tip} +${tip} TIP` : `+${amount}`;
     const t = scene.add
-      .text(this.sprite.x, this.headY() - 4, `+${amount}`, {
+      .text(this.sprite.x, this.headY() - 4, label, {
         fontFamily: 'monospace',
         fontSize: '16px',
         color: '#f2c14e',
@@ -166,37 +265,6 @@ export class CustomerActor extends CharacterActor {
       ease: 'Cubic.easeOut',
       onComplete: () => t.destroy(),
     });
-  }
-
-  private startEating(): void {
-    this.phase = 'eating';
-    this.eatTimer = 7 + Math.random() * 2; // ~8s, canon FSM shape
-    this.sprite.setMotion('eat');
-    this.showMood('happy');
-    const p = this.view.worldOf(this.seat.tile.tx, this.seat.tile.ty);
-    this.plate = this.view.scene.add
-      .circle(p.x + 14, p.y - 26, 7, PALETTE.toxic)
-      .setStrokeStyle(2, 0x0d0f14)
-      .setDepth(this.sprite.depth + 1);
-  }
-
-  private finishEating(): void {
-    // One-shot: leave 'eating' SYNCHRONOUSLY so this can never re-fire while
-    // the infect tween runs (review blocker: duplicate payouts + zombies).
-    this.phase = 'converting';
-    this.sprite.setMotion('auto');
-    this.plate?.destroy();
-    this.plate = null;
-    this.mood?.destroy();
-    this.mood = null;
-    Economy.addCoins(this.tip);
-    this.coinFloat(this.tip);
-    EventBus.publish('customer-served', this.tip);
-    if (Math.random() < this.infectionChance) this.infect();
-    else {
-      this.phase = 'leaving';
-      this.leave();
-    }
   }
 
   private infect(): void {

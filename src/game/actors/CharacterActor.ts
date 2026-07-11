@@ -21,6 +21,7 @@ export class CharacterActor {
   readonly walker: Walker;
   readonly sprite: PuppetBody;
   protected view: RoomView;
+  private tiredBadge: Phaser.GameObjects.Text | null = null;
 
   constructor(view: RoomView, rigKey: string, start: Tile, tilesPerSec: number, seed: number, id: string) {
     this.view = view;
@@ -53,11 +54,30 @@ export class CharacterActor {
     this.sprite.setFlipX(this.walker.facing === 'SE' || this.walker.facing === 'NE');
   }
 
+  /** "z Z" over a daydreaming zombie — the original's tired-staff telegraph. */
+  setTiredBadge(on: boolean): void {
+    if (on && !this.tiredBadge) {
+      this.tiredBadge = this.view.scene.add
+        .text(0, 0, 'z Z', { fontFamily: 'monospace', fontSize: '13px', color: '#9fb3d9', fontStyle: 'bold' })
+        .setOrigin(0.5, 1)
+        .setStroke('#0d0f14', 3);
+    } else if (!on && this.tiredBadge) {
+      this.tiredBadge.destroy();
+      this.tiredBadge = null;
+    }
+    if (this.tiredBadge) {
+      this.tiredBadge
+        .setPosition(this.sprite.x + 15, this.sprite.y - this.sprite.displayHeight - 2)
+        .setDepth(this.sprite.depth + 2);
+    }
+  }
+
   destroy(): void {
     // No tween callback may outlive the actor (a tween touching a destroyed
     // body dereferences a nulled scene and kills the game loop).
     this.view.scene.tweens.killTweensOf(this.sprite);
     this.walker.dispose();
+    this.tiredBadge?.destroy();
     this.sprite.destroy();
   }
 }

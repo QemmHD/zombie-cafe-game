@@ -4,7 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { CafeScene } from './scenes/CafeScene';
 import { HudScene } from './scenes/HudScene';
-import './core/SaveManager'; // initialises the Save singleton + offline earnings on load
+import { Save } from './core/SaveManager'; // initialises the Save singleton + offline earnings on load
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -24,9 +24,11 @@ const game = new Phaser.Game({
 declare global {
   interface Window {
     __game?: Phaser.Game;
+    __save?: typeof Save;
   }
 }
 // DEV builds and explicit ?qa runs only — production consoles get nothing.
 if (import.meta.env.DEV || new URLSearchParams(location.search).has('qa')) {
   window.__game = game;
+  window.__save = Save;
 }
