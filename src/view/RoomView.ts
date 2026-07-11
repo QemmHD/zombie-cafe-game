@@ -60,6 +60,7 @@ export class RoomView {
   constructor(scene: Phaser.Scene, grid: CafeGrid) {
     this.scene = scene;
     this.grid = grid;
+    this.buildStreet();
     this.buildFloor();
     this.buildWalls();
     this.buildDoor();
@@ -77,15 +78,16 @@ export class RoomView {
     });
   }
 
-  /** Fit the camera to the room with a margin; returns the applied zoom. */
+  /** Fit the camera to room + street strip; returns the applied zoom. */
   fitCamera(marginPx = 40): number {
     const b = roomBounds(this.grid.w, this.grid.h);
+    const maxY = b.maxY + 100; // include the sidewalk/asphalt strip out front
     const cam = this.scene.cameras.main;
     const zw = (cam.width - marginPx * 2) / (b.maxX - b.minX);
-    const zh = (cam.height - marginPx * 2) / (b.maxY - b.minY);
+    const zh = (cam.height - marginPx * 2) / (maxY - b.minY);
     const zoom = clamp(Math.min(zw, zh), DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
     cam.setZoom(zoom);
-    cam.centerOn((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2 + 12);
+    cam.centerOn((b.minX + b.maxX) / 2, (b.minY + maxY) / 2);
     return zoom;
   }
 
@@ -106,6 +108,27 @@ export class RoomView {
   }
 
   // ── construction ───────────────────────────────────────────────────────────
+
+  /**
+   * The street outside (original: the cafe fronts a sidewalk where pedestrians
+   * pass). Render-only rows beyond the SW front edge: one sidewalk row with a
+   * curb facing the cafe, then asphalt — extended sideways past the room so it
+   * reads as a passing street, not a platform.
+   */
+  private buildStreet(): void {
+    for (let row = 0; row < 3; row++) {
+      const ty = this.grid.h + row;
+      const key = row === 0 ? 'sidewalk' : 'asphalt';
+      for (let tx = -4; tx < this.grid.w + 4; tx++) {
+        const c = tileToWorld(tx, ty);
+        this.scene.add
+          .image(c.x, c.y, key)
+          .setScale(ART_SCALE)
+          .setDepth(-20 + (tx + ty) / 1000)
+          .setAlpha(row === 2 ? 0.85 : 1); // far asphalt fades toward the backdrop
+      }
+    }
+  }
 
   private buildFloor(): void {
     for (let ty = 0; ty < this.grid.h; ty++) {
@@ -161,25 +184,32 @@ export class RoomView {
     this.furniture.set(p.id, img);
   }
 
-  private positionFurniture(img: Phaser.GameObjects.Image, p: Placement): void {
-    const { w: fw, h: fh } = p.footprint;
-    // Footprint center in tile space; sprite bottom sits on the footprint's
-    // front (screen-bottom) vertex: centerY + HALF_H*(fw+fh)/2.
-    const cx = p.anchor.tx + (fw - 1) / 2;
-    const cy = p.anchor.ty + (fh - 1) / 2;
+  /**
+   * Shared sprite-fitting math for placed furniture AND move-mode ghosts:
+   * width tracks the projected footprint diamond, height capped per kind,
+   * bottom anchored on the footprint's front vertex.
+   */
+  layoutSprite(img: Phaser.GameObjects.Image, kind: string, fw: number, fh: number, anchor: Tile): void {
+    const cx = anchor.tx + (fw - 1) / 2;
+    const cy = anchor.ty + (fh - 1) / 2;
     const c = tileToWorld(cx, cy);
     const bottomY = c.y + (HALF_H * (fw + fh)) / 2;
-    const fit = KIND_FIT[p.kind] ?? { w: 0.85, maxH: 2.5 };
-    // Width tracks the projected footprint diamond; height is capped so
-    // near-square art can't tower (players notice everything).
+    const fit = KIND_FIT[kind] ?? { w: 0.85, maxH: 2.5 };
     let scale = ((fw + fh) * HALF_W * fit.w) / img.width;
     const maxH = fit.maxH * 2 * HALF_H;
     if (img.height * scale > maxH) scale = maxH / img.height;
     img.setScale(scale);
     img.setPosition(c.x, bottomY + 2);
+  }
+
+  private positionFurniture(img: Phaser.GameObjects.Image, p: Placement): void {
+    const { w: fw, h: fh } = p.footprint;
+    this.layoutSprite(img, p.kind, fw, fh, p.anchor);
     img.setDepth(entityDepth(furnitureSortKey(p), false));
 
     // Grounding shadow: nothing sits ON the floor without one.
+    const c = tileToWorld(p.anchor.tx + (fw - 1) / 2, p.anchor.ty + (fh - 1) / 2);
+    const bottomY = c.y + (HALF_H * (fw + fh)) / 2;
     const shadowKey = `sh_${p.id}`;
     (this.scene.children.getByName(shadowKey) as Phaser.GameObjects.Ellipse | null)?.destroy();
     this.scene.add

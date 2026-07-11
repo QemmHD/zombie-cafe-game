@@ -26,6 +26,7 @@ export class StoveSim {
   private cookGame = 0;
 
   private label: Phaser.GameObjects.Text;
+  private barBg: Phaser.GameObjects.Rectangle;
   private barFill: Phaser.GameObjects.Rectangle;
   private bubble: Phaser.GameObjects.Container;
   private steam: Phaser.GameObjects.Ellipse;
@@ -52,7 +53,7 @@ export class StoveSim {
       .setOrigin(0.5, 0)
       .setStroke('#0d0f14', 4)
       .setDepth(depth);
-    scene.add.rectangle(x, y - 4, 78, 9, 0x0d0f14, 0.78).setDepth(depth);
+    this.barBg = scene.add.rectangle(x, y - 4, 78, 9, 0x0d0f14, 0.78).setDepth(depth);
     this.barFill = scene.add.rectangle(x - 38, y - 4, 0, 5, PALETTE.toxic).setOrigin(0, 0.5).setDepth(depth + 1);
     this.steam = scene.add.ellipse(x, this.top.y + 6, 22, 13, PALETTE.toxic, 0).setDepth(depth);
 
@@ -63,7 +64,23 @@ export class StoveSim {
       .setOrigin(0.5);
     this.bubble.add([bBg, bTxt]).setVisible(false);
 
-    sprite.on('pointerdown', () => this.onTap());
+  }
+
+  /** The stove moved (id-preserving nudge): re-anchor all status fx to it. */
+  reposition(): void {
+    const sprite = this.view.furnitureSprite(this.placementId);
+    if (!sprite) return;
+    const { x, y } = sprite;
+    this.top = { x, y: y - sprite.displayHeight };
+    this.label.setPosition(x, y + 4);
+    this.barBg.setPosition(x, y - 4);
+    this.barFill.setPosition(x - 38, y - 4);
+    this.steam.setPosition(x, this.top.y + 6);
+    this.bobTween?.pause();
+    this.view.scene.tweens.killTweensOf(this.bubble);
+    this.bobTween = null;
+    this.bubble.setPosition(x, this.top.y - 12);
+    if (this.state === 'ready') this.bubble.setVisible(true);
   }
 
   /** A waiter has been dispatched; block double-taps while they shamble over. */
@@ -95,7 +112,8 @@ export class StoveSim {
     this.label.setText(this.dish.displayName).setColor('#e8ecf2');
   }
 
-  private onTap(): void {
+  /** Tap routed by the scene's input arbiter (short press; long press = move). */
+  tap(): void {
     if (this.state === 'ready') this.collect();
     else if (this.state === 'unstaffed') {
       if (!this.onRequestStaff?.()) {

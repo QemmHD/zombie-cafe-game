@@ -25,6 +25,9 @@ export class CustomerActor extends CharacterActor {
   private onDone: (c: CustomerActor) => void;
   private plate: Phaser.GameObjects.Arc | null = null;
   private eatTimer = 0;
+  // Walk-in from the sidewalk (render-only intro; the walker waits at the door)
+  private introT = 0.7;
+  private static readonly INTRO = 0.7;
 
   constructor(
     view: RoomView,
@@ -51,6 +54,21 @@ export class CustomerActor extends CharacterActor {
   }
 
   update(dtSec: number): void {
+    // Sidewalk walk-in: the sprite strolls from the street to the door before
+    // the grid walk begins — nobody materializes out of thin air.
+    if (this.introT > 0) {
+      this.introT = Math.max(0, this.introT - dtSec);
+      const t = 1 - this.introT / CustomerActor.INTRO;
+      const door = this.view.grid.door();
+      const from = this.view.worldOf(door.tx, door.ty + 1.35); // on the sidewalk
+      const to = this.view.worldOf(door.tx, door.ty);
+      this.sprite.setPosition(
+        from.x + (to.x - from.x) * t,
+        from.y + (to.y - from.y) * t + 18 - Math.abs(Math.sin(t * 9)) * 3,
+      );
+      this.sprite.setAlpha(Math.min(1, t * 3 + 0.3));
+      return;
+    }
     switch (this.phase) {
       case 'entering': {
         for (const e of this.tick(dtSec)) {
@@ -109,8 +127,7 @@ export class CustomerActor extends CharacterActor {
       duration: 420,
       yoyo: true,
       onYoyo: () => {
-        this.sprite.setTexture('zombie_waiter');
-        this.sprite.setScale(118 / this.sprite.height);
+        this.setCharTexture('zombie_waiter');
         this.sprite.setTint(0x9fe8a0);
         const z = randomCommonZombie();
         EventBus.publish('customer-infected', z.displayName);

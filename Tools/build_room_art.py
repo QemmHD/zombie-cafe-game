@@ -137,6 +137,29 @@ def wall_section(seed: int) -> Image.Image:
     return img
 
 
+def street_tile(base, seed: int, curb: bool = False) -> Image.Image:
+    """Sidewalk/asphalt diamond for the street strip along the cafe's front edge."""
+    rng = random.Random(seed)
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    tex = Image.new("RGBA", (W, H), (*base, 255))
+    d = ImageDraw.Draw(tex, "RGBA")
+    for _ in range(1100):
+        x, y = rng.randrange(W), rng.randrange(H)
+        tone = rng.choice([(255, 255, 255), (0, 0, 0)])
+        d.point((x, y), fill=(*tone, rng.randint(5, 16)))
+    grime(d, rng, W, H, 30, (20, 18, 20), alpha=(8, 22))
+    cracks(d, rng, W, H, 3, (30, 28, 30))
+    tex = tex.filter(ImageFilter.GaussianBlur(0.4))
+    img.paste(tex, (0, 0), diamond_mask(W, H))
+    dd = ImageDraw.Draw(img, "RGBA")
+    if curb:
+        # light curb line along the NE edge (faces the cafe)
+        dd.line([(W // 2, 4), (W - 4, H // 2)], fill=(200, 195, 185, 120), width=5)
+    dd.polygon([(W // 2, 1), (W - 2, H // 2), (W // 2, H - 2), (1, H // 2)],
+               outline=(28, 26, 30, 255))
+    return img
+
+
 def door_mat(seed: int) -> Image.Image:
     rng = random.Random(seed)
     img = floor_tile(MAT, (40, 12, 10), seed)
@@ -153,5 +176,7 @@ if __name__ == "__main__":
     floor_tile(CHAR, CHAR_GROUT, 22).save(OUT / "floor_01_b.png")
     wall_section(33).save(OUT / "wall_01.png")
     door_mat(44).save(OUT / "door_mat.png")
+    street_tile((126, 122, 118), 55, curb=True).save(OUT / "sidewalk.png")
+    street_tile((58, 58, 64), 66).save(OUT / "asphalt.png")
     for f in sorted(OUT.glob("*.png")):
         print(f"  {f.name:18s} {Image.open(f).size} {f.stat().st_size // 1024}KB")

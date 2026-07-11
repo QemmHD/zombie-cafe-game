@@ -9,8 +9,12 @@ import type { Zombie, ZombieInstance } from '../data/types';
 import {
   CafeGrid,
   DEFAULT_SPEED_STAT,
+  characterSortKey,
+  entityDepth,
   zombieTilesPerSec,
+  type FootprintItem,
   type LayoutSchema,
+  type PlacementId,
   type Seat,
 } from '../engine/contracts';
 import { CharacterActor } from '../game/actors/CharacterActor';
@@ -31,6 +35,13 @@ export class CafeScene extends Phaser.Scene {
   private saveTimer = 5000;
   private servedSinceLevel = 0;
   private seedCounter = 1;
+  private stovesById = new Map<PlacementId, StoveSim>();
+  // Edit mode: hold a furniture piece to lift it, tap a tile to set it down.
+  private holdTimer: Phaser.Time.TimerEvent | null = null;
+  private moveSession: { id: PlacementId; item: FootprintItem; rot: 0 | 1; ghost: Phaser.GameObjects.Image } | null = null;
+  // Street life: render-only pedestrians passing on the sidewalk.
+  private peds: { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; fx: number; fy: number; dir: 1 | -1; speed: number; phase: number }[] = [];
+  private pedTimer = 2500;
 
   constructor() {
     super('Cafe');
@@ -47,6 +58,11 @@ export class CafeScene extends Phaser.Scene {
 
     this.scene.launch('Hud');
     this.buildStoves();
+    this.setupEditMode();
+    this.grid.events.on('moved', ({ placement }) => {
+      const stove = this.stovesById.get(placement.id);
+      stove?.reposition();
+    });
     this.staffStartersFromSave();
     this.reportOfflineEarnings();
 
@@ -68,7 +84,12 @@ export class CafeScene extends Phaser.Scene {
     // The city outside: screen-fixed, behind the diorama — Deadbeat Diner sits
     // on a night street corner, not in a void.
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'city_bg');
-    bg.setScrollFactor(0).setDepth(-100);
+    bg.setScrollFactor(0).setDepth(-100).setAlpha(0.92);
+    // Push the backdrop back so the diner reads as the subject, not a sticker.
+    this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH * 2, GAME_HEIGHT * 2, 0x0a0c12, 0.32)
+      .setScrollFactor(0)
+      .setDepth(-99);
     bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height) / this.cameras.main.zoom || 1);
     // Re-fit after camera zoom is known (fitCamera runs later in create()).
     this.time.delayedCall(0, () => {
@@ -85,6 +106,7 @@ export class CafeScene extends Phaser.Scene {
       const stove = new StoveSim(this.view, p.id, unlocked[i % unlocked.length]);
       stove.onRequestStaff = () => this.dispatchWaiter(stove);
       this.stoves.push(stove);
+      this.stovesById.set(p.id, stove);
       i++;
     }
   }
@@ -199,12 +221,131 @@ export class CafeScene extends Phaser.Scene {
     }
   }
 
+  // ── edit mode (hold to lift, tap to place — the original's rearrange-anytime) ──
+
+  private setupEditMode(): void {
+    this.input.on('gameobjectdown', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.GameObject) => {
+      const id = obj.getData('placementId') as PlacementId | undefined;
+      if (!id || this.moveSession) return;
+      this.holdTimer?.remove();
+      this.holdTimer = this.time.delayedCall(350, () => this.enterMoveMode(id));
+    });
+    this.input.on('gameobjectup', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.GameObject) => {
+      const id = obj.getData('placementId') as PlacementId | undefined;
+      if (!id) return;
+      if (this.holdTimer && this.holdTimer.getProgress() < 1) {
+        // Short press = interact (stove tap). Long press already lifted it.
+        this.holdTimer.remove();
+        this.holdTimer = null;
+        if (!this.moveSession) this.stovesById.get(id)?.tap();
+      }
+    });
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (!this.moveSession) return;
+      this.updateGhost(ptr);
+    });
+    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      if (!this.moveSession || over.some((o) => o.getData('placementId') === this.moveSession?.id)) return;
+      this.tryDrop(ptr);
+    });
+  }
+
+  private enterMoveMode(id: PlacementId): void {
+    const p = this.grid.placements().get(id);
+    if (!p) return;
+    const item = itemCatalog(p.itemId);
+    if (!item) return;
+    const src = this.view.furnitureSprite(id);
+    if (!src) return;
+    src.setAlpha(0.35);
+    const ghost = this.add.image(src.x, src.y, src.texture.key).setOrigin(0.5, 1).setAlpha(0.8).setDepth(9500);
+    this.moveSession = { id, item, rot: p.rot, ghost };
+    this.updateGhost(this.input.activePointer);
+    EventBus.publish('notify', 'Moving — tap a tile to set it down.');
+  }
+
+  private updateGhost(ptr: Phaser.Input.Pointer): void {
+    const ses = this.moveSession;
+    if (!ses) return;
+    const t = this.view.pointerTile(ptr);
+    const fw = ses.rot === 1 ? ses.item.h : ses.item.w;
+    const fh = ses.rot === 1 ? ses.item.w : ses.item.h;
+    this.view.layoutSprite(ses.ghost, ses.item.kind, fw, fh, t);
+    const ok = this.grid.canPlace(ses.item, t, ses.rot, ses.id).ok;
+    ses.ghost.setTint(ok ? 0x8dff9a : 0xff7a6a);
+    ses.ghost.setData('anchor', t);
+    ses.ghost.setData('ok', ok);
+  }
+
+  private tryDrop(ptr: Phaser.Input.Pointer): void {
+    const ses = this.moveSession;
+    if (!ses) return;
+    this.updateGhost(ptr);
+    const anchor = ses.ghost.getData('anchor');
+    if (ses.ghost.getData('ok') && this.grid.moveItem(ses.id, anchor, ses.rot)) {
+      this.exitMoveMode();
+    } else {
+      this.tweens.add({ targets: ses.ghost, x: ses.ghost.x + 5, duration: 45, yoyo: true, repeat: 3 });
+    }
+  }
+
+  private exitMoveMode(): void {
+    const ses = this.moveSession;
+    if (!ses) return;
+    this.view.furnitureSprite(ses.id)?.setAlpha(1);
+    ses.ghost.destroy();
+    this.moveSession = null;
+  }
+
+  // ── street life (render-only pedestrians on the sidewalk) ───────────────────
+
+  private spawnPedestrian(): void {
+    if (this.peds.length >= 3) return;
+    const dir = (Math.random() < 0.5 ? 1 : -1) as 1 | -1;
+    const fy = this.grid.h + 0.35 + Math.random() * 0.4;
+    const fx = dir === 1 ? -3.5 : this.grid.w + 3;
+    const img = this.add.image(0, 0, 'customer').setOrigin(0.5, 0.96);
+    img.setScale(104 / img.height);
+    const tints = [0xd9c9a8, 0xc9b8d0, 0xa8c9d9, 0xd9b8a8, 0xb8d9b0];
+    img.setTint(tints[Math.floor(Math.random() * tints.length)]);
+    img.setFlipX(dir === -1);
+    const shadow = this.add.ellipse(0, 0, 38, 12, 0x000000, 0.28);
+    this.peds.push({ img, shadow, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });
+  }
+
+  private updatePedestrians(dt: number): void {
+    this.pedTimer -= dt * 1000;
+    if (this.pedTimer <= 0) {
+      this.spawnPedestrian();
+      this.pedTimer = Phaser.Math.Between(3500, 9000);
+    }
+    for (let i = this.peds.length - 1; i >= 0; i--) {
+      const p = this.peds[i];
+      p.fx += p.dir * p.speed * dt;
+      p.phase += dt * 7 * p.speed;
+      const w = this.view.worldOf(p.fx, p.fy);
+      const bob = Math.abs(Math.sin(p.phase)) * 3;
+      p.img.setPosition(w.x, w.y + 18 - bob);
+      p.img.setRotation(Math.sin(p.phase / 2) * 0.04);
+      p.shadow.setPosition(w.x, w.y + 16);
+      const d = entityDepth(characterSortKey(p.fx, p.fy), true);
+      p.img.setDepth(d);
+      p.shadow.setDepth(d - 1);
+      if ((p.dir === 1 && p.fx > this.grid.w + 3.5) || (p.dir === -1 && p.fx < -4)) {
+        p.img.destroy();
+        p.shadow.destroy();
+        this.peds.splice(i, 1);
+      }
+    }
+  }
+
   // ── loop ───────────────────────────────────────────────────────────────────
 
   update(_time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, MAX_TICK_SEC);
 
     for (const stove of this.stoves) stove.update(dt);
+    this.updatePedestrians(dt);
     for (const c of this.customers) c.update(dt);
     for (const w of this.waiters) {
       const events = w.tick(dt);
