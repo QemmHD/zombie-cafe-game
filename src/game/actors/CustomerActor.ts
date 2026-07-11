@@ -73,6 +73,7 @@ export class CustomerActor extends CharacterActor {
       // Under the wall band while outside; pop into the entity band at the door.
       this.sprite.setDepth(t < 0.5 ? 810 : this.sprite.depth);
       this.sprite.setAlpha(Math.min(1, t * 3 + 0.3));
+      this.followMood();
       return;
     }
     switch (this.phase) {
@@ -99,7 +100,11 @@ export class CustomerActor extends CharacterActor {
         break;
       }
     }
-    // The thought bubble rides above the head through every phase.
+    this.followMood();
+  }
+
+  /** The thought bubble rides above the head through every phase. */
+  private followMood(): void {
     if (this.mood) {
       this.mood.setPosition(this.sprite.x + 16, this.headY() - 10);
       this.mood.setDepth(this.sprite.depth + 2);
