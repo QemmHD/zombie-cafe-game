@@ -1,44 +1,56 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, DEMO_TIME_SCALE } from '../config';
-import { Hud } from '../ui/Hud';
-import { Stove } from '../game/Stove';
-import { Customer } from '../game/Customer';
-import { Save } from '../core/SaveManager';
+import { GAME_WIDTH, GAME_HEIGHT } from '../config';
 import { EventBus } from '../core/EventBus';
+import { Save } from '../core/SaveManager';
+import { itemCatalog } from '../data/catalog';
 import { dishesForLevel, getZombie } from '../data/content';
+import starterLayoutJson from '../data/starterLayout.json';
 import type { Zombie, ZombieInstance } from '../data/types';
+import {
+  CafeGrid,
+  DEFAULT_SPEED_STAT,
+  zombieTilesPerSec,
+  type LayoutSchema,
+  type Seat,
+} from '../engine/contracts';
+import { CharacterActor } from '../game/actors/CharacterActor';
+import { CustomerActor } from '../game/actors/CustomerActor';
+import { StoveSim } from '../game/StoveSim';
+import { RoomView } from '../view/RoomView';
 
-type Pt = { x: number; y: number };
-
-const STOVE_XS = [268, 480, 692];
-const STOVE_Y = 306;
-const TABLES: Pt[] = [
-  { x: 205, y: 476 },
-  { x: 408, y: 492 },
-  { x: 620, y: 478 },
-  { x: 812, y: 458 },
-];
-const DOOR: Pt = { x: 480, y: 596 };
+const MAX_TICK_SEC = 0.25; // clamp render-loop dt; long gaps are offline settlement's job
 
 export class CafeScene extends Phaser.Scene {
-  private stoves: Stove[] = [];
-  private waiters: Phaser.GameObjects.Image[] = [];
-  private spawnTimer = 1200;
+  private grid!: CafeGrid;
+  private view!: RoomView;
+  private stoves: StoveSim[] = [];
+  private waiters: CharacterActor[] = [];
+  private customers = new Set<CustomerActor>();
+  private seatsTaken = new Set<string>(); // seatId = chair placementId
+  private spawnTimer = 1600;
   private saveTimer = 5000;
   private servedSinceLevel = 0;
+  private seedCounter = 1;
 
   constructor() {
     super('Cafe');
   }
 
   create(): void {
-    this.buildRoom();
-    new Hud(this);
+    this.buildBackdrop();
+
+    const { grid, repairs } = CafeGrid.deserialize(starterLayoutJson as LayoutSchema, itemCatalog);
+    if (repairs.length > 0) console.warn('[layout] repairs applied:', repairs);
+    this.grid = grid;
+    this.view = new RoomView(this, grid);
+    this.view.fitCamera(36);
+
+    this.scene.launch('Hud');
     this.buildStoves();
-    this.assignStarters();
+    this.staffStartersFromSave();
     this.reportOfflineEarnings();
 
-    EventBus.publish('notify', 'Tap a glowing pot to collect. Serve customers to infect them!');
+    EventBus.publish('notify', 'Tap a stove to staff it. Feed customers to infect them!');
 
     this.game.events.on(Phaser.Core.Events.BLUR, () => Save.save());
     window.addEventListener('visibilitychange', () => {
@@ -46,61 +58,67 @@ export class CafeScene extends Phaser.Scene {
     });
   }
 
-  // ── Room ─────────────────────────────────────────────────────────────────────
-  private buildRoom(): void {
-    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'cafe_bg').setDepth(-1000);
-    const scale = Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height);
-    bg.setScale(scale);
+  // ── setup ──────────────────────────────────────────────────────────────────
 
-    for (const t of TABLES) this.drawTable(t.x, t.y);
-
-    this.add.text(DOOR.x, GAME_HEIGHT - 16, '▲ ENTRANCE ▲', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#e8ecf2',
-    }).setOrigin(0.5).setStroke('#0d0f14', 4).setDepth(5);
-  }
-
-  private drawTable(x: number, y: number): void {
-    this.add.ellipse(x, y + 4, 88, 24, 0x000000, 0.3).setDepth(y - 3);
-    this.add.rectangle(x, y - 12, 14, 40, 0x4a3320).setDepth(y - 2);
-    this.add.ellipse(x, y - 34, 74, 32, 0x6b4a2f).setStrokeStyle(3, 0x3a2718).setDepth(y - 1);
-    this.add.ellipse(x - 10, y - 40, 22, 10, 0x2a3142).setDepth(y); // plate
+  private buildBackdrop(): void {
+    // The city outside: screen-fixed, behind the diorama — Deadbeat Diner sits
+    // on a night street corner, not in a void.
+    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'city_bg');
+    bg.setScrollFactor(0).setDepth(-100);
+    bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height) / this.cameras.main.zoom || 1);
+    // Re-fit after camera zoom is known (fitCamera runs later in create()).
+    this.time.delayedCall(0, () => {
+      const z = this.cameras.main.zoom;
+      bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height) / z);
+    });
   }
 
   private buildStoves(): void {
     const unlocked = dishesForLevel(Save.data.cafeLevel);
-    STOVE_XS.forEach((x, i) => {
-      const dish = unlocked[i % unlocked.length];
-      const stove = new Stove(this, x, STOVE_Y, dish);
-      stove.onRequestStaff = () => this.takeIdleZombie(i);
+    let i = 0;
+    for (const p of this.grid.placements().values()) {
+      if (p.kind !== 'stove') continue;
+      const stove = new StoveSim(this.view, p.id, unlocked[i % unlocked.length]);
+      stove.onRequestStaff = () => this.dispatchWaiter(stove);
       this.stoves.push(stove);
-    });
+      i++;
+    }
   }
 
-  private addWaiter(stoveIndex: number): void {
-    const x = STOVE_XS[stoveIndex] - 60;
-    const y = STOVE_Y + 12;
-    const w = this.add.image(x, y, 'zombie_waiter').setOrigin(0.5, 1);
-    w.setScale(112 / w.height).setDepth(y).setFlipX(true);
-    this.tweens.add({ targets: w, y: y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.waiters[stoveIndex] = w;
-  }
-
-  private assignStarters(): void {
+  /** Kitchen zombies from the save walk in and man the stoves on boot. */
+  private staffStartersFromSave(): void {
     const kitchen = Save.data.zombies.filter((z) => z.assignment === 'kitchen');
-    this.stoves.forEach((stove, i) => {
-      if (kitchen[i]) {
-        stove.assign(kitchen[i]);
-        this.addWaiter(i);
-      }
-    });
+    kitchen.slice(0, this.stoves.length).forEach((z, i) => this.sendWaiterTo(this.stoves[i], z));
   }
 
-  private takeIdleZombie(stoveIndex: number): ZombieInstance | null {
+  private dispatchWaiter(stove: StoveSim): boolean {
     const idle = Save.data.zombies.find((z) => z.assignment === 'idle');
-    if (!idle) return null;
-    idle.assignment = 'kitchen';
-    this.addWaiter(stoveIndex);
-    return idle;
+    if (!idle) return false;
+    this.sendWaiterTo(stove, idle);
+    return true;
+  }
+
+  private sendWaiterTo(stove: StoveSim, zombie: ZombieInstance): void {
+    const cells = this.grid.interactionCells(stove.placementId);
+    if (cells.length === 0) return;
+    const data = getZombie(zombie.zombieId);
+    const speed = zombieTilesPerSec(data ? Math.round(data.baseSpeed * 3) : DEFAULT_SPEED_STAT);
+    const w = new CharacterActor(this.view, 'zombie_waiter', this.grid.door(), speed, this.seedCounter++, `waiter_${this.seedCounter}`);
+    // Any reachable interaction cell will do — layouts can seal some of them.
+    const reached = cells.some((cell) => w.walker.requestMove(cell).status === 'ok');
+    if (!reached) {
+      w.destroy();
+      EventBus.publish('notify', 'That stove is walled off — your zombie refuses.');
+      return;
+    }
+    zombie.assignment = 'kitchen';
+    w.sprite.setData('stoveId', stove.placementId);
+    this.waiters.push(w);
+    // When the waiter arrives, the pot goes on.
+    const onTick = (events: ReturnType<CharacterActor['tick']>) => {
+      for (const e of events) if (e.type === 'arrived') stove.staffArrived(zombie);
+    };
+    w.sprite.setData('onTick', onTick);
   }
 
   private reportOfflineEarnings(): void {
@@ -108,12 +126,13 @@ export class CafeScene extends Phaser.Scene {
     if (!r) return;
     const mins = Math.floor(r.seconds / 60);
     const label = mins >= 1 ? `${mins} min` : `${r.seconds}s`;
-    this.time.delayedCall(500, () =>
+    this.time.delayedCall(600, () =>
       EventBus.publish('notify', `Welcome back! Your zombies cooked ${r.coins} coins in ${label}. 🧟`),
     );
   }
 
-  // ── Customers ───────────────────────────────────────────────────────────────
+  // ── customers ──────────────────────────────────────────────────────────────
+
   private kitchenInfectionChance(): number {
     let chance = 0;
     for (const inst of Save.data.zombies) {
@@ -124,10 +143,29 @@ export class CafeScene extends Phaser.Scene {
     return Phaser.Math.Clamp(chance, 0, 0.75);
   }
 
+  private freeSeat(): Seat | null {
+    const seats = this.grid.seats().filter((s) => !this.seatsTaken.has(s.chairId));
+    return seats.length > 0 ? seats[Phaser.Math.Between(0, seats.length - 1)] : null;
+  }
+
   private spawnCustomer(): void {
-    const table = TABLES[Phaser.Math.Between(0, TABLES.length - 1)];
+    const seat = this.freeSeat();
+    if (!seat) return; // full house — seats gate throughput, like the original
+    this.seatsTaken.add(seat.chairId);
     const tip = 12 + Save.data.cafeLevel * 6;
-    new Customer(this, DOOR, table, tip, this.kitchenInfectionChance(), (z) => this.onCustomerConverted(z));
+    const c = new CustomerActor(
+      this.view,
+      seat,
+      tip,
+      this.kitchenInfectionChance(),
+      this.seedCounter++,
+      (z) => this.onCustomerConverted(z),
+      (done) => {
+        this.seatsTaken.delete(done.seat.chairId);
+        this.customers.delete(done);
+      },
+    );
+    this.customers.add(c);
   }
 
   private onCustomerConverted(z: Zombie): void {
@@ -148,15 +186,23 @@ export class CafeScene extends Phaser.Scene {
     }
   }
 
-  // ── Loop ─────────────────────────────────────────────────────────────────────
+  // ── loop ───────────────────────────────────────────────────────────────────
+
   update(_time: number, deltaMs: number): void {
-    const dtGame = (deltaMs / 1000) * DEMO_TIME_SCALE;
-    for (const stove of this.stoves) stove.update(dtGame);
+    const dt = Math.min(deltaMs / 1000, MAX_TICK_SEC);
+
+    for (const stove of this.stoves) stove.update(dt);
+    for (const c of this.customers) c.update(dt);
+    for (const w of this.waiters) {
+      const events = w.tick(dt);
+      const cb = w.sprite.getData('onTick') as ((e: typeof events) => void) | undefined;
+      if (events.length > 0 && cb) cb(events);
+    }
 
     this.spawnTimer -= deltaMs;
     if (this.spawnTimer <= 0) {
       this.spawnCustomer();
-      this.spawnTimer = Phaser.Math.Between(2600, 4600);
+      this.spawnTimer = Phaser.Math.Between(2800, 5200);
     }
 
     this.saveTimer -= deltaMs;

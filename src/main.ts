@@ -3,9 +3,10 @@ import { GAME_WIDTH, GAME_HEIGHT } from './config';
 import { BootScene } from './scenes/BootScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { CafeScene } from './scenes/CafeScene';
+import { HudScene } from './scenes/HudScene';
 import './core/SaveManager'; // initialises the Save singleton + offline earnings on load
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: GAME_WIDTH,
@@ -16,5 +17,13 @@ new Phaser.Game({
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   render: { antialias: true, pixelArt: false },
-  scene: [BootScene, PreloadScene, CafeScene],
+  scene: [BootScene, PreloadScene, CafeScene, HudScene],
 });
+
+// Exposed for headless verification harnesses (Playwright probes scene state).
+declare global {
+  interface Window {
+    __game?: Phaser.Game;
+  }
+}
+window.__game = game;
