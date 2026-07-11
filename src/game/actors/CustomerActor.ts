@@ -4,7 +4,7 @@ import { Economy } from '../../core/Economy';
 import { EventBus } from '../../core/EventBus';
 import { randomCommonZombie } from '../../data/content';
 import type { Zombie } from '../../data/types';
-import { CUSTOMER_SPEED, type Seat } from '../../engine/contracts';
+import { CUSTOMER_SPEED, characterSortKey, entityDepth, type Seat } from '../../engine/contracts';
 import type { RoomView } from '../../view/RoomView';
 import { CharacterActor } from './CharacterActor';
 
@@ -66,12 +66,12 @@ export class CustomerActor extends CharacterActor {
       const behind = door.ty === 0 ? { fx: door.tx, fy: -1.1 } : { fx: -1.1, fy: door.ty };
       const from = this.view.worldOf(behind.fx, behind.fy);
       const to = this.view.worldOf(door.tx, door.ty);
-      this.sprite.setPosition(
-        from.x + (to.x - from.x) * t,
-        from.y + (to.y - from.y) * t + 18 - Math.abs(Math.sin(t * 9)) * 3,
-      );
-      // Under the wall band while outside; pop into the entity band at the door.
-      this.sprite.setDepth(t < 0.5 ? 810 : this.sprite.depth);
+      this.sprite.setPosition(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t + 18);
+      this.sprite.setFlipX(door.ty !== 0); // through a left-back door they head SE
+      this.sprite.tickPose(dtSec, true, t * 9);
+      // Behind the wall while outside (glimpsed through the door hole); the
+      // moment the feet cross the wall plane, pop into the entity band.
+      this.sprite.setDepth(t < 0.55 ? 810 : entityDepth(characterSortKey(door.tx, door.ty), true));
       this.sprite.setAlpha(Math.min(1, t * 3 + 0.3));
       this.followMood();
       return;
@@ -171,6 +171,7 @@ export class CustomerActor extends CharacterActor {
   private startEating(): void {
     this.phase = 'eating';
     this.eatTimer = 7 + Math.random() * 2; // ~8s, canon FSM shape
+    this.sprite.setMotion('eat');
     this.showMood('happy');
     const p = this.view.worldOf(this.seat.tile.tx, this.seat.tile.ty);
     this.plate = this.view.scene.add
@@ -183,6 +184,7 @@ export class CustomerActor extends CharacterActor {
     // One-shot: leave 'eating' SYNCHRONOUSLY so this can never re-fire while
     // the infect tween runs (review blocker: duplicate payouts + zombies).
     this.phase = 'converting';
+    this.sprite.setMotion('auto');
     this.plate?.destroy();
     this.plate = null;
     this.mood?.destroy();
@@ -205,8 +207,8 @@ export class CustomerActor extends CharacterActor {
       duration: 420,
       yoyo: true,
       onYoyo: () => {
-        this.setCharTexture('zombie_waiter');
-        this.sprite.setTint(0x9fe8a0);
+        this.setCharRig('zombie_waiter');
+        this.sprite.setTintAll(0x9fe8a0);
         const z = randomCommonZombie();
         EventBus.publish('customer-infected', z.displayName);
         EventBus.publish('notify', `${z.displayName} joined your staff!`);

@@ -18,6 +18,7 @@ import {
 } from '../engine/contracts';
 import { CharacterActor } from '../game/actors/CharacterActor';
 import { CustomerActor } from '../game/actors/CustomerActor';
+import { PuppetBody } from '../game/actors/PuppetBody';
 import { StoveSim } from '../game/StoveSim';
 import { RoomView } from '../view/RoomView';
 
@@ -39,9 +40,13 @@ export class CafeScene extends Phaser.Scene {
   private holdTimer: Phaser.Time.TimerEvent | null = null;
   private moveSession: { id: PlacementId; item: FootprintItem; rot: 0 | 1; ghost: Phaser.GameObjects.Image } | null = null;
   // Street life: render-only pedestrians passing on the sidewalk.
-  private peds: { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; fx: number; fy: number; dir: 1 | -1; speed: number; phase: number }[] = [];
+  private peds: { body: PuppetBody; fx: number; fy: number; dir: 1 | -1; speed: number; phase: number }[] = [];
   private pedTimer = 2500;
   private panStart: { x: number; y: number; sx: number; sy: number } | null = null;
+  // Tap-to-control (original: zombies are re-taskable): the selected waiter.
+  private selected: CharacterActor | null = null;
+  private selectMarker: Phaser.GameObjects.Triangle | null = null;
+  private waiterActors = new Map<ZombieInstance, CharacterActor>();
 
   constructor() {
     super('Cafe');
@@ -120,41 +125,69 @@ export class CafeScene extends Phaser.Scene {
   private dispatchWaiter(stove: StoveSim): boolean {
     const idle = Save.data.zombies.find((z) => z.assignment === 'idle');
     if (!idle) return false;
+    // A zombie already standing in the room walks over from where they are;
+    // otherwise a fresh one shambles in from the door.
+    const existing = this.waiterActors.get(idle);
+    if (existing) return this.taskWaiterToStove(existing, idle, stove);
     return this.sendWaiterTo(stove, idle);
   }
 
   private sendWaiterTo(stove: StoveSim, zombie: ZombieInstance): boolean {
-    const cells = this.grid.interactionCells(stove.placementId);
-    if (cells.length === 0) return false;
     // The one stat->speed module; StaffStats (M6) will own stat derivation.
     const speed = zombieTilesPerSec(DEFAULT_SPEED_STAT);
     const w = new CharacterActor(this.view, 'zombie_waiter', this.grid.door(), speed, this.seedCounter++, `waiter_${this.seedCounter}`);
-    // Any reachable interaction cell will do — layouts can seal some of them.
-    const reached = cells.some((cell) => w.walker.requestMove(cell).status === 'ok');
-    if (!reached) {
+    if (!this.taskWaiterToStove(w, zombie, stove)) {
       w.destroy();
       EventBus.publish('notify', 'That stove is walled off — your zombie refuses.');
       return false;
     }
+    this.registerWaiter(w, zombie);
+    return true;
+  }
+
+  /** Walk a (new or re-tasked) waiter to a stove and bind arrival to cooking. */
+  private taskWaiterToStove(w: CharacterActor, zombie: ZombieInstance, stove: StoveSim): boolean {
+    const cells = this.grid.interactionCells(stove.placementId);
+    if (cells.length === 0) return false;
+    // Any reachable interaction cell will do — layouts can seal some of them.
+    const reached = cells.some((cell) => w.walker.requestMove(cell).status === 'ok');
+    if (!reached) return false;
     zombie.assignment = 'kitchen';
     stove.expectStaff(); // stove stays honest: no double-dispatch window
     w.sprite.setData('stoveId', stove.placementId);
-    this.waiters.push(w);
     const onTick = (events: ReturnType<CharacterActor['tick']>) => {
       for (const e of events) {
         if (e.type === 'arrived') stove.staffArrived(zombie);
         if (e.type === 'blocked') {
           // Route died (furniture moved mid-walk): free everyone honestly.
-          zombie.assignment = 'idle';
-          stove.revertToUnstaffed();
-          this.waiters = this.waiters.filter((x) => x !== w);
-          w.destroy();
-          EventBus.publish('notify', 'Your zombie got walled in and gave up.');
+          // The zombie stays where they froze — tap them to re-task.
+          this.releaseWaiter(w);
+          EventBus.publish('notify', 'Your zombie got walled in — tap them to re-task.');
         }
       }
     };
     w.sprite.setData('onTick', onTick);
     return true;
+  }
+
+  private registerWaiter(w: CharacterActor, zombie: ZombieInstance): void {
+    this.waiters.push(w);
+    this.waiterActors.set(zombie, w);
+    w.sprite.setData('waiterRef', w);
+    w.sprite.setData('zombieInst', zombie);
+    w.sprite.enableTap();
+  }
+
+  /** Free a waiter from whatever they were doing (stove reverts honestly). */
+  private releaseWaiter(w: CharacterActor): void {
+    const stoveId = w.sprite.getData('stoveId') as PlacementId | undefined;
+    const zombie = w.sprite.getData('zombieInst') as ZombieInstance | undefined;
+    if (stoveId) {
+      this.stovesById.get(stoveId)?.releaseCook();
+      w.sprite.setData('stoveId', undefined);
+    }
+    if (zombie) zombie.assignment = 'idle';
+    w.sprite.setData('onTick', undefined);
   }
 
   private reportOfflineEarnings(): void {
@@ -231,6 +264,15 @@ export class CafeScene extends Phaser.Scene {
       this.holdTimer = this.time.delayedCall(350, () => this.enterMoveMode(id));
     });
     this.input.on('gameobjectup', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.GameObject) => {
+      // Tap a zombie: select them for re-tasking (the original's control verb).
+      const waiter = obj.getData('waiterRef') as CharacterActor | undefined;
+      if (waiter) {
+        if (!this.moveSession && _ptr.getDistance() <= TAP_VS_PAN_PX) {
+          if (this.selected === waiter) this.deselectWaiter();
+          else this.selectWaiter(waiter);
+        }
+        return;
+      }
       const id = obj.getData('placementId') as PlacementId | undefined;
       if (!id) return;
       if (this.holdTimer && this.holdTimer.getProgress() < 1) {
@@ -239,7 +281,8 @@ export class CafeScene extends Phaser.Scene {
         this.holdTimer.remove();
         this.holdTimer = null;
         if (!this.moveSession && _ptr.getDistance() <= TAP_VS_PAN_PX) {
-          this.stovesById.get(id)?.tap();
+          if (this.selected) this.commandToFurniture(id);
+          else this.stovesById.get(id)?.tap();
         }
       }
     });
@@ -269,9 +312,72 @@ export class CafeScene extends Phaser.Scene {
       const cam = this.cameras.main;
       this.panStart = { x: ptr.x, y: ptr.y, sx: cam.scrollX, sy: cam.scrollY };
     });
-    this.input.on('pointerup', () => {
+    this.input.on('pointerup', (ptr: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      // Tap on open floor while a zombie is selected: send them there.
+      if (this.selected && !this.moveSession && over.length === 0 && ptr.getDistance() <= TAP_VS_PAN_PX) {
+        this.commandToTile(ptr);
+      }
       this.panStart = null;
     });
+  }
+
+  // ── tap-to-control (tap a zombie, then tap a tile or stove) ─────────────────
+
+  private selectWaiter(w: CharacterActor): void {
+    this.deselectWaiter();
+    this.selected = w;
+    w.sprite.setTintAll(0xc4ffcb);
+    this.selectMarker = this.add
+      .triangle(0, 0, 0, 0, 16, 0, 8, 11, 0x7ee081)
+      .setStrokeStyle(2, 0x0d0f14)
+      .setDepth(9600);
+    EventBus.publish('notify', 'Zombie selected — tap a tile to send them, or a stove to assign.');
+  }
+
+  private deselectWaiter(): void {
+    this.selected?.sprite.clearTintAll();
+    this.selected = null;
+    this.selectMarker?.destroy();
+    this.selectMarker = null;
+  }
+
+  private commandToTile(ptr: Phaser.Input.Pointer): void {
+    const w = this.selected;
+    if (!w) return;
+    const t = this.view.pointerTile(ptr);
+    if (!this.grid.walkable(t)) {
+      EventBus.publish('notify', 'They can’t stand there.');
+      return; // keep the selection — let the player retry
+    }
+    this.releaseWaiter(w);
+    if (w.walker.requestMove(t).status === 'ok') {
+      w.sprite.setData('onTick', (events: ReturnType<CharacterActor['tick']>) => {
+        for (const e of events) {
+          if (e.type === 'blocked') EventBus.publish('notify', 'Your zombie got walled in — tap them to re-task.');
+        }
+      });
+    } else {
+      EventBus.publish('notify', 'No path — they refuse to walk through walls.');
+    }
+    this.deselectWaiter();
+  }
+
+  private commandToFurniture(id: PlacementId): void {
+    const w = this.selected;
+    if (!w) return;
+    const stove = this.stovesById.get(id);
+    if (!stove) {
+      this.deselectWaiter();
+      return;
+    }
+    if (stove.state !== 'unstaffed') {
+      EventBus.publish('notify', 'That stove already has a cook.');
+      return;
+    }
+    const zombie = w.sprite.getData('zombieInst') as ZombieInstance;
+    this.releaseWaiter(w);
+    if (this.taskWaiterToStove(w, zombie, stove)) this.deselectWaiter();
+    else EventBus.publish('notify', 'That stove is walled off — your zombie refuses.');
   }
 
   private enterMoveMode(id: PlacementId): void {
@@ -330,13 +436,11 @@ export class CafeScene extends Phaser.Scene {
     // glimpsed beyond the wall tops and at the corners.
     const fy = -0.7 - Math.random() * 0.35;
     const fx = dir === 1 ? -4.5 : this.grid.w + 4;
-    const img = this.add.image(0, 0, 'customer').setOrigin(0.5, 0.96);
-    img.setScale(104 / img.height);
+    const body = new PuppetBody(this, 'customer', 104);
     const tints = [0xd9c9a8, 0xc9b8d0, 0xa8c9d9, 0xd9b8a8, 0xb8d9b0];
-    img.setTint(tints[Math.floor(Math.random() * tints.length)]);
-    img.setFlipX(dir === -1);
-    const shadow = this.add.ellipse(0, 0, 38, 12, 0x000000, 0.28);
-    this.peds.push({ img, shadow, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });
+    body.setTintAll(tints[Math.floor(Math.random() * tints.length)]);
+    body.setFlipX(dir === 1); // art faces left; +fx walks screen-right
+    this.peds.push({ body, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });
   }
 
   private updatePedestrians(dt: number): void {
@@ -350,16 +454,12 @@ export class CafeScene extends Phaser.Scene {
       p.fx += p.dir * p.speed * dt;
       p.phase += dt * 7 * p.speed;
       const w = this.view.worldOf(p.fx, p.fy);
-      const bob = Math.abs(Math.sin(p.phase)) * 3;
-      p.img.setPosition(w.x, w.y + 18 - bob);
-      p.img.setRotation(Math.sin(p.phase / 2) * 0.04);
-      p.shadow.setPosition(w.x, w.y + 16);
+      p.body.setPosition(w.x, w.y + 18);
+      p.body.tickPose(dt, true, p.phase);
       // Behind the back walls: render beneath the wall band, above the street.
-      p.img.setDepth(800);
-      p.shadow.setDepth(799);
+      p.body.setDepth(800);
       if ((p.dir === 1 && p.fx > this.grid.w + 4.5) || (p.dir === -1 && p.fx < -5)) {
-        p.img.destroy();
-        p.shadow.destroy();
+        p.body.destroy();
         this.peds.splice(i, 1);
       }
     }
@@ -369,6 +469,15 @@ export class CafeScene extends Phaser.Scene {
 
   update(_time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, MAX_TICK_SEC);
+
+    // The selection arrow bobs above the chosen zombie wherever they shamble.
+    if (this.selected && this.selectMarker) {
+      const s = this.selected.sprite;
+      this.selectMarker.setPosition(
+        s.x - 8,
+        s.y - s.displayHeight - 30 + Math.sin(_time / 170) * 3.5,
+      );
+    }
 
     for (const stove of this.stoves) stove.update(dt);
     this.updatePedestrians(dt);

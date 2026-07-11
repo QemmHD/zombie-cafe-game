@@ -1,0 +1,111 @@
+{
+ "style": "human",
+ "height": 300,
+ "pelvis": [
+  0,
+  -120.1
+ ],
+ "parts": [
+  {
+   "name": "legR",
+   "tex": "pp_cu_legR",
+   "w": 53.8,
+   "h": 133.5,
+   "pivot": [
+    0.5,
+    0.06
+   ],
+   "attach": [
+    10.4,
+    -112.1
+   ],
+   "group": "root",
+   "z": 1,
+   "channel": "legR"
+  },
+  {
+   "name": "legL",
+   "tex": "pp_cu_legL",
+   "w": 53.8,
+   "h": 133.5,
+   "pivot": [
+    0.5,
+    0.06
+   ],
+   "attach": [
+    -10.4,
+    -112.1
+   ],
+   "group": "root",
+   "z": 2,
+   "channel": "legL"
+  },
+  {
+   "name": "torso",
+   "tex": "pp_cu_torso",
+   "w": 64.8,
+   "h": 95.8,
+   "pivot": [
+    0.5,
+    0.94
+   ],
+   "attach": [
+    0,
+    0
+   ],
+   "group": "upper",
+   "z": 3
+  },
+  {
+   "name": "armR",
+   "tex": "pp_cu_armR",
+   "w": 32.1,
+   "h": 113.2,
+   "pivot": [
+    0.45,
+    0.08
+   ],
+   "attach": [
+    25.9,
+    -76.6
+   ],
+   "group": "upper",
+   "z": 4,
+   "channel": "armR"
+  },
+  {
+   "name": "armL",
+   "tex": "pp_cu_armL",
+   "w": 32.1,
+   "h": 112.9,
+   "pivot": [
+    0.55,
+    0.08
+   ],
+   "attach": [
+    -25.9,
+    -76.6
+   ],
+   "group": "upper",
+   "z": 5,
+   "channel": "armL"
+  },
+  {
+   "name": "head",
+   "tex": "pp_cu_head",
+   "w": 64.2,
+   "h": 104.5,
+   "pivot": [
+    0.5,
+    0.92
+   ],
+   "attach": [
+    0,
+    -83.7
+   ],
+   "group": "upper",
+   "z": 6,
+   "channel": "head"
+  }
+ ]
+}

@@ -222,19 +222,28 @@ def road_stripe_tile(seed: int) -> Image.Image:
 
 
 def wall_door_section(seed: int) -> Image.Image:
-    """A back-wall section with the doorway in it (the original's door is a wall item)."""
+    """A back-wall section with the doorway in it (the original's door is a wall item).
+
+    The opening is a real transparent HOLE — entering customers and the street
+    behind show through it instead of vanishing behind painted-on darkness.
+    """
     img = wall_section(seed)
-    # dark doorway opening following the parallelogram (base rise x/2)
+    # cut the doorway following the parallelogram (base rise x/2)
     for x in range(28, 100):
         top = x // 2
         arch = 210 if 40 <= x <= 88 else 230  # slight arch shape
         for y in range(top + arch, top + 384 - 4):
-            img.putpixel((x, y), (26, 20, 26, 255))
-    # door frame
+            img.putpixel((x, y), (0, 0, 0, 0))
+    # door frame posts + lintel rim around the cut
     for x in (27, 28, 99, 100):
         top = x // 2
         for y in range(top + 205, top + 384 - 2):
             img.putpixel((x, y), (96, 66, 40, 255))
+    for x in range(28, 100):
+        top = x // 2
+        arch = 210 if 40 <= x <= 88 else 230
+        for t in range(4):
+            img.putpixel((x, top + arch - 1 - t), (96, 66, 40, 255))
     # OPEN sign glow above the door
     d = ImageDraw.Draw(img)
     d.rectangle([48, 150, 82, 168], fill=(40, 80, 46, 255), outline=(126, 224, 129, 255))

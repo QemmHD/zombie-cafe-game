@@ -102,6 +102,20 @@ export class StoveSim {
     this.startCook();
   }
 
+  /**
+   * The cook was re-tasked away (original's tap-to-control). A dish in
+   * progress is abandoned (interim burn rule until M5); READY food stays
+   * collectable — the stove just won't restart without a cook.
+   */
+  releaseCook(): void {
+    this.zombie = null;
+    if (this.state === 'cooking' || this.state === 'awaiting-cook') {
+      this.barFill.width = 0;
+      this.steam.setAlpha(0);
+      this.revertToUnstaffed();
+    }
+  }
+
   private startCook(): void {
     const z = this.zombie ? getZombie(this.zombie.zombieId) : null;
     this.cookGame = this.dish.cookTimeSeconds * (z ? z.cookSpeedMult : 1);
@@ -136,7 +150,13 @@ export class StoveSim {
       duration: 420,
       onComplete: () => this.bubble.setAlpha(1).setY(this.top.y - 12),
     });
-    this.startCook();
+    // Only restart if the cook is still standing here (they can be re-tasked).
+    if (this.zombie) this.startCook();
+    else {
+      this.barFill.width = 0;
+      this.steam.setAlpha(0);
+      this.revertToUnstaffed();
+    }
   }
 
   update(dtSec: number): void {
