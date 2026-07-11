@@ -22,10 +22,14 @@ export function characterSortKey(fx: number, fy: number): number {
 }
 
 /**
- * Entity band depth. The +8 character bias resolves the classic equal-sum tie
- * (character standing beside a 2x2 stove on the same anti-diagonal): the
- * character draws on top. Exact for all real cases with footprints <= 2x2.
+ * Entity band depth (canon §1, rev 3). The tile sum is quantized round-to-nearest
+ * BEFORE scaling: furniture keys are integer sums (depth ≡ 0 mod 16) while
+ * characters carry the +8 bias (≡ 8 mod 16), so a character↔furniture depth tie
+ * is arithmetically impossible — mid-step included. Exactly one depth flip per
+ * furniture pass, at fractional sum 0.5. Keys must come from the LOGICAL
+ * trajectory, never the corner-rounded render offset. Character↔character ties
+ * (same quantized sum) break by stable entity-id order in the view.
  */
 export function entityDepth(key: number, isCharacter: boolean): number {
-  return BAND.ENTITY + key * 16 + (isCharacter ? 8 : 0);
+  return BAND.ENTITY + 16 * Math.floor(key + 0.5) + (isCharacter ? 8 : 0);
 }

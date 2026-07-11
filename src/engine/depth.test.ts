@@ -38,6 +38,21 @@ describe('depth canon', () => {
     expect(beside).toBe(stove + 8);
   });
 
+  it('character/furniture depth ties are arithmetically impossible (canon rev 3)', () => {
+    // Sweep a character across a full 2x2-stove pass at 1/64-tile sampling:
+    // furniture depths are ≡0 (mod 16), characters ≡8 — never equal.
+    const stove = entityDepth(furnitureSortKey(place(1, 1, 2, 2)), false);
+    for (let sum = 3; sum <= 5; sum += 1 / 64) {
+      const c = entityDepth(characterSortKey(sum, 0), true);
+      expect(c).not.toBe(stove);
+      expect(c % 16).toBe(8);
+    }
+    expect(stove % 16).toBe(0);
+    // Exactly one flip per pass, at fractional sum 0.5 of the stove's key
+    expect(entityDepth(characterSortKey(3.49, 0), true)).toBeLessThan(stove);
+    expect(entityDepth(characterSortKey(3.5, 0), true)).toBeGreaterThan(stove);
+  });
+
   it('the 17x16 endgame stays comfortably inside the entity band', () => {
     const maxKey = 16 + 15; // front corner of the far tile
     expect(entityDepth(maxKey, true)).toBeLessThan(BAND.FX_WORLD);

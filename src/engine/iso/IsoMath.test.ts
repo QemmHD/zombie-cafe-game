@@ -55,11 +55,15 @@ describe('IsoMath transforms', () => {
 });
 
 describe('roomBounds', () => {
-  it('17x16 endgame room spans 2112 x 1280 px + wall headroom (spec §2.4)', () => {
+  it('17x16 endgame room spans 2112 x 1248 world px (canon §1)', () => {
     const b = roomBounds(17, 16);
     expect(b.maxX - b.minX).toBe(2112); // 64*17 + 64*16
-    expect(b.maxY).toBe(HALF_H * (17 + 16)); // floor bottom corner
+    expect(b.maxY).toBe(HALF_H * (17 + 16) - HALF_H); // bottom corner of tile (16,15)
     expect(b.minY).toBe(-HALF_H - 192); // wall top
+    expect(b.maxY - b.minY).toBe(1248);
+    // maxY must equal the actual projected bottom corner of the front tile.
+    const front = tileToWorld(16, 15);
+    expect(b.maxY).toBe(front.y + HALF_H);
   });
 });
 

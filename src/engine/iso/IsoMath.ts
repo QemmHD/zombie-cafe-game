@@ -29,13 +29,15 @@ export function worldToTile(wx: number, wy: number): Tile {
   return { tx: Math.round(f.x), ty: Math.round(f.y) };
 }
 
-/** World-space AABB of a WxH room including the back walls (spec 01 §2.4). */
+/** World-space AABB of a WxH room including the back walls (canon §1). */
 export function roomBounds(w: number, h: number): AABB {
   return {
     minX: -HALF_W * h, // left corner of tile (0, h-1)
     maxX: HALF_W * w, // right corner of tile (w-1, 0)
     minY: -HALF_H - WALL_H, // top of walls above tile (0,0)
-    maxY: HALF_H * (w + h), // bottom corner of tile (w-1, h-1)
+    // Bottom corner of tile (w-1, h-1): center 32*(w+h-2) + half-height 32.
+    // (Canon rev 3 corrected spec 01's "-HALF_H+HALF_H" slip here.)
+    maxY: HALF_H * (w + h) - HALF_H,
   };
 }
 
