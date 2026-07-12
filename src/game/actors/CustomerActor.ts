@@ -82,6 +82,9 @@ export class CustomerActor extends CharacterActor {
       // moment the feet cross the wall plane, pop into the entity band.
       this.sprite.setDepth(t < 0.55 ? 810 : entityDepth(characterSortKey(door.tx, door.ty), true));
       this.sprite.setAlpha(Math.min(1, t * 3 + 0.3));
+      this.shadow.setPosition(this.sprite.x, this.sprite.y - 1);
+      this.shadow.setAlpha(0.26 * this.sprite.alpha);
+      this.shadow.setDepth(this.sprite.depth - 1);
       this.followMood();
       return;
     }
@@ -123,6 +126,9 @@ export class CustomerActor extends CharacterActor {
   private startWaiting(): void {
     this.phase = 'waiting';
     this.patience = PATIENCE_SEC;
+    // Actually SIT: pelvis to the chair, legs forward, facing the table.
+    this.sprite.setMotion('sit');
+    this.faceOverride = this.seat.facing === 'NE' || this.seat.facing === 'SE' ? 'right' : 'left';
     this.showMood('hungry');
   }
 
@@ -291,6 +297,8 @@ export class CustomerActor extends CharacterActor {
 
   private leave(): void {
     this.phase = 'leaving';
+    this.sprite.setMotion('auto');
+    this.faceOverride = null;
     const res = this.walker.requestMove(this.view.grid.door());
     // Trapped, or already standing on the door tile (requestMove returns ok
     // and goes idle WITHOUT an 'arrived' event) — finish now, don't deadlock.
@@ -303,6 +311,13 @@ export class CustomerActor extends CharacterActor {
     this.plate?.destroy();
     this.mood?.destroy();
     this.onDone(this);
-    this.destroy();
+    // Slip out through the door instead of blinking out of existence.
+    this.view.scene.tweens.add({
+      targets: this.sprite,
+      alpha: 0,
+      duration: 240,
+      onUpdate: () => this.shadow.setAlpha(0.26 * this.sprite.alpha),
+      onComplete: () => this.destroy(),
+    });
   }
 }

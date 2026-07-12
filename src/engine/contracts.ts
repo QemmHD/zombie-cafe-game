@@ -51,7 +51,7 @@ export {
 } from './move/speed';
 
 export type { PuppetPose, PuppetStyle } from './anim/puppetPoses';
-export { REST_POSE, eatPose, idlePose, walkPose } from './anim/puppetPoses';
+export { REST_POSE, eatPose, idlePose, sitPose, walkPose } from './anim/puppetPoses';
 
 export { mulberry32 } from './rng';
 export { Emitter } from './events';

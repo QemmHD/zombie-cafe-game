@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   eatPose,
   idlePose,
+  sitPose,
   walkPose,
   type PuppetPose,
   type PuppetStyle,
@@ -35,7 +36,7 @@ const RIGS: Record<string, RigData> = {
   zombie_waiter: zombieRig as RigData,
 };
 
-export type PuppetMotion = 'auto' | 'eat';
+export type PuppetMotion = 'auto' | 'sit' | 'eat';
 
 /**
  * The original's characters are skeletal cutout puppets (spec 92 §5) — this is
@@ -125,14 +126,22 @@ export class PuppetBody extends Phaser.GameObjects.Container {
     const pose =
       this.motion === 'eat'
         ? eatPose(this.idleT, this.rig.style)
-        : moving
-          ? walkPose(phase, this.rig.style)
-          : idlePose(this.idleT, this.rig.style);
+        : this.motion === 'sit'
+          ? sitPose(this.idleT, this.rig.style)
+          : moving
+            ? walkPose(phase, this.rig.style)
+            : idlePose(this.idleT, this.rig.style);
     this.applyPose(pose);
+  }
+
+  /** Height of the body above the ground line, world px (for contact shadows). */
+  get lift(): number {
+    return Math.max(0, -this.rigRoot.y * this.baseScale);
   }
 
   private applyPose(pose: PuppetPose): void {
     this.rigRoot.y = pose.bobY;
+    this.rigRoot.scaleY = pose.squash; // footfall weight; feet stay planted
     this.upper.rotation = pose.torsoRot;
     for (const p of this.rig.parts) {
       if (!p.channel) continue;

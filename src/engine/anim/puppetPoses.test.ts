@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { walkPose, idlePose, eatPose, REST_POSE, type PuppetStyle } from './puppetPoses';
+import { walkPose, idlePose, eatPose, sitPose, REST_POSE, type PuppetStyle } from './puppetPoses';
 
 const STYLES: PuppetStyle[] = ['human', 'zombie'];
 const CHANNELS = Object.keys(REST_POSE) as (keyof typeof REST_POSE)[];
@@ -76,5 +76,29 @@ describe('idlePose / eatPose', () => {
     expect(down.armR).toBeLessThan(up.armR);
     // both well above walk-swing range: the arm is clearly "up"
     expect(down.armR).toBeGreaterThan(0.5);
+  });
+
+  it('sitting drops the pelvis and swings the legs forward (and eat inherits it)', () => {
+    for (const style of STYLES) {
+      const s = sitPose(2.2, style);
+      expect(s.bobY).toBeGreaterThan(30); // down onto the seat
+      expect(s.legL).toBeGreaterThan(0.8);
+      expect(s.legR).toBeGreaterThan(0.8);
+      const e = eatPose(2.2, style);
+      expect(e.bobY).toBe(s.bobY);
+      expect(e.legL).toBe(s.legL);
+    }
+  });
+
+  it('walk squash compresses at footfall, never stretches past rest', () => {
+    for (const style of STYLES) {
+      for (let phase = 0; phase < Math.PI * 2; phase += 0.1) {
+        const p = walkPose(phase, style);
+        expect(p.squash).toBeLessThanOrEqual(1);
+        expect(p.squash).toBeGreaterThan(0.9);
+      }
+      expect(walkPose(0, style).squash).toBeLessThan(1); // footfall = compressed
+      expect(walkPose(Math.PI / 2, style).squash).toBeCloseTo(1, 5); // mid-hop
+    }
   });
 });

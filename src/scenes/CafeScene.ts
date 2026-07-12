@@ -71,7 +71,7 @@ export class CafeScene extends Phaser.Scene {
   private holdTimer: Phaser.Time.TimerEvent | null = null;
   private moveSession: { id: PlacementId; item: FootprintItem; rot: 0 | 1; ghost: Phaser.GameObjects.Image } | null = null;
   // Street life: render-only pedestrians passing on the sidewalk.
-  private peds: { body: PuppetBody; fx: number; fy: number; dir: 1 | -1; speed: number; phase: number }[] = [];
+  private peds: { body: PuppetBody; shadow: Phaser.GameObjects.Ellipse; fx: number; fy: number; dir: 1 | -1; speed: number; phase: number }[] = [];
   private pedTimer = 2500;
   private panStart: { x: number; y: number; sx: number; sy: number } | null = null;
   // Tap-to-control (original: zombies are re-taskable): the selected waiter.
@@ -742,6 +742,8 @@ export class CafeScene extends Phaser.Scene {
     this.deselectWaiter();
     this.selected = w;
     w.sprite.setTintAll(0xc4ffcb);
+    // A tactile little squash-pop: you PICKED something up off the floor.
+    this.tweens.add({ targets: w.sprite, scaleY: w.sprite.scaleY * 0.88, duration: 70, yoyo: true });
     this.selectMarker = this.add
       .triangle(0, 0, 0, 0, 16, 0, 8, 11, 0x7ee081)
       .setStrokeStyle(2, 0x0d0f14)
@@ -864,7 +866,8 @@ export class CafeScene extends Phaser.Scene {
     const tints = [0xd9c9a8, 0xc9b8d0, 0xa8c9d9, 0xd9b8a8, 0xb8d9b0];
     body.setTintAll(tints[Math.floor(Math.random() * tints.length)]);
     body.setFlipX(dir === 1); // art faces left; +fx walks screen-right
-    this.peds.push({ body, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });
+    const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.22);
+    this.peds.push({ body, shadow, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });
   }
 
   private updatePedestrians(dt: number): void {
@@ -882,9 +885,38 @@ export class CafeScene extends Phaser.Scene {
       p.body.tickPose(dt, true, p.phase);
       // Behind the back walls: render beneath the wall band, above the street.
       p.body.setDepth(800);
+      const k = Math.max(0.55, 1 - p.body.lift / 26);
+      p.shadow.setPosition(w.x, w.y + 17).setScale(k).setAlpha(0.22 * k).setDepth(799);
       if ((p.dir === 1 && p.fx > this.grid.w + 4.5) || (p.dir === -1 && p.fx < -5)) {
         p.body.destroy();
+        p.shadow.destroy();
         this.peds.splice(i, 1);
+      }
+    }
+  }
+
+  /**
+   * Render-only body separation: two puppets on the same spot ghost through
+   * each other like paper. Nudge overlapping sprites apart AFTER their logic
+   * positions are synced — walkers and pathing never see this.
+   */
+  private separateBodies(): void {
+    const actors: CharacterActor[] = [...this.waiters];
+    for (const c of this.customers) {
+      if (c.phase === 'entering' || c.phase === 'leaving') actors.push(c);
+    }
+    for (let i = 0; i < actors.length; i++) {
+      for (let j = i + 1; j < actors.length; j++) {
+        const a = actors[i].sprite;
+        const b = actors[j].sprite;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        if (Math.abs(dx) < 26 && Math.abs(dy) < 14) {
+          const push = ((26 - Math.abs(dx)) / 2) * 0.5;
+          const dir = dx === 0 ? (i % 2 === 0 ? 1 : -1) : Math.sign(dx);
+          actors[i].nudgeRender(-dir * push);
+          actors[j].nudgeRender(dir * push);
+        }
       }
     }
   }
@@ -936,6 +968,7 @@ export class CafeScene extends Phaser.Scene {
       }
     }
     this.tickEnergy(dt);
+    this.separateBodies();
 
     this.jobScanTimer -= deltaMs;
     if (this.jobScanTimer <= 0) {
