@@ -15,15 +15,13 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('floor_a', 'art/room/floor_01_a.png');
     this.load.image('floor_b', 'art/room/floor_01_b.png');
     this.load.image('wall', 'art/room/wall_01.png');
-    this.load.image('door_mat', 'art/room/door_mat.png');
     this.load.image('sidewalk', 'art/room/sidewalk.png');
     this.load.image('asphalt', 'art/room/asphalt.png');
     this.load.image('grass', 'art/room/grass.png');
     this.load.image('road_stripe', 'art/room/road_stripe.png');
     this.load.image('wall_door', 'art/room/wall_door.png');
 
-    // World & characters (cutout-puppet parts, spec 92 §5)
-    this.load.image('city_bg', 'art/city_bg.jpg');
+    // Characters (cutout-puppet parts, spec 92 §5)
     for (const c of ['zw', 'cu']) {
       for (const part of ['head', 'torso', 'armL', 'armR', 'legL', 'legR']) {
         this.load.image(`pp_${c}_${part}`, `art/puppets/${c}_${part}.png`);
@@ -43,24 +41,27 @@ export class PreloadScene extends Phaser.Scene {
   private buildProgressBar(): void {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
-    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, PALETTE.bgTop).setOrigin(0);
+    const FONT = "'Trebuchet MS', Verdana, sans-serif";
+    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0xfaf3e0).setOrigin(0);
     this.add
       .text(cx, cy - 44, BRAND.name.toUpperCase(), {
-        fontFamily: 'monospace',
-        fontSize: '30px',
-        color: '#7ee081',
+        fontFamily: FONT,
+        fontSize: '34px',
+        color: '#5cb544',
         fontStyle: 'bold',
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setStroke('#3a2c1c', 6);
     this.add
-      .text(cx, cy - 16, 'the service is to die for', {
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        color: '#8891a4',
+      .text(cx, cy - 12, 'the service is to die for', {
+        fontFamily: FONT,
+        fontSize: '13px',
+        color: '#8a7a62',
+        fontStyle: 'bold italic',
       })
       .setOrigin(0.5);
-    this.add.rectangle(cx, cy + 10, 320, 16, PALETTE.panel).setStrokeStyle(1, PALETTE.panelEdge);
-    const fill = this.add.rectangle(cx - 158, cy + 10, 0, 12, PALETTE.toxic).setOrigin(0, 0.5);
+    this.add.rectangle(cx, cy + 14, 320, 16, 0xffffff).setStrokeStyle(2, PALETTE.panelEdge);
+    const fill = this.add.rectangle(cx - 158, cy + 14, 0, 12, PALETTE.toxic).setOrigin(0, 0.5);
     this.load.on('progress', (p: number) => {
       fill.width = 316 * p;
     });

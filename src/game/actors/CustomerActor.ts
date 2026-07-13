@@ -75,7 +75,7 @@ export class CustomerActor extends CharacterActor {
       const behind = door.ty === 0 ? { fx: door.tx, fy: -1.1 } : { fx: -1.1, fy: door.ty };
       const from = this.view.worldOf(behind.fx, behind.fy);
       const to = this.view.worldOf(door.tx, door.ty);
-      this.sprite.setPosition(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t + 18);
+      this.sprite.setPosition(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t + 15);
       this.sprite.setFlipX(door.ty !== 0); // through a left-back door they head SE
       this.sprite.tickPose(dtSec, true, t * 9);
       // Behind the wall while outside (glimpsed through the door hole); the
@@ -83,7 +83,7 @@ export class CustomerActor extends CharacterActor {
       this.sprite.setDepth(t < 0.55 ? 810 : entityDepth(characterSortKey(door.tx, door.ty), true));
       this.sprite.setAlpha(Math.min(1, t * 3 + 0.3));
       this.shadow.setPosition(this.sprite.x, this.sprite.y - 1);
-      this.shadow.setAlpha(0.26 * this.sprite.alpha);
+      this.shadow.setAlpha(0.18 * this.sprite.alpha);
       this.shadow.setDepth(this.sprite.depth - 1);
       this.followMood();
       return;
@@ -316,7 +316,7 @@ export class CustomerActor extends CharacterActor {
       targets: this.sprite,
       alpha: 0,
       duration: 240,
-      onUpdate: () => this.shadow.setAlpha(0.26 * this.sprite.alpha),
+      onUpdate: () => this.shadow.setAlpha(0.18 * this.sprite.alpha),
       onComplete: () => this.destroy(),
     });
   }

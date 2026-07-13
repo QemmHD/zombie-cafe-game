@@ -7,7 +7,7 @@ import {
   rightWallSectionTopLeft,
   leftWallSectionTopLeft,
 } from './IsoMath';
-import { HALF_H, HALF_W, WALL_SECTION_H } from '../IsoConfig';
+import { HALF_H, HALF_W, WALL_H, WALL_SECTION_H } from '../IsoConfig';
 import { mulberry32 } from '../rng';
 
 describe('IsoMath transforms', () => {
@@ -55,12 +55,11 @@ describe('IsoMath transforms', () => {
 });
 
 describe('roomBounds', () => {
-  it('17x16 endgame room spans 2112 x 1248 world px (canon §1)', () => {
+  it('17x16 endgame room spans the projected extents (derived from IsoConfig)', () => {
     const b = roomBounds(17, 16);
-    expect(b.maxX - b.minX).toBe(2112); // 64*17 + 64*16
+    expect(b.maxX - b.minX).toBe(HALF_W * (17 + 16));
     expect(b.maxY).toBe(HALF_H * (17 + 16) - HALF_H); // bottom corner of tile (16,15)
-    expect(b.minY).toBe(-HALF_H - 192); // wall top
-    expect(b.maxY - b.minY).toBe(1248);
+    expect(b.minY).toBe(-HALF_H - WALL_H); // wall top
     // maxY must equal the actual projected bottom corner of the front tile.
     const front = tileToWorld(16, 15);
     expect(b.maxY).toBe(front.y + HALF_H);
@@ -68,7 +67,7 @@ describe('roomBounds', () => {
 });
 
 describe('wall canon', () => {
-  it('right wall section k sits at (64k, 32k - 224)', () => {
+  it('right wall section k sits at (HALF_W*k, HALF_H*k - WALL_SECTION_H)', () => {
     for (const k of [0, 3, 16]) {
       expect(rightWallSectionTopLeft(k)).toEqual({ x: HALF_W * k, y: HALF_H * k - WALL_SECTION_H });
     }

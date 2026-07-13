@@ -37,7 +37,7 @@ RIG_OUT.mkdir(parents=True, exist_ok=True)
 
 WHITE_T = 238  # border flood-fill threshold: all channels above -> background
 TARGET_H = 300  # normalized assembled character height in rig units
-TEX_SCALE = 0.4  # shipped texture downscale (~3x on-screen headroom; the rig
+TEX_SCALE = 0.3  # shipped texture downscale (~3x on-screen headroom; the rig
 #                  uses setDisplaySize, so texture resolution is independent)
 
 
@@ -97,27 +97,28 @@ def components(img: Image.Image, min_area: int = 900) -> list[dict]:
 # Expected part centroids per sheet (eyeballed from the chosen generations).
 SHEETS = {
     'zombie_waiter': {
-        'file': 'zw_sheet_b.png',
+        'file': 'flat/zw_a.png',
         'style': 'zombie',
         'expect': {
-            'head': (220, 230), 'armL': (590, 190), 'armR': (900, 290),
-            'torso': (230, 720), 'legL': (600, 760), 'legR': (820, 760),
+            'head': (225, 440), 'torso': (540, 545), 'armL': (745, 355),
+            'armR': (915, 440), 'legL': (760, 715), 'legR': (885, 700),
         },
-        # tray arm: shoulder is the torn sleeve at the part's top-right
-        'pivots': {'head': (0.5, 0.90), 'torso': (0.5, 0.94), 'armL': (0.86, 0.16),
+        # tray arm: shoulder is the torn sleeve at the part's lower-left
+        'pivots': {'head': (0.45, 0.92), 'torso': (0.5, 0.94), 'armL': (0.18, 0.72),
                    'armR': (0.5, 0.08), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
         'swing': {'armL': 0.25},  # cloche stays level — barely swings
-        'rest': {'armL': 0.0},
+        'rest': {'armL': -0.55},  # swing the platter out front at chest height
+        'anatomy': {'shoulder_spread': 0.6},
     },
     'customer': {
-        'file': 'cu_sheet_a.png',
+        'file': 'flat/cu_a.png',
         'style': 'human',
         'expect': {
-            'head': (230, 250), 'armL': (480, 290), 'torso': (690, 200),
-            'armR': (920, 280), 'legL': (260, 740), 'legR': (790, 740),
+            'head': (255, 265), 'torso': (525, 520), 'armL': (165, 690),
+            'armR': (830, 530), 'legL': (345, 830), 'legR': (725, 810),
         },
-        'pivots': {'head': (0.5, 0.92), 'torso': (0.5, 0.94), 'armL': (0.55, 0.08),
-                   'armR': (0.45, 0.08), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'pivots': {'head': (0.45, 0.93), 'torso': (0.5, 0.94), 'armL': (0.75, 0.1),
+                   'armR': (0.2, 0.12), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
         'swing': {},
         'rest': {},
     },
@@ -136,6 +137,7 @@ ANATOMY = {
 
 def build(char: str) -> None:
     cfg = SHEETS[char]
+    anat = {**ANATOMY, **cfg.get('anatomy', {})}
     sheet = remove_exterior_white(Image.open(SCRATCH / cfg['file']))
     comps = components(sheet)
     if len(comps) < 6:
@@ -173,14 +175,14 @@ def build(char: str) -> None:
     legH = max(dims['legL'][1], dims['legR'][1])
     torW, torH = dims['torso']
     headH = dims['head'][1]
-    raw_h = legH * (1 - ANATOMY['leg_overlap']) + torH * (1 - ANATOMY['torso_overlap']) \
-        + headH * (1 - ANATOMY['head_overlap'] - (1 - cfg['pivots']['head'][1]))
+    raw_h = legH * (1 - anat['leg_overlap']) + torH * (1 - anat['torso_overlap']) \
+        + headH * (1 - anat['head_overlap'] - (1 - cfg['pivots']['head'][1]))
     s = TARGET_H / raw_h  # normalize all part sizes + offsets into rig units
 
-    hip_y = -legH * (1 - ANATOMY['leg_overlap'] - 0.06) * s
+    hip_y = -legH * (1 - anat['leg_overlap'] - 0.06) * s
     pelvis_y = hip_y - legH * 0.06 * s
-    shoulder_y = torH * ANATOMY['shoulder_y'] * s  # up from pelvis (positive)
-    torso_top = torH * (1 - ANATOMY['torso_overlap']) * s
+    shoulder_y = torH * anat['shoulder_y'] * s  # up from pelvis (positive)
+    torso_top = torH * (1 - anat['torso_overlap']) * s
 
     def P(name: str, attach: tuple[float, float], group: str, z: int,
           channel: str | None) -> dict:
@@ -200,8 +202,8 @@ def build(char: str) -> None:
             part['rest'] = cfg['rest'][name]
         return part
 
-    hs = torW * ANATOMY['hip_spread'] * s
-    ss = torW * ANATOMY['shoulder_spread'] * s
+    hs = torW * anat['hip_spread'] * s
+    ss = torW * anat['shoulder_spread'] * s
     rig = {
         'style': cfg['style'],
         'height': TARGET_H,
@@ -214,7 +216,7 @@ def build(char: str) -> None:
             P('torso', (0, 0), 'upper', 3, None),
             P('armR', (ss, -shoulder_y), 'upper', 4, 'armR'),
             P('armL', (-ss, -shoulder_y), 'upper', 5, 'armL'),
-            P('head', (0, -(torso_top - headH * ANATOMY['head_overlap'] * s)), 'upper', 6, 'head'),
+            P('head', (0, -(torso_top - headH * anat['head_overlap'] * s)), 'upper', 6, 'head'),
         ],
     }
     (RIG_OUT / f'{char}.json').write_text(json.dumps(rig, indent=1) + '\n')

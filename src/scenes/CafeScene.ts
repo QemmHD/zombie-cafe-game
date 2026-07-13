@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, PALETTE } from '../config';
+import { PALETTE } from '../config';
 import { Economy } from '../core/Economy';
 import { EventBus } from '../core/EventBus';
 import { Save } from '../core/SaveManager';
@@ -130,21 +130,9 @@ export class CafeScene extends Phaser.Scene {
   // ── setup ──────────────────────────────────────────────────────────────────
 
   private buildBackdrop(): void {
-    // The city outside: screen-fixed, behind the diorama — Deadbeat Diner sits
-    // on a night street corner, not in a void.
-    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'city_bg');
-    bg.setScrollFactor(0).setDepth(-100).setAlpha(0.92);
-    // Push the backdrop back so the diner reads as the subject, not a sticker.
-    this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH * 2, GAME_HEIGHT * 2, 0x0a0c12, 0.52)
-      .setScrollFactor(0)
-      .setDepth(-99);
-    bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height) / this.cameras.main.zoom || 1);
-    // Re-fit after camera zoom is known (fitCamera runs later in create()).
-    this.time.delayedCall(0, () => {
-      const z = this.cameras.main.zoom;
-      bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height) / z);
-    });
+    // Bright daylight, like the original: beyond the drawn street tiles the
+    // camera clear-color reads as more asphalt. No night city, no dark scrim.
+    this.cameras.main.setBackgroundColor(0x848688);
   }
 
   private buildStations(): void {
@@ -694,14 +682,32 @@ export class CafeScene extends Phaser.Scene {
       if (!wasTap || this.moveSession || this.cookbook.isOpen || this.cookbook.justClosed) return;
       over = over.filter((o) => o.active); // a UI tap may have destroyed its target
       if (over.some((o) => o.getData('uiBlock'))) return; // fixed UI ate the tap
+      // Characters only claim taps landing on their body CORE — a cook stands
+      // right at their stove, and tapping the stove must open the cookbook,
+      // not grab the cook (their generous hit box overlaps the furniture).
+      const pickActor = <T>(refKey: string): T | null => {
+        let best: T | null = null;
+        let bestDx = Infinity;
+        for (const o of over) {
+          const ref = o.getData(refKey) as T | undefined;
+          if (!ref) continue;
+          const body = o as unknown as Phaser.GameObjects.Container;
+          const dx = Math.abs(ptr.worldX - body.x);
+          if (dx < Math.abs(body.displayWidth) * 0.34 && dx < bestDx) {
+            best = ref;
+            bestDx = dx;
+          }
+        }
+        return best;
+      };
       // 1) customers: the Toxin infection verb (researched)
-      const cust = over.map((o) => o.getData('customerRef') as CustomerActor | undefined).find(Boolean);
+      const cust = pickActor<CustomerActor>('customerRef');
       if (cust) {
         this.tryInfect(cust);
         return;
       }
       // 2) zombies: select for re-tasking
-      const waiter = over.map((o) => o.getData('waiterRef') as CharacterActor | undefined).find(Boolean);
+      const waiter = pickActor<CharacterActor>('waiterRef');
       if (waiter) {
         if (this.selected === waiter) this.deselectWaiter();
         else this.selectWaiter(waiter);
@@ -862,11 +868,11 @@ export class CafeScene extends Phaser.Scene {
     // glimpsed beyond the wall tops and at the corners.
     const fy = -0.7 - Math.random() * 0.35;
     const fx = dir === 1 ? -4.5 : this.grid.w + 4;
-    const body = new PuppetBody(this, 'customer', 104);
+    const body = new PuppetBody(this, 'customer', 84);
     const tints = [0xd9c9a8, 0xc9b8d0, 0xa8c9d9, 0xd9b8a8, 0xb8d9b0];
     body.setTintAll(tints[Math.floor(Math.random() * tints.length)]);
     body.setFlipX(dir === 1); // art faces left; +fx walks screen-right
-    const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.22);
+    const shadow = this.add.ellipse(0, 0, 26, 8, 0x2a2a2a, 0.15);
     this.peds.push({ body, shadow, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });
   }
 
@@ -881,12 +887,12 @@ export class CafeScene extends Phaser.Scene {
       p.fx += p.dir * p.speed * dt;
       p.phase += dt * 7 * p.speed;
       const w = this.view.worldOf(p.fx, p.fy);
-      p.body.setPosition(w.x, w.y + 18);
+      p.body.setPosition(w.x, w.y + 15);
       p.body.tickPose(dt, true, p.phase);
       // Behind the back walls: render beneath the wall band, above the street.
       p.body.setDepth(800);
       const k = Math.max(0.55, 1 - p.body.lift / 26);
-      p.shadow.setPosition(w.x, w.y + 17).setScale(k).setAlpha(0.22 * k).setDepth(799);
+      p.shadow.setPosition(w.x, w.y + 17).setScale(k).setAlpha(0.15 * k).setDepth(799);
       if ((p.dir === 1 && p.fx > this.grid.w + 4.5) || (p.dir === -1 && p.fx < -5)) {
         p.body.destroy();
         p.shadow.destroy();

@@ -5,6 +5,7 @@ import type { Dish } from '../data/types';
 const ROW_H = 46;
 const PANEL_W = 560;
 const MAX_ROWS = 7;
+const FONT = "'Trebuchet MS', Verdana, sans-serif";
 
 /**
  * The original's recipe menu ("tap your character and then tap the stove to
@@ -48,7 +49,7 @@ export class CookbookPanel {
     this.root = root;
 
     const dim = this.scene.add
-      .rectangle(cx, cy, GAME_WIDTH * 2, GAME_HEIGHT * 2, 0x05070b, 0.55)
+      .rectangle(cx, cy, GAME_WIDTH * 2, GAME_HEIGHT * 2, 0x3a2c1c, 0.42)
       .setInteractive();
     dim.on('pointerup', () => {
       this.close();
@@ -66,9 +67,9 @@ export class CookbookPanel {
     root.add(
       this.scene.add
         .text(cx, top + 14, 'COOKBOOK', {
-          fontFamily: 'monospace',
-          fontSize: '18px',
-          color: '#7ee081',
+          fontFamily: FONT,
+          fontSize: '20px',
+          color: '#3a2c1c',
           fontStyle: 'bold',
         })
         .setOrigin(0.5, 0),
@@ -76,9 +77,9 @@ export class CookbookPanel {
     root.add(
       this.scene.add
         .text(cx, top + 36, 'pay up front — food burns if left on the stove', {
-          fontFamily: 'monospace',
-          fontSize: '11px',
-          color: '#8891a4',
+          fontFamily: FONT,
+          fontSize: '12px',
+          color: '#8a7a62',
         })
         .setOrigin(0.5, 0),
     );
@@ -87,12 +88,12 @@ export class CookbookPanel {
       const ry = top + 66 + i * ROW_H + ROW_H / 2;
       const afford = coins >= d.price;
       const row = this.scene.add
-        .rectangle(cx, ry, PANEL_W - 24, ROW_H - 6, afford ? 0x1a2130 : 0x141821, 1)
-        .setStrokeStyle(1, afford ? PALETTE.panelEdge : 0x1c2230);
+        .rectangle(cx, ry, PANEL_W - 24, ROW_H - 6, afford ? 0xfffdf4 : 0xefe7d2, 1)
+        .setStrokeStyle(1, afford ? PALETTE.panelEdge : 0xcbbc9e);
       if (afford) {
         row.setInteractive({ useHandCursor: true });
-        row.on('pointerover', () => row.setFillStyle(0x243049));
-        row.on('pointerout', () => row.setFillStyle(0x1a2130));
+        row.on('pointerover', () => row.setFillStyle(0xfff3cf));
+        row.on('pointerout', () => row.setFillStyle(0xfffdf4));
         row.on('pointerup', () => {
           this.close();
           onPick(d);
@@ -100,13 +101,13 @@ export class CookbookPanel {
       }
       root.add(row);
 
-      const nameCol = afford ? '#e8ecf2' : '#5a6274';
-      const statCol = afford ? '#8891a4' : '#454c5c';
+      const nameCol = afford ? '#3a2c1c' : '#a49781';
+      const statCol = afford ? '#8a7a62' : '#b3a68e';
       root.add(
         this.scene.add
           .text(cx - PANEL_W / 2 + 22, ry - 9, d.displayName, {
-            fontFamily: 'monospace',
-            fontSize: '14px',
+            fontFamily: FONT,
+            fontSize: '15px',
             color: nameCol,
             fontStyle: 'bold',
           })
@@ -115,8 +116,8 @@ export class CookbookPanel {
       root.add(
         this.scene.add
           .text(cx - PANEL_W / 2 + 22, ry + 10, `$${d.price} · ready in ${fmtTime(d.cookTimeSeconds)} · ${d.servings} servings`, {
-            fontFamily: 'monospace',
-            fontSize: '11px',
+            fontFamily: FONT,
+            fontSize: '12px',
             color: statCol,
           })
           .setOrigin(0, 0.5),
@@ -124,9 +125,9 @@ export class CookbookPanel {
       root.add(
         this.scene.add
           .text(cx + PANEL_W / 2 - 22, ry, `earns $${d.coinReward}\n+${d.xp} xp`, {
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            color: afford ? '#f2c14e' : '#5a5442',
+            fontFamily: FONT,
+            fontSize: '12px',
+            color: afford ? '#b0761f' : '#bfae8e',
             align: 'right',
           })
           .setOrigin(1, 0.5),
@@ -137,9 +138,9 @@ export class CookbookPanel {
       root.add(
         this.scene.add
           .text(cx, top + 66 + rows.length * ROW_H + 4, `…${dishes.length - MAX_ROWS} more unlock as you level`, {
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            color: '#8891a4',
+            fontFamily: FONT,
+            fontSize: '12px',
+            color: '#8a7a62',
           })
           .setOrigin(0.5, 0),
       );

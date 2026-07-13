@@ -18,8 +18,11 @@ import {
   type Tile,
 } from '../engine/contracts';
 
-// Assets are authored @2x (floor 256x128 for a 128x64 tile); the view scales by 0.5.
+// Assets are authored @2x (floor 168x108 for an 84x54 tile); the view scales by 0.5.
 const ART_SCALE = 0.5;
+
+/** The original tints its white wall panel at runtime — the starter is lemon. */
+const WALL_TINT = 0xf5ec74;
 
 /** Sprite keys per furniture kind (M1 set; grows with the catalog art). */
 const KIND_TEXTURE: Record<string, string> = {
@@ -63,7 +66,6 @@ export class RoomView {
     this.buildStreet();
     this.buildFloor();
     this.buildWalls();
-    this.buildDoor();
     for (const p of grid.placements().values()) this.addFurniture(p);
 
     grid.events.on('placed', ({ placement }) => this.addFurniture(placement));
@@ -85,15 +87,17 @@ export class RoomView {
    */
   fitCamera(marginPx = 10): number {
     const b = roomBounds(this.grid.w, this.grid.h);
-    const maxY = b.maxY + 70; // include the front grass apron
+    const maxY = b.maxY + 56; // include a strip of the front lawn
     const cam = this.scene.cameras.main;
     const zw = (cam.width - marginPx * 2) / (b.maxX - b.minX);
-    const zoom = clamp(zw, DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
+    const zh = (cam.height - 64) / (maxY - b.minY); // leave room for the HUD bar
+    // Original framing: the starter room fills the screen edge-to-edge; larger
+    // cafes overflow and the player drag-scrolls (authentic).
+    const zoom = clamp(Math.min(zw, zh), DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
     cam.setZoom(zoom);
     const pad = 90;
     cam.setBounds(b.minX - pad, b.minY - pad, b.maxX - b.minX + pad * 2, maxY - b.minY + pad * 2);
-    // Bias the initial view toward the front: door, seats, and street in frame.
-    cam.centerOn((b.minX + b.maxX) / 2, (b.minY + maxY) / 2 + 40);
+    cam.centerOn((b.minX + b.maxX) / 2, (b.minY + maxY) / 2 + 26);
     return zoom;
   }
 
@@ -173,6 +177,7 @@ export class RoomView {
           .image(p.x, p.y, isDoor ? 'wall_door' : 'wall')
           .setOrigin(0, 0)
           .setScale(ART_SCALE)
+          .setTint(WALL_TINT) // white panel, tinted — the original's own technique
           .setDepth(BAND.WALL + k),
       );
     }
@@ -185,19 +190,12 @@ export class RoomView {
           .setOrigin(0, 0)
           .setScale(ART_SCALE)
           .setFlipX(true)
+          .setTint(WALL_TINT)
           .setDepth(BAND.WALL + m),
       );
     }
   }
 
-  private buildDoor(): void {
-    const d = this.grid.door();
-    const c = tileToWorld(d.tx, d.ty);
-    this.scene.add
-      .image(c.x, c.y, 'door_mat')
-      .setScale(ART_SCALE)
-      .setDepth(BAND.FLOOR_OVERLAY - 1);
-  }
 
   private addFurniture(p: Placement): void {
     const tex = KIND_TEXTURE[p.kind];
@@ -232,13 +230,13 @@ export class RoomView {
     this.layoutSprite(img, p.kind, fw, fh, p.anchor);
     img.setDepth(entityDepth(furnitureSortKey(p), false));
 
-    // Grounding shadow: nothing sits ON the floor without one.
+    // Grounding shadow: soft and tight — the bright style can't carry blobs.
     const c = tileToWorld(p.anchor.tx + (fw - 1) / 2, p.anchor.ty + (fh - 1) / 2);
     const bottomY = c.y + (HALF_H * (fw + fh)) / 2;
     const shadowKey = `sh_${p.id}`;
     (this.scene.children.getByName(shadowKey) as Phaser.GameObjects.Ellipse | null)?.destroy();
     this.scene.add
-      .ellipse(c.x, bottomY - 4, img.displayWidth * 0.86, HALF_H * (fw + fh) * 0.6, 0x000000, 0.28)
+      .ellipse(c.x, bottomY - 3, img.displayWidth * 0.72, HALF_H * (fw + fh) * 0.42, 0x2a2a2a, 0.13)
       .setName(shadowKey)
       .setDepth(BAND.FLOOR_OVERLAY);
   }

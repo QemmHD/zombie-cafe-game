@@ -9,7 +9,8 @@ import {
 import type { RoomView } from '../../view/RoomView';
 import { PuppetBody } from './PuppetBody';
 
-const CHAR_H = 118; // on-screen height of a person at zoom 1
+// Measured from the original starting-cafe frame: character ≈ 1.12 tile widths.
+const CHAR_H = 94; // world-px height of a person at zoom 1
 
 /**
  * Shared base for anything that walks the grid: owns a Walker (engine) and a
@@ -34,7 +35,7 @@ export class CharacterActor {
     this.view = view;
     this.walker = new Walker(view.grid as CafeGrid, id, start, tilesPerSec, seed);
     this.sprite = new PuppetBody(view.scene, rigKey, CHAR_H);
-    this.shadow = view.scene.add.ellipse(0, 0, 36, 11, 0x000000, 0.26);
+    this.shadow = view.scene.add.ellipse(0, 0, 30, 9, 0x2a2a2a, 0.18);
     this.syncSprite(0);
   }
 
@@ -54,7 +55,7 @@ export class CharacterActor {
     const r = this.walker.renderPos(); // corner-rounded, render-only
     const p = this.view.worldOf(r.x, r.y);
     const moving = this.walker.state === 'moving';
-    this.sprite.setPosition(p.x, p.y + 18);
+    this.sprite.setPosition(p.x, p.y + 15);
     this.sprite.tickPose(dtSec, moving, this.walker.bobPhase);
     // Depth from the LOGICAL trajectory (canon §1.2), never the render offset.
     const d = entityDepth(characterSortKey(this.walker.pos.x, this.walker.pos.y), true);
@@ -67,7 +68,7 @@ export class CharacterActor {
     const k = Math.max(0.55, 1 - lift / 26);
     this.shadow.setPosition(p.x, p.y + 17);
     this.shadow.setScale(k);
-    this.shadow.setAlpha(0.26 * k * this.sprite.alpha);
+    this.shadow.setAlpha(0.18 * k * this.sprite.alpha);
     this.shadow.setDepth(d - 1);
   }
 
