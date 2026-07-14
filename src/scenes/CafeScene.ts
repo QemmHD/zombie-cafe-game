@@ -24,7 +24,7 @@ import {
 } from '../engine/contracts';
 import { CharacterActor } from '../game/actors/CharacterActor';
 import { CustomerActor } from '../game/actors/CustomerActor';
-import { PuppetBody } from '../game/actors/PuppetBody';
+import { PuppetBody, pickCustomerRig } from '../game/actors/PuppetBody';
 import { CounterSim } from '../game/CounterSim';
 import { StoveSim } from '../game/StoveSim';
 import { CookbookPanel } from '../ui/CookbookPanel';
@@ -975,9 +975,7 @@ export class CafeScene extends Phaser.Scene {
     // glimpsed beyond the wall tops and at the corners.
     const fy = -0.7 - Math.random() * 0.35;
     const fx = dir === 1 ? -4.5 : this.grid.w + 4;
-    const body = new PuppetBody(this, 'customer', 84);
-    const tints = [0xd9c9a8, 0xc9b8d0, 0xa8c9d9, 0xd9b8a8, 0xb8d9b0];
-    body.setTintAll(tints[Math.floor(Math.random() * tints.length)]);
+    const body = new PuppetBody(this, pickCustomerRig(Math.floor(Math.random() * 97)), 84);
     body.setFlipX(dir === 1); // art faces left; +fx walks screen-right
     const shadow = this.add.ellipse(0, 0, 26, 8, 0x2a2a2a, 0.15);
     this.peds.push({ body, shadow, fx, fy, dir, speed: 0.9 + Math.random() * 0.7, phase: Math.random() * 6 });

@@ -7,6 +7,7 @@ import type { Dish, Zombie } from '../../data/types';
 import { CUSTOMER_SPEED, characterSortKey, entityDepth, perServingXP, type Seat } from '../../engine/contracts';
 import type { RoomView } from '../../view/RoomView';
 import { CharacterActor } from './CharacterActor';
+import { pickCustomerRig } from './PuppetBody';
 
 type Phase = 'entering' | 'waiting' | 'eating' | 'converting' | 'leaving' | 'done';
 
@@ -47,7 +48,7 @@ export class CustomerActor extends CharacterActor {
     onAte: (c: CustomerActor) => void,
     onDone: (c: CustomerActor) => void,
   ) {
-    super(view, 'customer', view.grid.door(), CUSTOMER_SPEED, seed, `cust_${seed}`);
+    super(view, pickCustomerRig(seed), view.grid.door(), CUSTOMER_SPEED, seed, `cust_${seed}`);
     this.seat = seat;
     this.onConverted = onConverted;
     this.onAte = onAte;

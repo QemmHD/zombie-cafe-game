@@ -8,6 +8,8 @@ import {
   type PuppetStyle,
 } from '../../engine/contracts';
 import customerRig from '../../data/puppets/customer.json';
+import customerWRig from '../../data/puppets/customer_w.json';
+import customerSRig from '../../data/puppets/customer_s.json';
 import zombieRig from '../../data/puppets/zombie_waiter.json';
 
 interface RigPart {
@@ -33,8 +35,17 @@ interface RigData {
 
 const RIGS: Record<string, RigData> = {
   customer: customerRig as RigData,
+  customer_w: customerWRig as RigData,
+  customer_s: customerSRig as RigData,
   zombie_waiter: zombieRig as RigData,
 };
+
+/** The original's baseline walk-in crowd: man, woman, senior (weighted). */
+const CUSTOMER_RIGS = ['customer', 'customer', 'customer_w', 'customer_w', 'customer_s'];
+
+export function pickCustomerRig(seed: number): string {
+  return CUSTOMER_RIGS[Math.abs(Math.floor(seed)) % CUSTOMER_RIGS.length];
+}
 
 export type PuppetMotion = 'auto' | 'sit' | 'eat';
 

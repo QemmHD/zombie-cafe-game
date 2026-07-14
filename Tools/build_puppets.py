@@ -122,6 +122,32 @@ SHEETS = {
         'swing': {},
         'rest': {},
     },
+    'customer_w': {
+        'file': 'flat/cw_a.png',
+        'short': 'cw',
+        'style': 'human',
+        'expect': {
+            'head': (499, 251), 'torso': (504, 635), 'armL': (221, 600),
+            'armR': (765, 568), 'legL': (330, 865), 'legR': (693, 865),
+        },
+        'pivots': {'head': (0.5, 0.92), 'torso': (0.5, 0.94), 'armL': (0.6, 0.08),
+                   'armR': (0.08, 0.3), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'swing': {'armR': 0.5},
+        'rest': {'armR': 1.25},  # the horizontal art hangs down at rest
+    },
+    'customer_s': {
+        'file': 'flat/cs_a.png',
+        'short': 'cs',
+        'style': 'human',
+        'expect': {
+            'head': (517, 275), 'torso': (501, 729), 'armL': (123, 718),
+            'armR': (794, 667), 'legL': (283, 863), 'legR': (737, 887),
+        },
+        'pivots': {'head': (0.5, 0.93), 'torso': (0.5, 0.94), 'armL': (0.5, 0.08),
+                   'armR': (0.08, 0.3), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'swing': {'armR': 0.5},
+        'rest': {'armR': 1.25},
+    },
 }
 
 # Anatomy ratios (fractions of sizes measured off the sliced parts).
@@ -158,7 +184,7 @@ def build(char: str) -> None:
     if len(assigned) < 6:
         sys.exit(f'{char}: could not assign all parts')
 
-    short = 'zw' if char == 'zombie_waiter' else 'cu'
+    short = cfg.get('short') or ('zw' if char == 'zombie_waiter' else 'cu')
     dims: dict[str, tuple[int, int]] = {}
     for name, c in assigned.items():
         x0, y0, x1, y1 = c['bbox']

@@ -25,7 +25,7 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     // Characters (cutout-puppet parts, spec 92 §5)
-    for (const c of ['zw', 'cu']) {
+    for (const c of ['zw', 'cu', 'cw', 'cs']) {
       for (const part of ['head', 'torso', 'armL', 'armR', 'legL', 'legR']) {
         this.load.image(`pp_${c}_${part}`, `art/puppets/${c}_${part}.png`);
       }
