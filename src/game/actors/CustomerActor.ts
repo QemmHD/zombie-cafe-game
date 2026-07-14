@@ -4,7 +4,7 @@ import { Economy } from '../../core/Economy';
 import { EventBus } from '../../core/EventBus';
 import { randomCommonZombie } from '../../data/content';
 import type { Dish, Zombie } from '../../data/types';
-import { CUSTOMER_SPEED, characterSortKey, entityDepth, type Seat } from '../../engine/contracts';
+import { CUSTOMER_SPEED, characterSortKey, entityDepth, perServingXP, type Seat } from '../../engine/contracts';
 import type { RoomView } from '../../view/RoomView';
 import { CharacterActor } from './CharacterActor';
 
@@ -181,7 +181,9 @@ export class CustomerActor extends CharacterActor {
       Economy.addCoins(pay);
       this.coinFloat(pay, tip);
     }
-    EventBus.publish('customer-served', pay);
+    // Researched XP split: this serving's share of the dish's remaining 2/3.
+    const xpShare = this.servedDish ? perServingXP(this.servedDish.xp, this.servedDish.servings) : 0;
+    EventBus.publish('customer-served', pay, xpShare);
     this.onAte(this); // scene drops a dirty plate on the table
     this.phase = 'leaving';
     this.leave();

@@ -12,6 +12,7 @@ export type GameEvent =
   | 'customer-infected'
   | 'cafe-level-up'
   | 'rating-changed'
+  | 'xp-changed'
   | 'notify'
   | 'offline-earnings';
 

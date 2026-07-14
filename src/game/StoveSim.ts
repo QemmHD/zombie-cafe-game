@@ -198,6 +198,13 @@ export class StoveSim {
     return Math.max(0, Math.ceil(this.cookGame - this.elapsedGame));
   }
 
+  /** Toxin accelerant: the pot leaps straight to READY (original mechanic). */
+  finishInstantly(): void {
+    if (this.state !== 'cooking') return;
+    this.elapsedGame = this.cookGame;
+    this.update(0.001);
+  }
+
   update(dtSec: number): void {
     if (this.state === 'cooking') {
       if (!this.zombie) return; // unmanned pot is PAUSED (authentic rule)

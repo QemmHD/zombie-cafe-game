@@ -2,7 +2,18 @@ import type { ZombieInstance } from '../data/types';
 import { getZombie, DISHES } from '../data/content';
 
 const SAVE_KEY = 'zombiecafe.save.v1';
-const SAVE_VERSION = 3;
+const SAVE_VERSION = 4;
+
+/** A removable grime decal (the original's opening cleaning loop). */
+export interface GrimeRecord {
+  id: string;
+  kind: 'stain' | 'slime' | 'rat' | 'boards' | 'drip';
+  // Floor decals sit on a tile; wall decals hang on a wall section.
+  tx?: number;
+  ty?: number;
+  wall?: 'right' | 'left';
+  section?: number;
+}
 
 export interface SaveData {
   version: number;
@@ -12,9 +23,24 @@ export interface SaveData {
   playerXP: number;
   rating: number; // star rating 1..5 — service quality gates customer traffic
   zombies: ZombieInstance[];
+  grime: GrimeRecord[];
   // Idle bookkeeping
   lastSaveUtc: number;      // ms epoch
   idleCoinsPerSec: number;  // snapshot of production rate at last save
+}
+
+/** The new cafe is FILTHY — scrubbing it clean IS the early game (spec 95). */
+export function starterGrime(): GrimeRecord[] {
+  return [
+    { id: 'g1', kind: 'rat', tx: 3, ty: 4 },
+    { id: 'g2', kind: 'stain', tx: 1, ty: 5 },
+    { id: 'g3', kind: 'slime', tx: 5, ty: 3 },
+    { id: 'g4', kind: 'stain', tx: 5, ty: 6 },
+    { id: 'g5', kind: 'boards', wall: 'right', section: 1 },
+    { id: 'g6', kind: 'drip', wall: 'right', section: 5 },
+    { id: 'g7', kind: 'boards', wall: 'left', section: 2 },
+    { id: 'g8', kind: 'drip', wall: 'left', section: 6 },
+  ];
 }
 
 export function freshSave(): SaveData {
@@ -29,6 +55,7 @@ export function freshSave(): SaveData {
       { zombieId: 'zombie_rotten', level: 1, xp: 0, assignment: 'kitchen', energy: 100 },
       { zombieId: 'zombie_chef', level: 1, xp: 0, assignment: 'idle', energy: 100 },
     ],
+    grime: starterGrime(),
     lastSaveUtc: Date.now(),
     idleCoinsPerSec: 0,
   };
@@ -74,6 +101,8 @@ export class SaveManager {
     // v2 -> v3: zombies gain energy; the cafe gains a star rating.
     merged.rating = typeof old.rating === 'number' ? old.rating : 3;
     merged.zombies = (merged.zombies ?? []).map((z) => ({ ...z, energy: z.energy ?? 100 }));
+    // v3 -> v4: the cleaning loop arrives — existing cafes get dirty too.
+    merged.grime = Array.isArray(old.grime) ? old.grime : starterGrime();
     return merged;
   }
 

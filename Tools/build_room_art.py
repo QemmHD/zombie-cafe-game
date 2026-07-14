@@ -232,6 +232,85 @@ def asphalt_tile(seed: int, stripe: bool = False) -> Image.Image:
     return blend_over(img, marks)
 
 
+def decal_stain(seed: int) -> Image.Image:
+    """Brown splat — removable floor grime (flat-cel blob + darker outline)."""
+    rng = random.Random(seed)
+    img = Image.new("RGBA", (96, 60), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for _ in range(7):
+        cx, cy = rng.randint(24, 72), rng.randint(18, 42)
+        rx, ry = rng.randint(10, 22), rng.randint(6, 12)
+        d.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=(122, 96, 62, 235))
+    for _ in range(6):
+        cx, cy = rng.randint(10, 86), rng.randint(8, 52)
+        r = rng.randint(2, 5)
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(122, 96, 62, 235))
+    return img
+
+
+def decal_slime(seed: int) -> Image.Image:
+    """Green ooze puddle — the kitchen has a leak somewhere."""
+    rng = random.Random(seed)
+    img = Image.new("RGBA", (96, 56), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for _ in range(6):
+        cx, cy = rng.randint(24, 72), rng.randint(16, 40)
+        rx, ry = rng.randint(12, 22), rng.randint(7, 12)
+        d.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=(96, 168, 64, 235))
+    d.ellipse([34, 18, 52, 28], fill=(150, 212, 110, 235))  # highlight
+    d.ellipse([58, 30, 68, 36], fill=(150, 212, 110, 235))
+    return img
+
+
+def decal_rat(seed: int) -> Image.Image:
+    """THE rat (the original's most famous floor decal), facing left."""
+    img = Image.new("RGBA", (72, 40), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    O = (60, 56, 60, 255)
+    BODY = (134, 130, 134, 255)
+    d.ellipse([16, 14, 52, 34], fill=BODY, outline=O, width=2)  # body
+    d.ellipse([8, 16, 26, 32], fill=BODY, outline=O, width=2)  # head
+    d.ellipse([16, 10, 26, 20], fill=BODY, outline=O, width=2)  # ear
+    d.ellipse([18, 13, 23, 17], fill=(196, 150, 160, 255))  # inner ear
+    d.arc([46, 8, 70, 32], 200, 340, fill=O, width=3)  # tail
+    d.ellipse([9, 22, 13, 26], fill=(20, 18, 20, 255))  # eye
+    d.polygon([(8, 26), (4, 27), (8, 29)], fill=(230, 160, 170, 255))  # nose
+    for x0 in (24, 34, 44):  # feet nubs
+        d.ellipse([x0, 31, x0 + 6, 37], fill=BODY, outline=O, width=1)
+    return img
+
+
+def decal_boards(seed: int) -> Image.Image:
+    """Nailed-up planks — wall grime (someone boarded up a hole)."""
+    img = Image.new("RGBA", (84, 84), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    PLANK = (196, 160, 108, 255)
+    EDGE = (120, 92, 56, 255)
+    d.polygon([(4, 26), (76, 8), (80, 20), (8, 38)], fill=PLANK, outline=EDGE)
+    d.polygon([(6, 54), (78, 40), (80, 52), (8, 66)], fill=PLANK, outline=EDGE)
+    for (nx, ny) in [(12, 30), (70, 14), (12, 58), (72, 46)]:
+        d.ellipse([nx, ny, nx + 4, ny + 4], fill=(70, 66, 70, 255))
+    return img
+
+
+def decal_drip(seed: int) -> Image.Image:
+    """Slime dripping down the wall from the ceiling line."""
+    rng = random.Random(seed)
+    img = Image.new("RGBA", (64, 96), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    G = (96, 168, 64, 235)
+    d.rectangle([4, 0, 60, 10], fill=G)
+    x = 8
+    while x < 58:
+        w_ = rng.randint(5, 9)
+        ln = rng.randint(18, 74)
+        d.rounded_rectangle([x, 0, x + w_, ln], radius=w_ // 2, fill=G)
+        d.ellipse([x, ln - w_, x + w_, ln], fill=G)
+        x += w_ + rng.randint(3, 7)
+    d.rectangle([10, 4, 16, 30], fill=(150, 212, 110, 200))
+    return img
+
+
 if __name__ == "__main__":
     floor_tile(11).save(OUT / "floor_01_a.png")
     floor_tile(22).save(OUT / "floor_01_b.png")
@@ -241,6 +320,12 @@ if __name__ == "__main__":
     sidewalk_tile(55).save(OUT / "sidewalk.png")
     asphalt_tile(66).save(OUT / "asphalt.png")
     asphalt_tile(88, stripe=True).save(OUT / "road_stripe.png")
+    # Removable grime decals (the original's cleaning loop — spec 95)
+    decal_stain(7).save(OUT / "decal_stain.png")
+    decal_slime(9).save(OUT / "decal_slime.png")
+    decal_rat(1).save(OUT / "decal_rat.png")
+    decal_boards(3).save(OUT / "decal_boards.png")
+    decal_drip(5).save(OUT / "decal_drip.png")
     # door_mat retired: the original has no mat — keep a transparent stub so
     # stale caches can't 404 (nothing renders it anymore).
     Image.new("RGBA", (2, 2), (0, 0, 0, 0)).save(OUT / "door_mat.png")

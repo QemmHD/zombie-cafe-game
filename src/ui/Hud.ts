@@ -3,6 +3,7 @@ import { PALETTE, GAME_WIDTH, BRAND } from '../config';
 import { EventBus } from '../core/EventBus';
 import { Economy } from '../core/Economy';
 import { Save } from '../core/SaveManager';
+import { xpToNext } from '../engine/contracts';
 
 const FONT = "'Trebuchet MS', Verdana, sans-serif"; // chunky cartoon lettering
 const BAR_H = 52;
@@ -18,6 +19,7 @@ export class Hud {
   private zombieText!: Phaser.GameObjects.Text;
   private stars: Phaser.GameObjects.Text[] = [];
   private ratingNum!: Phaser.GameObjects.Text;
+  private xpFill!: Phaser.GameObjects.Rectangle;
   private toasts: Phaser.GameObjects.Container[] = [];
 
   constructor(scene: Phaser.Scene) {
@@ -31,6 +33,7 @@ export class Hud {
       EventBus.subscribe('zombie-added', () => this.refresh()),
       EventBus.subscribe('cafe-level-up', () => this.refresh()),
       EventBus.subscribe('rating-changed', () => this.refresh()),
+      EventBus.subscribe('xp-changed', () => this.refresh()),
       EventBus.subscribe('notify', (msg: string) => this.toast(msg)),
     ];
     // A restarted HUD scene must not leave stale handlers poking dead objects.
@@ -84,6 +87,10 @@ export class Hud {
     this.toxinText = this.chip(330, 110, PALETTE.toxic, '0');
     this.levelText = this.chip(450, 96, null, 'Lv 1');
     this.zombieText = this.chip(556, 110, PALETTE.blood, '0');
+    // XP progress toward the next cafe level, under the level chip.
+    s.add.rectangle(450, BAR_H - 6, 96, 5, 0xe4dbc4, 1).setOrigin(0, 0.5).setDepth(1);
+    this.xpFill = s.add.rectangle(450, BAR_H - 6, 0, 5, PALETTE.toxic, 1).setOrigin(0, 0.5).setDepth(2);
+    this.layer.add(this.xpFill);
 
     const brand = s.add
       .text(GAME_WIDTH - 12, BAR_H / 2, `${BRAND.name}  v${BRAND.version}`, {
@@ -101,6 +108,7 @@ export class Hud {
     this.toxinText.setText(this.fmt(Economy.toxin));
     this.levelText.setText(`Lv ${Save.data.cafeLevel}`);
     this.zombieText.setText(`${Save.data.zombies.length} 🧟`);
+    this.xpFill.width = 96 * Math.min(1, Save.data.playerXP / xpToNext(Save.data.cafeLevel));
     const r = Save.data.rating;
     this.stars.forEach((star, i) => {
       if (r >= i + 0.75) star.setColor('#f2b13c').setAlpha(1);

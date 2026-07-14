@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { PALETTE } from '../config';
 import { Economy } from '../core/Economy';
 import { EventBus } from '../core/EventBus';
-import { Save } from '../core/SaveManager';
+import { Save, type GrimeRecord } from '../core/SaveManager';
 import { itemCatalog } from '../data/catalog';
 import { dishesForLevel } from '../data/content';
 import starterLayoutJson from '../data/starterLayout.json';
@@ -11,6 +11,10 @@ import {
   CafeGrid,
   DEFAULT_SPEED_STAT,
   TAP_VS_PAN_PX,
+  applyXP,
+  cookStartXP,
+  leftWallSectionTopLeft,
+  rightWallSectionTopLeft,
   zombieTilesPerSec,
   type FootprintItem,
   type LayoutSchema,
@@ -59,7 +63,6 @@ export class CafeScene extends Phaser.Scene {
   private spawnTimer = 3000;
   private saveTimer = 5000;
   private jobScanTimer = 900;
-  private servedSinceLevel = 0;
   private seedCounter = 1;
   private stovesById = new Map<PlacementId, StoveSim>();
   private cookbook!: CookbookPanel;
@@ -96,6 +99,7 @@ export class CafeScene extends Phaser.Scene {
     this.scene.launch('Hud');
     this.cookbook = new CookbookPanel(this);
     this.buildStations();
+    this.buildGrime();
     this.setupEditMode();
     this.grid.events.on('moved', ({ placement }) => {
       this.stovesById.get(placement.id)?.reposition();
@@ -106,11 +110,11 @@ export class CafeScene extends Phaser.Scene {
 
     EventBus.publish('notify', 'Tap a stove to open the cookbook. Tap a customer to infect them (1 Toxin)!');
 
-    // Progress comes from SERVING (canon §6), and service quality moves the
-    // star rating, which drives how fast customers show up (researched).
+    // Researched: XP flows 1/3 at cook start + 2/3 across servings served;
+    // service quality moves the star rating, which drives customer traffic.
     const unsubs = [
-      EventBus.subscribe('customer-served', () => {
-        this.maybeLevelUp();
+      EventBus.subscribe('customer-served', (_pay: number, xpShare?: number) => {
+        if (xpShare) this.addCafeXP(xpShare);
         Save.data.rating = Math.min(5, Save.data.rating + 0.06);
         EventBus.publish('rating-changed', Save.data.rating);
       }),
@@ -279,8 +283,9 @@ export class CafeScene extends Phaser.Scene {
           EventBus.publish('notify', 'The pot is paused — no cook! Free up a zombie.');
           break;
         }
-        const m = Math.ceil(stove.remainingSec() / 60);
-        EventBus.publish('notify', `${stove.dish?.displayName ?? 'The dish'} needs ${m >= 1 ? `${m} min` : 'a moment'} more.`);
+        // The original's Toxin accelerant: "touch the stove, then the finish
+        // button" — a chip appears over the pot offering an instant finish.
+        this.showFinishChip(stove);
         break;
       }
       case 'staffed':
@@ -351,7 +356,53 @@ export class CafeScene extends Phaser.Scene {
       refund(); // stove state changed while the menu was open
       return;
     }
+    // Researched split: a third of the dish's XP lands when the pot starts.
+    this.addCafeXP(cookStartXP(dish.xp));
     this.deselectWaiter();
+  }
+
+  /** Instant-finish chip over a cooking pot (Toxin accelerant, pillar 3). */
+  private showFinishChip(stove: StoveSim): void {
+    this.refillChip?.destroy();
+    const sprite = this.view.furnitureSprite(stove.placementId);
+    if (!sprite) return;
+    const bg = this.add.rectangle(0, 0, 128, 26, 0xfffdf4, 0.97).setStrokeStyle(2, PALETTE.panelEdge);
+    const m = Math.ceil(stove.remainingSec() / 60);
+    const txt = this.add
+      .text(0, 0, `⚡ finish now (1)`, { fontFamily: "'Trebuchet MS', Verdana, sans-serif", fontSize: '13px', color: '#3a2c1c', fontStyle: 'bold' })
+      .setOrigin(0.5);
+    const chip = this.add
+      .container(sprite.x, sprite.y - sprite.displayHeight - 26, [bg, txt])
+      .setDepth(9700);
+    bg.setData('uiBlock', true);
+    bg.setInteractive({ useHandCursor: true });
+    bg.on('pointerup', () => {
+      if (stove.state === 'cooking' && Economy.spendToxin(1)) {
+        stove.finishInstantly();
+        EventBus.publish('notify', 'Toxin surge — dinner is served early!');
+      } else if (stove.state === 'cooking') {
+        EventBus.publish('notify', `No Toxin — ${m >= 1 ? `${m} min` : 'a moment'} to go.`);
+      }
+      chip.destroy();
+      if (this.refillChip === chip) this.refillChip = null;
+    });
+    this.refillChip = chip;
+    this.time.delayedCall(3500, () => {
+      if (chip.active) chip.destroy();
+      if (this.refillChip === chip) this.refillChip = null;
+    });
+  }
+
+  /** Cafe XP with the researched curve; levels unlock cookbook pages. */
+  private addCafeXP(earned: number): void {
+    const r = applyXP(Save.data.cafeLevel, Save.data.playerXP, earned);
+    Save.data.playerXP = r.xp;
+    if (r.levels > 0) {
+      Save.data.cafeLevel = r.level;
+      EventBus.publish('cafe-level-up', r.level);
+      EventBus.publish('notify', `Cafe reached level ${r.level}! New recipes in the cookbook.`);
+    }
+    EventBus.publish('xp-changed', Save.data.playerXP);
   }
 
   /** Finished food gets CARRIED to a serving counter (the original's core verb). */
@@ -625,14 +676,64 @@ export class CafeScene extends Phaser.Scene {
     c.infectByPlayer();
   }
 
-  private maybeLevelUp(): void {
-    this.servedSinceLevel++;
-    if (this.servedSinceLevel >= 6 && Save.data.cafeLevel < 20) {
-      this.servedSinceLevel = 0;
-      Save.data.cafeLevel++;
-      EventBus.publish('cafe-level-up', Save.data.cafeLevel);
-      EventBus.publish('notify', `Cafe reached level ${Save.data.cafeLevel}! New recipes in the cookbook.`);
+
+
+  // ── grime (the original's opening loop: your new cafe is FILTHY) ────────────
+
+  private grimeSprites = new Map<string, Phaser.GameObjects.Image>();
+
+  private buildGrime(): void {
+    for (const g of Save.data.grime) this.renderGrime(g);
+  }
+
+  private renderGrime(g: GrimeRecord): void {
+    let img: Phaser.GameObjects.Image;
+    if (g.wall && g.section !== undefined) {
+      const p = g.wall === 'right' ? rightWallSectionTopLeft(g.section) : leftWallSectionTopLeft(g.section);
+      const rise = (21 * 27) / 42; // mid-section base rise
+      img = this.add
+        .image(p.x + 21, p.y + rise + 74, `decal_${g.kind}`)
+        .setDepth(2000 - 40 + (g.section ?? 0))
+        .setFlipX(g.wall === 'left');
+      // walls are runtime-tinted; decals hang ON them, so keep full color
+    } else {
+      const c = this.view.worldOf(g.tx ?? 0, g.ty ?? 0);
+      img = this.add.image(c.x, c.y + 4, `decal_${g.kind}`).setDepth(12 + ((g.tx ?? 0) + (g.ty ?? 0)) / 1000);
     }
+    img.setInteractive({ useHandCursor: true });
+    img.setData('grimeId', g.id);
+    this.grimeSprites.set(g.id, img);
+  }
+
+  /** Scrub verb: pay a little, get a sparkle and a happier health inspector. */
+  private scrubGrime(id: string): void {
+    const g = Save.data.grime.find((x) => x.id === id);
+    const img = this.grimeSprites.get(id);
+    if (!g || !img) return;
+    if (!Economy.spendCoins(5)) {
+      EventBus.publish('notify', 'Scrubbing costs $5 — serve some customers first!');
+      return;
+    }
+    Save.data.grime = Save.data.grime.filter((x) => x.id !== id);
+    this.grimeSprites.delete(id);
+    // sparkle burst
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const p = this.add.circle(img.x, img.y, 3.5, 0xffffff, 1).setStrokeStyle(1, 0xd8cdb8).setDepth(img.depth + 1);
+      this.tweens.add({
+        targets: p,
+        x: img.x + Math.cos(a) * 26,
+        y: img.y + Math.sin(a) * 18,
+        alpha: 0,
+        duration: 420,
+        ease: 'Cubic.easeOut',
+        onComplete: () => p.destroy(),
+      });
+    }
+    img.destroy();
+    Save.data.rating = Math.min(5, Save.data.rating + 0.08);
+    EventBus.publish('rating-changed', Save.data.rating);
+    EventBus.publish('notify', Save.data.grime.length > 0 ? 'Scrubbed! The place looks better already.' : 'Spotless! Your customers approve.');
   }
 
   // ── edit mode (hold to lift, tap to place — the original's rearrange-anytime) ──
@@ -713,7 +814,13 @@ export class CafeScene extends Phaser.Scene {
         else this.selectWaiter(waiter);
         return;
       }
-      // 3) furniture: stoves route by state
+      // 3) grime decals: the scrub verb
+      const grimeObj = over.find((o) => o.getData('grimeId'));
+      if (grimeObj) {
+        this.scrubGrime(grimeObj.getData('grimeId') as string);
+        return;
+      }
+      // 4) furniture: stoves route by state
       const id = this.topPlacement(over);
       if (id) {
         const stove = this.stovesById.get(id);

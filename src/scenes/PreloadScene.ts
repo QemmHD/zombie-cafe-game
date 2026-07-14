@@ -20,6 +20,9 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('grass', 'art/room/grass.png');
     this.load.image('road_stripe', 'art/room/road_stripe.png');
     this.load.image('wall_door', 'art/room/wall_door.png');
+    for (const d of ['stain', 'slime', 'rat', 'boards', 'drip']) {
+      this.load.image(`decal_${d}`, `art/room/decal_${d}.png`);
+    }
 
     // Characters (cutout-puppet parts, spec 92 §5)
     for (const c of ['zw', 'cu']) {

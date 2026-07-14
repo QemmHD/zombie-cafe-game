@@ -50,6 +50,8 @@ export {
   zombieTilesPerSec,
 } from './move/speed';
 
+export { applyXP, cookStartXP, perServingXP, xpToNext } from './progression';
+
 export type { PuppetPose, PuppetStyle } from './anim/puppetPoses';
 export { REST_POSE, eatPose, idlePose, sitPose, walkPose } from './anim/puppetPoses';
 
