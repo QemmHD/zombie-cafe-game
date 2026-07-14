@@ -60,3 +60,4 @@ legacy-unity/Assets/Audio/Music/*.caf
 legacy-unity/Assets/Audio/SFX/*.caf
 legacy-unity/Assets/Audio/Music/*.mp3
 legacy-unity/Assets/Audio/SFX/*.mp3
+__pycache__/
