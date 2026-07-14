@@ -5869,8 +5869,8 @@
   "displayName": "Table 01",
   "furnitureType": 1,
   "size": {
-   "x": 2,
-   "y": 2
+   "x": 1,
+   "y": 1
   },
   "buyCost": 450,
   "sellValue": 40,

@@ -32,7 +32,7 @@ export interface SaveData {
 /** The new cafe is FILTHY — scrubbing it clean IS the early game (spec 95). */
 export function starterGrime(): GrimeRecord[] {
   return [
-    { id: 'g1', kind: 'rat', tx: 3, ty: 4 },
+    { id: 'g1', kind: 'rat', tx: 5, ty: 5 },
     { id: 'g2', kind: 'stain', tx: 1, ty: 5 },
     { id: 'g3', kind: 'slime', tx: 5, ty: 3 },
     { id: 'g4', kind: 'stain', tx: 5, ty: 6 },

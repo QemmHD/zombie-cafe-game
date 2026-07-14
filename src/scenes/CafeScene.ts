@@ -690,11 +690,14 @@ export class CafeScene extends Phaser.Scene {
     let img: Phaser.GameObjects.Image;
     if (g.wall && g.section !== undefined) {
       const p = g.wall === 'right' ? rightWallSectionTopLeft(g.section) : leftWallSectionTopLeft(g.section);
-      const rise = (21 * 27) / 42; // mid-section base rise
+      const rise = (21 * 27) / 42; // mid-section top-edge rise
+      // Drips creep down FROM the wall's top edge (like the original's corner
+      // moss); boards hang mid-panel.
       img = this.add
-        .image(p.x + 21, p.y + rise + 74, `decal_${g.kind}`)
+        .image(p.x + 21, g.kind === 'drip' ? p.y + rise : p.y + rise + 74, `decal_${g.kind}`)
         .setDepth(2000 - 40 + (g.section ?? 0))
         .setFlipX(g.wall === 'left');
+      if (g.kind === 'drip') img.setOrigin(0.5, 0);
       // walls are runtime-tinted; decals hang ON them, so keep full color
     } else {
       const c = this.view.worldOf(g.tx ?? 0, g.ty ?? 0);
@@ -871,7 +874,7 @@ export class CafeScene extends Phaser.Scene {
   private showRefillChip(inst: ZombieInstance): void {
     const bg = this.add.rectangle(0, 0, 92, 24, 0x11151d, 0.95).setStrokeStyle(2, PALETTE.toxic);
     const txt = this.add
-      .text(0, 0, '⚡ 1 toxin', { fontFamily: 'monospace', fontSize: '12px', color: '#7ee081' })
+      .text(0, 0, '⚡ 1 toxin', { fontFamily: "'Trebuchet MS', Verdana, sans-serif", fontStyle: 'bold', fontSize: '12px', color: '#7ee081' })
       .setOrigin(0.5);
     const chip = this.add.container(0, 0, [bg, txt]).setDepth(9700);
     bg.setData('uiBlock', true);

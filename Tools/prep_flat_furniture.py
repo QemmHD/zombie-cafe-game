@@ -36,7 +36,7 @@ def remove_exterior_white(img: Image.Image) -> Image.Image:
     return img
 
 
-for name in ['stove', 'table', 'chair', 'counter', 'sink']:
+for name in ['stove', 'table', 'chair', 'counter', 'sink', 'fridge']:
     img = remove_exterior_white(Image.open(SRC / f'{name}.png'))
     bbox = img.getbbox()
     img = img.crop(bbox)

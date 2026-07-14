@@ -1,33 +1,118 @@
 {
-  "layoutRev": 1,
-  "w": 7,
-  "h": 8,
+  "layoutRev": 3,
+  "w": 6,
+  "h": 7,
   "expansionTier": 0,
-  "door": { "x": 3, "y": 0 },
+  "door": {
+    "x": 3,
+    "y": 0
+  },
   "floors": [
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01",
-    "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01", "floor_01"
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01",
+    "floor_01"
   ],
-  "wallsRight": ["wall_01", "wall_01", "wall_01", "wall_01", "wall_01", "wall_01", "wall_01"],
-  "wallsLeft": ["wall_01", "wall_01", "wall_01", "wall_01", "wall_01", "wall_01", "wall_01", "wall_01"],
+  "wallsRight": [
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01"
+  ],
+  "wallsLeft": [
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01",
+    "wall_01"
+  ],
   "wallDecor": [],
   "placements": [
-    { "id": "p_1", "itemId": "stove_01", "x": 0, "y": 1, "rot": 0 },
-    { "id": "p_2", "itemId": "stove_01", "x": 0, "y": 3, "rot": 0 },
-    { "id": "p_3", "itemId": "counter_01", "x": 0, "y": 5, "rot": 0 },
-    { "id": "p_4", "itemId": "sink_01", "x": 6, "y": 1, "rot": 0 },
-    { "id": "p_5", "itemId": "table_01", "x": 2, "y": 2, "rot": 0 },
-    { "id": "p_6", "itemId": "table_01", "x": 4, "y": 5, "rot": 0 },
-    { "id": "p_7", "itemId": "chair_01", "x": 4, "y": 2, "rot": 0 },
-    { "id": "p_8", "itemId": "chair_01", "x": 1, "y": 3, "rot": 0 },
-    { "id": "p_9", "itemId": "chair_01", "x": 6, "y": 5, "rot": 0 }
+    {
+      "id": "p_1",
+      "itemId": "fridge_01",
+      "x": 0,
+      "y": 1,
+      "rot": 0
+    },
+    {
+      "id": "p_2",
+      "itemId": "sink_01",
+      "x": 0,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "id": "p_3",
+      "itemId": "stove_01",
+      "x": 0,
+      "y": 5,
+      "rot": 0
+    },
+    {
+      "id": "p_4",
+      "itemId": "counter_01",
+      "x": 2,
+      "y": 4,
+      "rot": 0
+    },
+    {
+      "id": "p_5",
+      "itemId": "table_01",
+      "x": 4,
+      "y": 3,
+      "rot": 0
+    },
+    {
+      "id": "p_6",
+      "itemId": "chair_01",
+      "x": 3,
+      "y": 3,
+      "rot": 0
+    }
   ],
   "storage": [],
-  "idCounter": 9
+  "idCounter": 6
 }

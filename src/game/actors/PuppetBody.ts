@@ -174,13 +174,17 @@ export class PuppetBody extends Phaser.GameObjects.Container {
     for (const img of this.jointImgs.values()) img.clearTint();
   }
 
-  /** Tap target covering the assembled body (local feet-origin space). */
+  /**
+   * Tap target covering the assembled body. Phaser normalizes container hit
+   * coords by ADDING displayOrigin (w/2, h/2) to the local point before the
+   * contains-check, so the rect must be authored in that shifted space:
+   * feet-space y in [-h, 0] maps to [-h/2, h/2], x in [-w/2, w/2] to [0, w].
+   * (The old feet-space rect silently made only the head half tappable.)
+   */
   enableTap(): void {
     const w = this.rig.height * 0.52;
-    this.setInteractive(
-      new Phaser.Geom.Rectangle(-w / 2, -this.rig.height, w, this.rig.height),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    const h = this.rig.height;
+    this.setInteractive(new Phaser.Geom.Rectangle(0, -h / 2, w, h), Phaser.Geom.Rectangle.Contains);
     if (this.input) this.input.cursor = 'pointer';
   }
 }

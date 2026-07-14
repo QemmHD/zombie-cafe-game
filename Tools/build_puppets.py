@@ -94,59 +94,60 @@ def components(img: Image.Image, min_area: int = 900) -> list[dict]:
     return out
 
 
-# Expected part centroids per sheet (eyeballed from the chosen generations).
+# Expected part centroids per sheet (measured off the chosen generations —
+# the "_b" chibi set: heads >50% of height, deadpan lidded eyes, audit spec).
 SHEETS = {
     'zombie_waiter': {
-        'file': 'flat/zw_a.png',
+        'file': 'flat/zw_b.png',
         'style': 'zombie',
         'expect': {
-            'head': (225, 440), 'torso': (540, 545), 'armL': (745, 355),
-            'armR': (915, 440), 'legL': (760, 715), 'legR': (885, 700),
+            'head': (222, 242), 'torso': (538, 531), 'armL': (263, 569),
+            'armR': (855, 523), 'legL': (337, 848), 'legR': (729, 848),
         },
-        # tray arm: shoulder is the torn sleeve at the part's lower-left
-        'pivots': {'head': (0.45, 0.92), 'torso': (0.5, 0.94), 'armL': (0.18, 0.72),
-                   'armR': (0.5, 0.08), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
-        'swing': {'armL': 0.25},  # cloche stays level — barely swings
-        'rest': {'armL': -0.55},  # swing the platter out front at chest height
-        'anatomy': {'shoulder_spread': 0.6},
+        # tray arm is horizontal art: shoulder = torn sleeve at upper-right
+        'pivots': {'head': (0.55, 0.93), 'torso': (0.5, 0.94), 'armL': (0.88, 0.2),
+                   'armR': (0.5, 0.06), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'swing': {'armL': 0.2},  # platter stays level — barely swings
+        'rest': {'armL': 0.0},
+        'anatomy': {'shoulder_spread': 0.5},
     },
     'customer': {
-        'file': 'flat/cu_a.png',
+        'file': 'flat/cu_b.png',
         'style': 'human',
         'expect': {
-            'head': (255, 265), 'torso': (525, 520), 'armL': (165, 690),
-            'armR': (830, 530), 'legL': (345, 830), 'legR': (725, 810),
+            'head': (250, 256), 'torso': (715, 308), 'armL': (164, 740),
+            'armR': (360, 740), 'legL': (632, 796), 'legR': (850, 796),
         },
-        'pivots': {'head': (0.45, 0.93), 'torso': (0.5, 0.94), 'armL': (0.75, 0.1),
-                   'armR': (0.2, 0.12), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'pivots': {'head': (0.5, 0.93), 'torso': (0.5, 0.94), 'armL': (0.5, 0.08),
+                   'armR': (0.5, 0.08), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
         'swing': {},
         'rest': {},
     },
     'customer_w': {
-        'file': 'flat/cw_a.png',
+        'file': 'flat/cw_b.png',
         'short': 'cw',
         'style': 'human',
         'expect': {
-            'head': (499, 251), 'torso': (504, 635), 'armL': (221, 600),
-            'armR': (765, 568), 'legL': (330, 865), 'legR': (693, 865),
+            'head': (291, 280), 'torso': (782, 324), 'armL': (122, 717),
+            'armR': (508, 717), 'legL': (701, 817), 'legR': (864, 817),
         },
-        'pivots': {'head': (0.5, 0.92), 'torso': (0.5, 0.94), 'armL': (0.6, 0.08),
-                   'armR': (0.08, 0.3), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
-        'swing': {'armR': 0.5},
-        'rest': {'armR': 1.25},  # the horizontal art hangs down at rest
+        'pivots': {'head': (0.5, 0.93), 'torso': (0.5, 0.94), 'armL': (0.5, 0.08),
+                   'armR': (0.5, 0.08), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'swing': {},
+        'rest': {},
     },
     'customer_s': {
-        'file': 'flat/cs_a.png',
+        'file': 'flat/cs_b.png',
         'short': 'cs',
         'style': 'human',
         'expect': {
-            'head': (517, 275), 'torso': (501, 729), 'armL': (123, 718),
-            'armR': (794, 667), 'legL': (283, 863), 'legR': (737, 887),
+            'head': (291, 242), 'torso': (532, 627), 'armL': (169, 577),
+            'armR': (884, 575), 'legL': (228, 848), 'legR': (799, 849),
         },
-        'pivots': {'head': (0.5, 0.93), 'torso': (0.5, 0.94), 'armL': (0.5, 0.08),
-                   'armR': (0.08, 0.3), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
-        'swing': {'armR': 0.5},
-        'rest': {'armR': 1.25},
+        'pivots': {'head': (0.5, 0.93), 'torso': (0.5, 0.94), 'armL': (0.2, 0.08),
+                   'armR': (0.5, 0.06), 'legL': (0.5, 0.06), 'legR': (0.5, 0.06)},
+        'swing': {},
+        'rest': {},
     },
 }
 
@@ -168,7 +169,8 @@ def build(char: str) -> None:
     comps = components(sheet)
     if len(comps) < 6:
         sys.exit(f'{char}: expected >=6 parts, found {len(comps)}')
-    comps = comps[:6]
+    # keep ALL components — greedy nearest-centroid assignment below simply
+    # ignores extras (some sheets draw a duplicate part or stray marks)
     # assign each expected part its nearest component (greedy by distance)
     assigned: dict[str, dict] = {}
     used: set[int] = set()

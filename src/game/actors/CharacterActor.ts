@@ -35,7 +35,7 @@ export class CharacterActor {
     this.view = view;
     this.walker = new Walker(view.grid as CafeGrid, id, start, tilesPerSec, seed);
     this.sprite = new PuppetBody(view.scene, rigKey, CHAR_H);
-    this.shadow = view.scene.add.ellipse(0, 0, 30, 9, 0x2a2a2a, 0.18);
+    this.shadow = view.scene.add.ellipse(0, 0, 42, 12, 0x24241f, 0.24);
     this.syncSprite(0);
   }
 
@@ -68,7 +68,7 @@ export class CharacterActor {
     const k = Math.max(0.55, 1 - lift / 26);
     this.shadow.setPosition(p.x, p.y + 17);
     this.shadow.setScale(k);
-    this.shadow.setAlpha(0.18 * k * this.sprite.alpha);
+    this.shadow.setAlpha(0.24 * k * this.sprite.alpha);
     this.shadow.setDepth(d - 1);
   }
 
@@ -82,7 +82,7 @@ export class CharacterActor {
   setTiredBadge(on: boolean): void {
     if (on && !this.tiredBadge) {
       this.tiredBadge = this.view.scene.add
-        .text(0, 0, 'z Z', { fontFamily: 'monospace', fontSize: '13px', color: '#9fb3d9', fontStyle: 'bold' })
+        .text(0, 0, 'z Z', { fontFamily: "'Trebuchet MS', Verdana, sans-serif", fontStyle: 'bold', fontSize: '13px', color: '#9fb3d9' })
         .setOrigin(0.5, 1)
         .setStroke('#0d0f14', 3);
     } else if (!on && this.tiredBadge) {

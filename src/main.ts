@@ -11,7 +11,7 @@ const game = new Phaser.Game({
   parent: 'game',
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
-  backgroundColor: '#848688',
+  backgroundColor: '#48641a', // grass base — never expose gray canvas if a pan outruns the tiles
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

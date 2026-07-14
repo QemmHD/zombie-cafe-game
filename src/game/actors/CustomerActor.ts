@@ -258,7 +258,7 @@ export class CustomerActor extends CharacterActor {
     const label = tip > 0 ? `+${amount - tip} +${tip} TIP` : `+${amount}`;
     const t = scene.add
       .text(this.sprite.x, this.headY() - 4, label, {
-        fontFamily: 'monospace',
+        fontFamily: "'Trebuchet MS', Verdana, sans-serif",
         fontSize: '16px',
         color: '#f2c14e',
         fontStyle: 'bold',

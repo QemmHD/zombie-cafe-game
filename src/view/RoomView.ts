@@ -9,6 +9,7 @@ import {
   HALF_W,
   entityDepth,
   furnitureSortKey,
+  WALL_H,
   leftWallSectionTopLeft,
   rightWallSectionTopLeft,
   roomBounds,
@@ -21,8 +22,14 @@ import {
 // Assets are authored @2x (floor 168x108 for an 84x54 tile); the view scales by 0.5.
 const ART_SCALE = 0.5;
 
-/** The original tints its white wall panel at runtime — the starter is lemon. */
-const WALL_TINT = 0xf5ec74;
+/**
+ * The original tints its white wall panel at runtime, and lights the two
+ * planes differently (measured off the starter cafe): the NW/left wall is the
+ * light warm yellow, the NE/right wall a darker saturated mustard — that
+ * ~15% luminance gap is what makes the room corner read at a glance.
+ */
+const WALL_TINT_LEFT = 0xe6dc70;
+const WALL_TINT_RIGHT = 0xc2b843;
 
 /** Sprite keys per furniture kind (M1 set; grows with the catalog art). */
 const KIND_TEXTURE: Record<string, string> = {
@@ -31,6 +38,7 @@ const KIND_TEXTURE: Record<string, string> = {
   sink: 'sink',
   table: 'table',
   chair: 'chair',
+  fridge: 'fridge',
 };
 
 /**
@@ -38,12 +46,19 @@ const KIND_TEXTURE: Record<string, string> = {
  * display-height cap in tile-heights — keeps near-square source art from
  * towering over the room (a 2x2 diner table is wide, not monumental).
  */
+/*
+ * Scale metric (audit-locked): characters (CHAR_H 94) must stand >= 1.2x any
+ * table's total sprite height, matching the original's chef:table ratio of
+ * 1.24. The fridge is the room's ONLY piece taller than a character — its
+ * silhouette anchors the back wall. maxH is in tile-heights (x54px).
+ */
 const KIND_FIT: Record<string, { w: number; maxH: number }> = {
-  stove: { w: 0.84, maxH: 2.6 },
-  counter: { w: 0.95, maxH: 2.2 },
-  sink: { w: 0.8, maxH: 2.6 },
-  table: { w: 0.78, maxH: 2.4 },
-  chair: { w: 0.62, maxH: 2.2 },
+  stove: { w: 0.95, maxH: 1.5 },
+  counter: { w: 0.98, maxH: 1.3 },
+  sink: { w: 0.85, maxH: 1.3 },
+  table: { w: 1.2, maxH: 1.45 },
+  chair: { w: 0.6, maxH: 1.25 },
+  fridge: { w: 0.72, maxH: 1.95 },
 };
 
 /**
@@ -91,9 +106,11 @@ export class RoomView {
     const cam = this.scene.cameras.main;
     const zw = (cam.width - marginPx * 2) / (b.maxX - b.minX);
     const zh = (cam.height - 64) / (maxY - b.minY); // leave room for the HUD bar
-    // Original framing: the starter room fills the screen edge-to-edge; larger
-    // cafes overflow and the player drag-scrolls (authentic).
-    const zoom = clamp(Math.min(zw, zh), DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
+    // Original framing: the cafe DOMINATES the screen — the audit measured the
+    // reference room at ~90%+ of the frame vs our timid 60%. Overshoot the
+    // vertical fit by 25% (top/bottom slivers stay reachable by drag-pan,
+    // exactly like the original's scroll) but never crop horizontally.
+    const zoom = clamp(Math.min(zw, zh * 1.25), DEFAULT_FIT_ZOOM_FLOOR, ZOOM_MAX);
     cam.setZoom(zoom);
     const pad = 90;
     cam.setBounds(b.minX - pad, b.minY - pad, b.maxX - b.minX + pad * 2, maxY - b.minY + pad * 2);
@@ -125,29 +142,33 @@ export class RoomView {
    * through the doorway. The FRONT of the lot is a grass apron. All render-only.
    */
   private buildStreet(): void {
+    // Grass blankets the ENTIRE visible world first (the audit found raw
+    // canvas on ~40% of the frame) — streets and the floor slab draw over it,
+    // so no pan position can ever expose void.
+    for (let tx = -6; tx <= this.grid.w + 5; tx++) {
+      for (let ty = -6; ty <= this.grid.h + 4; ty++) {
+        const c = tileToWorld(tx, ty);
+        this.scene.add.image(c.x, c.y, 'grass').setScale(ART_SCALE).setDepth(-30 + (tx + ty) / 1000);
+      }
+    }
     // Street behind the right-back wall (rows ty = -1 sidewalk, -2 road)
     for (let tx = -5; tx < this.grid.w + 5; tx++) {
-      for (const [ty, key] of [[-1, 'sidewalk'], [-2, 'road_stripe']] as const) {
+      for (const [ty, key] of [[-1, 'sidewalk'], [-2, 'road_stripe'], [-3, 'asphalt']] as const) {
         const c = tileToWorld(tx, ty);
         this.scene.add.image(c.x, c.y, key).setScale(ART_SCALE).setDepth(-20 + (tx + ty) / 1000);
       }
     }
-    // Street wrapping behind the left-back wall (columns tx = -1, -2)
+    // Street wrapping behind the left-back wall (columns tx = -1, -2).
+    // flipX mirrors the stripe/curb art onto the +ty axis so the center line
+    // chains continuously down THIS road too.
     for (let ty = 0; ty < this.grid.h + 5; ty++) {
-      for (const [tx, key] of [[-1, 'sidewalk'], [-2, 'road_stripe']] as const) {
+      for (const [tx, key] of [[-1, 'sidewalk'], [-2, 'road_stripe'], [-3, 'asphalt']] as const) {
         const c = tileToWorld(tx, ty);
-        this.scene.add.image(c.x, c.y, key).setScale(ART_SCALE).setDepth(-20 + (tx + ty) / 1000);
-      }
-    }
-    // Grass apron in front (the original's lawn — tombstones live here later)
-    for (let row = 0; row < 2; row++) {
-      for (let tx = -2; tx < this.grid.w + 3; tx++) {
-        const c = tileToWorld(tx, this.grid.h + row);
-        this.scene.add.image(c.x, c.y, 'grass').setScale(ART_SCALE).setDepth(-20 + (tx + this.grid.h + row) / 1000);
-      }
-      for (let ty = 0; ty < this.grid.h; ty++) {
-        const c = tileToWorld(this.grid.w + row, ty);
-        this.scene.add.image(c.x, c.y, 'grass').setScale(ART_SCALE).setDepth(-20 + (this.grid.w + row + ty) / 1000);
+        this.scene.add
+          .image(c.x, c.y, key)
+          .setScale(ART_SCALE)
+          .setFlipX(true)
+          .setDepth(-20 + (tx + ty) / 1000);
       }
     }
   }
@@ -156,15 +177,43 @@ export class RoomView {
     for (let ty = 0; ty < this.grid.h; ty++) {
       for (let tx = 0; tx < this.grid.w; tx++) {
         const c = tileToWorld(tx, ty);
-        // Checker parity delivers the classic diner floor from one skin pair.
-        const key = (tx + ty) % 2 === 0 ? 'floor_a' : 'floor_b';
+        // One uniform skin — the original's floor is a single ceramic field
+        // (the audit killed our invented checkerboard). The 2x2 grout inside
+        // the tile art carries the pattern.
         const img = this.scene.add
-          .image(c.x, c.y, key)
+          .image(c.x, c.y, 'floor_a')
           .setScale(ART_SCALE)
           .setDepth(BAND.FLOOR + (tx + ty) / 1000);
         this.floorTiles.set(`${tx},${ty}`, img);
       }
     }
+    this.buildSlabRim();
+  }
+
+  /**
+   * The original strokes its ground plane: a dark rim along the floor's two
+   * exposed front edges makes the slab sit IN the lot instead of floating on
+   * it like a decal.
+   */
+  private buildSlabRim(): void {
+    const w = this.grid.w;
+    const h = this.grid.h;
+    const east = tileToWorld(w - 1, 0);
+    const south = tileToWorld(w - 1, h - 1);
+    const west = tileToWorld(0, h - 1);
+    const g = this.scene.add.graphics().setDepth(BAND.FLOOR_OVERLAY - 70);
+    g.lineStyle(3, 0x34342f, 0.85);
+    g.beginPath();
+    g.moveTo(east.x + HALF_W, east.y);
+    g.lineTo(south.x, south.y + HALF_H);
+    g.lineTo(west.x - HALF_W, west.y);
+    g.strokePath();
+    g.lineStyle(1, 0x6e6e66, 0.8);
+    g.beginPath();
+    g.moveTo(east.x + HALF_W - 2, east.y - 1);
+    g.lineTo(south.x, south.y + HALF_H - 3);
+    g.lineTo(west.x - HALF_W + 2, west.y - 1);
+    g.strokePath();
   }
 
   private buildWalls(): void {
@@ -177,9 +226,11 @@ export class RoomView {
           .image(p.x, p.y, isDoor ? 'wall_door' : 'wall')
           .setOrigin(0, 0)
           .setScale(ART_SCALE)
-          .setTint(WALL_TINT) // white panel, tinted — the original's own technique
+          .setTint(WALL_TINT_RIGHT) // white panel, tinted — the original's own technique
           .setDepth(BAND.WALL + k),
       );
+      if (isDoor) this.addDoorOverlay(p.x, p.y, false, k);
+      this.addWallShadow(p.x, p.y, false);
     }
     for (let m = 0; m < this.grid.h; m++) {
       const p = leftWallSectionTopLeft(m);
@@ -190,10 +241,43 @@ export class RoomView {
           .setOrigin(0, 0)
           .setScale(ART_SCALE)
           .setFlipX(true)
-          .setTint(WALL_TINT)
+          .setTint(WALL_TINT_LEFT)
           .setDepth(BAND.WALL + m),
       );
+      if (isDoor) this.addDoorOverlay(p.x, p.y, true, m);
+      this.addWallShadow(p.x, p.y, true);
     }
+    // Dark seam down the corner fold — the measured original carries a
+    // near-black ochre crease where the two planes meet.
+    this.scene.add
+      .image(0, -HALF_H - WALL_H, 'corner_seam')
+      .setOrigin(0.5, 0)
+      .setScale(ART_SCALE)
+      .setDepth(BAND.WALL + this.grid.w + this.grid.h + 1);
+  }
+
+  /**
+   * The door frame/leaf renders UNTINTED above its wall section — baked into
+   * the tinted panel, its steel-blue glass would multiply into olive mud.
+   */
+  private addDoorOverlay(x: number, y: number, flip: boolean, section: number): void {
+    this.scene.add
+      .image(x, y, 'door_overlay')
+      .setOrigin(0, 0)
+      .setScale(ART_SCALE)
+      .setFlipX(flip)
+      .setDepth(BAND.WALL + section + 0.5);
+  }
+
+  /** Baked contact-shadow strip where the wall meets the floor — grounds the
+   * room the way the original's pre-rendered wall art does. */
+  private addWallShadow(sectionX: number, sectionY: number, flip: boolean): void {
+    this.scene.add
+      .image(sectionX, sectionY + WALL_H, 'ao_strip')
+      .setOrigin(0, 0)
+      .setScale(ART_SCALE)
+      .setFlipX(flip)
+      .setDepth(BAND.FLOOR_OVERLAY - 60);
   }
 
 
@@ -229,15 +313,8 @@ export class RoomView {
     const { w: fw, h: fh } = p.footprint;
     this.layoutSprite(img, p.kind, fw, fh, p.anchor);
     img.setDepth(entityDepth(furnitureSortKey(p), false));
-
-    // Grounding shadow: soft and tight — the bright style can't carry blobs.
-    const c = tileToWorld(p.anchor.tx + (fw - 1) / 2, p.anchor.ty + (fh - 1) / 2);
-    const bottomY = c.y + (HALF_H * (fw + fh)) / 2;
-    const shadowKey = `sh_${p.id}`;
-    (this.scene.children.getByName(shadowKey) as Phaser.GameObjects.Ellipse | null)?.destroy();
-    this.scene.add
-      .ellipse(c.x, bottomY - 3, img.displayWidth * 0.72, HALF_H * (fw + fh) * 0.42, 0x2a2a2a, 0.13)
-      .setName(shadowKey)
-      .setDepth(BAND.FLOOR_OVERLAY);
+    // No drop-shadow ellipse: the original grounds furniture with painted
+    // grime and contact lines, never a floating gray blob (audit-confirmed).
+    (this.scene.children.getByName(`sh_${p.id}`) as Phaser.GameObjects.Ellipse | null)?.destroy();
   }
 }

@@ -14,12 +14,13 @@ describe('starter layout (canon AC-22)', () => {
     expect(repairs).toEqual([]);
   });
 
-  it('has the required stations and at least 3 seats', () => {
+  it('has the authentic starter loadout: stove, counter, sink, fridge, one seat', () => {
     const kinds = [...grid.placements().values()].map((p) => p.kind);
-    expect(kinds.filter((k) => k === 'stove').length).toBeGreaterThanOrEqual(1);
+    expect(kinds.filter((k) => k === 'stove').length).toBe(1); // scarcity IS the starter
     expect(kinds.filter((k) => k === 'counter').length).toBeGreaterThanOrEqual(1);
     expect(kinds.filter((k) => k === 'sink').length).toBeGreaterThanOrEqual(1);
-    expect(grid.seats().length).toBeGreaterThanOrEqual(2); // one seat per table (ground truth)
+    expect(kinds.filter((k) => k === 'fridge').length).toBeGreaterThanOrEqual(1);
+    expect(grid.seats().length).toBeGreaterThanOrEqual(1); // the original starts with ONE lonely table
   });
 
   it('every station is reachable from the door', () => {

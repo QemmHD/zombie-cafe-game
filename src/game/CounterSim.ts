@@ -32,7 +32,7 @@ export class CounterSim {
       .setDepth(depth)
       .setVisible(false);
     this.countLabel = view.scene.add
-      .text(0, 0, '', { fontFamily: 'monospace', fontSize: '13px', color: '#e8ecf2', fontStyle: 'bold' })
+      .text(0, 0, '', { fontFamily: "'Trebuchet MS', Verdana, sans-serif", fontStyle: 'bold', fontSize: '13px', color: '#e8ecf2' })
       .setOrigin(0.5, 1)
       .setStroke('#0d0f14', 4)
       .setDepth(depth + 1)

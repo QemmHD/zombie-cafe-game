@@ -47,7 +47,7 @@ export class StoveSim {
     const depth = BAND.FX_WORLD;
 
     this.label = scene.add
-      .text(x, y + 4, 'tap to staff', { fontFamily: 'monospace', fontSize: '15px', color: '#e8ecf2' })
+      .text(x, y + 4, 'tap to staff', { fontFamily: "'Trebuchet MS', Verdana, sans-serif", fontStyle: 'bold', fontSize: '15px', color: '#e8ecf2' })
       .setOrigin(0.5, 0)
       .setStroke('#0d0f14', 4)
       .setDepth(depth);
@@ -58,7 +58,7 @@ export class StoveSim {
     this.bubble = scene.add.container(x, this.top.y - 12).setDepth(depth + 2);
     const bBg = scene.add.circle(0, 0, 15, PALETTE.coin).setStrokeStyle(2, 0x0d0f14);
     const bTxt = scene.add
-      .text(0, 0, '!', { fontFamily: 'monospace', fontSize: '16px', color: '#141821', fontStyle: 'bold' })
+      .text(0, 0, '!', { fontFamily: "'Trebuchet MS', Verdana, sans-serif", fontStyle: 'bold', fontSize: '16px', color: '#141821' })
       .setOrigin(0.5);
     this.bubble.add([bBg, bTxt]).setVisible(false);
   }
